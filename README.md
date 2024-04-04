@@ -1,2 +1,3 @@
-# indirect-vqe
-Variational quantum eigensolver (VQE) with indirect quantum control.
+# indirect-zne
+
+Quantum error mitigation with Zero Noise Extrapolation (ZNE) approach for indirect controlled system.
