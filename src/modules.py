@@ -116,7 +116,7 @@ def create_param(layer, ti, tf):
     param = np.array([])
     
     # Time param
-    time = np.random.uniform(ti,tf, layer + 1)
+    time = np.random.uniform(ti,tf, layer)
     time = np.sort(time) # Time must be in incresing order
     for i in time:
         param = np.append(param, i)
@@ -169,30 +169,8 @@ def create_ising_hamiltonian(nqubit, cn, bn):
     
 
 
-def create_time_evo_unitary(observable, ti, tf):
-
-    """
-    Args:
-        observable: qulacs observable
-        ti: initial time
-        tf: final time
-    
-    Returns:
-        a dense matrix gate U(t) = exp(-iHt)
-    """
-    # Get the qubit number
-    n = observable.get_qubit_count()
-    # Converting to a matrix
-    H_mat = observable.get_matrix()
-
-    # Converting to array
-    H_mat_array = H_mat.toarray()
-
-    # this is exp(-iHt)
-    exponent = expm(-1*1j*H_mat_array*(tf-ti))
-    return (DenseMatrix([i for i in range(n)], exponent))
-    
 # def create_time_evo_unitary(observable, ti, tf):
+
     # """
     # Args:
         # observable: qulacs observable
@@ -205,18 +183,47 @@ def create_time_evo_unitary(observable, ti, tf):
     # # Get the qubit number
     # n = observable.get_qubit_count()
     # # Converting to a matrix
-    # H_mat = observable.get_matrix().toarray()
+    # H_mat = observable.get_matrix()
 
-    # # Diagonalize the Hamiltonian
-    # diag, eigen_vecs = np.linalg.eigh(H_mat)
+    # # Converting to array
+    # H_mat_array = H_mat.toarray()
 
-    # # Compute the exponent of diagonalized Hamiltonian
-    # exponent_diag = np.diag(np.exp(-1j * (tf - ti) * diag))
+    # # this is exp(-iHt)
+    # exponent = expm(-1*1j*H_mat_array*(tf-ti))
+    # return (DenseMatrix([i for i in range(n)], exponent))
+    
+# Global variables to store the eigenvalues and eigenvectors
+diag = None
+eigen_vecs = None
+    
+def create_time_evo_unitary(observable, ti, tf):
+    """
+    Args:
+        observable: qulacs observable
+        ti: initial time
+        tf: final time
+    
+    Returns:
+        a dense matrix gate U(t) = exp(-iHt)
+    """
+    # Get the qubit number
+    n = observable.get_qubit_count()
+    # Converting to a matrix
+    H_mat = observable.get_matrix().toarray()
 
-    # # Construct the time evolution operator
-    # time_evol_op = np.dot(np.dot(eigen_vecs, exponent_diag), eigen_vecs.T.conj())
+    # Compute eigenvalues and eigenvectors only once and reuse them
+    global diag, eigen_vecs
+    
+    if diag is None or eigen_vecs is None:
+        diag, eigen_vecs = np.linalg.eigh(H_mat)
 
-    # return DenseMatrix([i for i in range(n)], time_evol_op)
+    # Compute the exponent of diagonalized Hamiltonian
+    exponent_diag = np.diag(np.exp(-1j * (tf - ti) * diag))
+
+    # Construct the time evolution operator
+    time_evol_op = np.dot(np.dot(eigen_vecs, exponent_diag), eigen_vecs.T.conj())
+
+    return DenseMatrix([i for i in range(n)], time_evol_op)
 
 
 def parametric_ansatz(nqubit, layer, hamitolian, param):
@@ -232,7 +239,7 @@ def parametric_ansatz(nqubit, layer, hamitolian, param):
     """
     circuit = QuantumCircuit(nqubit)
 
-    flag = layer + 1 # Tracking angles in param ndarray
+    flag = layer # Tracking angles in param ndarray
     
     for i in range(layer):
 
@@ -246,12 +253,18 @@ def parametric_ansatz(nqubit, layer, hamitolian, param):
         # CZ gate
         circuit.add_gate(CZ(0,1))
 
-        # Time evolution gate
-        ti = param [i]
-        tf = param [i+1]
-        time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
-        circuit.add_gate(time_evo_gate)
-        
+        if i == 0:
+            # Time evolution gate
+            ti = 0
+            tf = param [i]
+            time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
         flag += 4 # Each layer has four angle-params. 
         
     return(circuit)
@@ -308,10 +321,3 @@ def create_time_constraints(time_params_length, all_params_length) -> LinearCons
         matrix[time_params_length + (i - 1), i] = 1  # t_i
 
     return LinearConstraint(matrix, np.zeros(2 * time_params_length), np.inf)
-
-
-   
-
-
-
-
