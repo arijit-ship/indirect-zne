@@ -1,3 +1,8 @@
+"""
+This scripts contains all the necessary functions for VQE and ZNE.
+"""
+import random
+from venv import create
 import numpy as np
 from qulacs import QuantumState, QuantumCircuit
 from scipy.optimize import minimize
@@ -8,90 +13,8 @@ from scipy.linalg import expm
 from openfermion.ops.operators.qubit_operator import QubitOperator
 from qulacs.observable import create_observable_from_openfermion_text
 from qulacs.gate import DenseMatrix
-import random
 from qulacs import QuantumState, QuantumCircuit, NoiseSimulator, DensityMatrix
 from qulacs.gate import *
-from qulacsvis import circuit_drawer
-from scipy.optimize import LinearConstraint
-
-def create_ansatz(nqubit, layer, time_evolution_gate, noise_prob, theta):
-    
-    """
-    Args:
-        nqubit: int, number of qubit
-        time_evolution_gate: qulacs dense matrix gate
-        noise_prob: noise probability
-        theta: list, params for rotation gates.
-
-    Returns:
-        :class:`qulacs.QuantumCircuit`
-    """
-
-    circuit = QuantumCircuit(nqubit)
-    
-    for i in range(layer):
-
-        # Add Rx to first and second qubits
-        circuit.add_noise_gate(RX(0, theta[i]),"Depolarizing", noise_prob)
-        circuit.add_noise_gate(RX(1, theta[i+1]),"Depolarizing", noise_prob)
-
-        # Add identities with Rx and make redudant circuit
-        # First qubit
-        circuit.add_noise_gate(RX(0, theta[i]).get_inverse(), "Depolarizing", noise_prob)  # Rx_dagger
-        circuit.add_noise_gate(RX(0, theta[i]), "Depolarizing", noise_prob)
-    
-        # Second qubit
-        circuit.add_noise_gate(RX(1, theta[i+1]).get_inverse(), "Depolarizing", noise_prob)   # Rx_dagger
-        circuit.add_noise_gate(RX(1, theta[i+1]), "Depolarizing", noise_prob)
-
-        # Add Ry to first and second qubits
-        circuit.add_noise_gate(RY(0, theta[i+2]),"Depolarizing", noise_prob)
-        circuit.add_noise_gate(RY(1, theta[i+3]),"Depolarizing", noise_prob)
-
-        # Add identities with Ry and make redudant circuit
-        # First qubit
-        circuit.add_noise_gate(RY(0, theta[i+2]).get_inverse(), "Depolarizing", noise_prob)  # Ry_dagger
-        circuit.add_noise_gate(RY(0, theta[i+2]), "Depolarizing", noise_prob)
-    
-        # Second qubit
-        circuit.add_noise_gate(RY(1, theta[i+3]).get_inverse(), "Depolarizing", noise_prob)   # Ry_dagger
-        circuit.add_noise_gate(RY(1, theta[i+3]), "Depolarizing", noise_prob)
-
-        # Add CZ gate
-        circuit.add_gate(CZ(0,1))
-
-        # Add multi-qubit U gate
-        circuit.add_gate(time_evolution_gate)
-
-        # Add depolarizing noise
-        for i in range(nqubit):
-            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
-
-        # Add Y gates to all odd qubits
-        for i in range(nqubit):
-            if (i+1) % 2 != 0:
-                circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
-
-        # Again add multi-qubit U gate
-        circuit.add_gate(time_evolution_gate)
-
-        # Add depolarizing noise
-        for i in range(nqubit):
-            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
-
-        # Add Y gates to all odd qubits
-        for i in range(nqubit):
-            if (i+1) % 2 != 0:
-                circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
-
-        # Again add multi-qubit U gate
-        circuit.add_gate(time_evolution_gate)
-
-        # Add depolarizing noise
-        for i in range(nqubit):
-            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
-        
-    return circuit
 
 
 def create_param(layer, ti, tf):
@@ -131,10 +54,10 @@ def create_param(layer, ti, tf):
 def create_xy_hamiltonian(nqubit, cn, bn, r):
     """
     Args:
-        nqubit: int, number of qubits
-        cn: list with length of nqubit, 0 - 1, coupling constant
-        bn: list with length of nqubit, 0 - 1, magnetic field
-        r: list with length of nqubit, 0 - 1, anisotropy param
+        nqubit: `int`, number of qubits
+        cn: `float`, 0 - 1, coupling constant
+        bn: `float`, 0 - 1, magnetic field
+        r: `float`, 0 - 1, anisotropy param
     
     Returns:
         qulacs observable
@@ -153,8 +76,8 @@ def create_ising_hamiltonian(nqubit, cn, bn):
     """"
     Args:
         nqubit: int, number of qubits
-        cn: list with length of nqubit, 0 - 1, coupling constant
-        bn: list with length of nqubit, 0 - 1, magnetic field
+        cn: `float`, 0 - 1, coupling constant
+        bn: `float`, 0 - 1, magnetic field
     
     Returns:
         qulacs observable
@@ -166,8 +89,21 @@ def create_ising_hamiltonian(nqubit, cn, bn):
         hami += bn * QubitOperator(f"Z{j}")
     
     return(create_observable_from_openfermion_text(str(hami)))
-    
 
+def exact_sol(hamiltonian):
+    """
+    Finds the exact minimum eigen value for a given matrix.
+
+    Args:
+        hamiltonian: `qulacs_core.Observable`
+    
+    Returns:
+        `float`, minimum eigen value
+    """
+    eigenvalues, _ = np.linalg.eigh(hamiltonian.get_matrix().toarray())
+    min_eigenvalue = np.min(eigenvalues)
+    return min_eigenvalue
+    
 
 # def create_time_evo_unitary(observable, ti, tf):
 
@@ -229,8 +165,9 @@ def create_time_evo_unitary(observable, ti, tf):
 def parametric_ansatz(nqubit, layer, hamitolian, param):
     """
     Args:
-        nqubit: int, number of qubit
-        layer: int, number of layer
+        nqubit: `int`, number of qubit
+        layer: `int`, number of layer
+        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
         param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -295,29 +232,338 @@ def he_ansatz_circuit(n_qubit, depth, theta_list):
         circuit.add_gate(merge(RY(i, theta_list[2*i+2*n_qubit*depth]), RZ(i, theta_list[2*i+1+2*n_qubit*depth])))
 
     return circuit  
+   
 
-
-def create_time_constraints(time_params_length, all_params_length) -> LinearConstraint:
+def create_noisy_ansatz2(nqubit, layer, noise_prob, hamiltonian, param):
+    
     """
-    Create constraints for time params to ensure each time parameter is positive
-    and differences between consecutive time parameters are non-negative.
+    Indirect controlled noisy ansatz.
 
-    Parameters:
-        time_params_length (int): Number of time parameters.
-        all_params_length (int): Total number of parameters including theta parameters.
+    Args:
+        nqubit: `int`, number of qubit
+        layer: `int`, number of layer
+        noise_prob: `float`, noise probability between 0-1
+        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
+        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        t1, t2, ... td, theta1, ..., theatd * 4]
 
     Returns:
-        LinearConstraint: Linear constraint object representing the constraints.
+        :class:`qulacs.QuantumCircuit`
     """
-    matrix = np.zeros((2 * time_params_length, all_params_length))  # Initialize matrix
 
-    # Set constraints for each time parameter to be positive
-    for i in range(time_params_length):
-        matrix[i, i] = 1  # t_i
+    circuit = QuantumCircuit(nqubit)
+    
+    flag = layer # Tracking angles in param ndarrsy
+    
+    for i in range(layer):
 
-    # Set constraints for differences between consecutive time parameters to be non-negative
-    for i in range(1, time_params_length):
-        matrix[time_params_length + (i - 1), i - 1] = -1  # -t_{i-1}
-        matrix[time_params_length + (i - 1), i] = 1  # t_i
+        # Add Rx to first and second qubits
+        circuit.add_noise_gate(RX(0, param[flag]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RX(1, param[flag+1]),"Depolarizing", noise_prob)
 
-    return LinearConstraint(matrix, np.zeros(2 * time_params_length), np.inf)
+        # Add identities with Rx and make redudant circuit
+
+        # First qubit
+        circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), "Depolarizing", noise_prob)  # Rx_dagger
+        circuit.add_noise_gate(RX(0, param[flag]), "Depolarizing", noise_prob)
+    
+        # Second qubit
+        circuit.add_noise_gate(RX(1, param[flag+1]).get_inverse(), "Depolarizing", noise_prob)   # Rx_dagger
+        circuit.add_noise_gate(RX(1, param[flag+1]), "Depolarizing", noise_prob)
+
+        # Add Ry to first and second qubits
+        circuit.add_noise_gate(RY(0, param[flag+2]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RY(1, param[flag+3]),"Depolarizing", noise_prob)
+
+        # Add identities with Ry and make redudant circuit
+        # First qubit
+        circuit.add_noise_gate(RY(0, param[flag+2]).get_inverse(), "Depolarizing", noise_prob)  # Ry_dagger
+        circuit.add_noise_gate(RY(0, param[flag+2]), "Depolarizing", noise_prob)
+    
+        # Second qubit
+        circuit.add_noise_gate(RY(1, param[flag+3]).get_inverse(), "Depolarizing", noise_prob)   # Ry_dagger
+        circuit.add_noise_gate(RY(1, param[flag+3]), "Depolarizing", noise_prob)
+
+        # Add CZ gate
+        circuit.add_noise_gate(CZ(0,1), "Depolarizing", noise_prob)
+
+        # Add multi-qubit U gate
+        if i == 0:
+            ti = 0
+            tf = param[i]
+            time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        # Add depolarizing noise to time evolution gate.
+        for i in range(nqubit):
+            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+        # Add Y gates to all odd qubits
+        for i in range(nqubit):
+            if (i+1) % 2 != 0:
+                circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
+        
+
+        # Again add multi-qubit U gate
+        if i == 0:
+            ti = 0
+            tf = param[i]
+            time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+
+        # Add depolarizing noise
+        for i in range(nqubit):
+            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+        # Add Y gates to all odd qubits
+        for i in range(nqubit):
+            if (i+1) % 2 != 0:
+                circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
+
+        # Again add multi-qubit U gate
+        if i == 0:
+            ti = 0
+            tf = param[i]
+            time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        # Add depolarizing noise
+        for i in range(nqubit):
+            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+        
+        flag += 4 # Each layer has four angle-params
+        
+    return circuit
+
+
+
+def create_noisy_ansatz(nqubit, layer, noise_prob, noise_factor, hamiltonian, param):
+    
+    """
+    Creates noisy redundant ansatz.
+
+    Args:
+        nqubit: `int`, number of qubit
+        layer: `int`, number of layer
+        noise_prob: `float`, noise probability between 0-1
+        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
+        noise_factor: `int`, noise factor for rotational gates, time evolution unitary gate and Y gate.. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        t1, t2, ... td, theta1, ..., theatd * 4]
+
+    Returns:
+        :class:`qulacs.QuantumCircuit`
+    """
+
+    circuit = QuantumCircuit(nqubit)
+
+    
+    if noise_factor == 0:
+        # Creates a noisy standard parametric circuit.
+        circuit = create_default_noisy_circuit(nqubit, layer, noise_prob, hamiltonian, param)
+
+    else:
+        # Creates redundant circuit
+        circuit = create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param)
+    
+    return circuit
+
+def create_default_noisy_circuit(nqubit, layer, noise_prob, hamiltonian, param):
+    """
+    Creates a noisy standard parametric circuit without any redundant identities. This circuit is mainly used to find the optimized parameters for noisy circuit.
+
+    Args:
+        nqubit: `int`, number of qubit
+        layer: `int`, number of layer
+        noise_prob: `float`, noise probability between 0-1
+        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
+        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        t1, t2, ... td, theta1, ..., theatd * 4]
+
+    Returns:
+        :class:`qulacs.QuantumCircuit`
+    """
+    circuit = QuantumCircuit(nqubit)
+
+    flag = layer # Tracking angles in param ndarrsy
+    
+    for i in range(layer):
+
+        # Add Rx to first and second qubits
+        circuit.add_noise_gate(RX(0, param[flag]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RX(1, param[flag+1]),"Depolarizing", noise_prob)
+
+        
+        # Add Ry to first and second qubits
+        circuit.add_noise_gate(RY(0, param[flag+2]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RY(1, param[flag+3]),"Depolarizing", noise_prob)
+
+        # Add CZ gate
+        circuit.add_noise_gate(CZ(0,1), "Depolarizing", noise_prob)
+
+        # Again add multi-qubit U gate
+        if i == 0:
+            ti = 0
+            tf = param[i]
+            time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        flag += 4
+
+    return circuit
+
+
+def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param):
+    """
+    Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
+
+    Args:
+        nqubit: `int`, number of qubit
+        layer: `int`, number of layer
+        noise_prob: `float`, noise probability between 0-1
+        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
+        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        t1, t2, ... td, theta1, ..., theatd * 4]
+
+    Returns:
+        :class:`qulacs.QuantumCircuit`
+    """
+    
+
+    circuit = QuantumCircuit(nqubit)
+
+    flag = layer # Tracking angles in param ndarrsy
+    
+    for i in range(layer):
+
+        # Add Rx to first and second qubits
+        circuit.add_noise_gate(RX(0, param[flag]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RX(1, param[flag+1]),"Depolarizing", noise_prob)
+
+        # Add identities with Rx and make redudant circuit
+
+        for _ in range(noise_factor):
+
+            # First qubit
+            circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), "Depolarizing", noise_prob)  # Rx_dagger
+            circuit.add_noise_gate(RX(0, param[flag]), "Depolarizing", noise_prob)
+    
+            # Second qubit
+            circuit.add_noise_gate(RX(1, param[flag+1]).get_inverse(), "Depolarizing", noise_prob)   # Rx_dagger
+            circuit.add_noise_gate(RX(1, param[flag+1]), "Depolarizing", noise_prob)
+
+        # Add Ry to first and second qubits
+        circuit.add_noise_gate(RY(0, param[flag+2]),"Depolarizing", noise_prob)
+        circuit.add_noise_gate(RY(1, param[flag+3]),"Depolarizing", noise_prob)
+
+        # Add identities with Ry and make redudant circuit
+
+        for _ in range(noise_factor):
+            # First qubit
+            circuit.add_noise_gate(RY(0, param[flag+2]).get_inverse(), "Depolarizing", noise_prob)  # Ry_dagger
+            circuit.add_noise_gate(RY(0, param[flag+2]), "Depolarizing", noise_prob)
+        
+            # Second qubit
+            circuit.add_noise_gate(RY(1, param[flag+3]).get_inverse(), "Depolarizing", noise_prob)   # Ry_dagger
+            circuit.add_noise_gate(RY(1, param[flag+3]), "Depolarizing", noise_prob)
+
+        # Add CZ gate
+        circuit.add_noise_gate(CZ(0,1), "Depolarizing", noise_prob)
+
+        # Add multi-qubit U gate
+        if i == 0:
+            ti = 0
+            tf = param[i]
+            time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        else:
+            ti = param[i]
+            tf = param[i+1]
+            time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+            circuit.add_gate(time_evo_gate)
+
+        # Add depolarizing noise to time evolution gate.
+        for i in range(nqubit):
+            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+        # XY spin chain identity 
+
+        for _ in range(noise_factor):
+            # Add Y gates to all odd qubits
+            for i in range(nqubit):
+                if (i+1) % 2 != 0:
+                    circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
+            
+
+            # Again add multi-qubit U gate
+            if i == 0:
+                ti = 0
+                tf = param[i]
+                time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+                circuit.add_gate(time_evo_gate)
+
+            else:
+                ti = param[i]
+                tf = param[i+1]
+                time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+                circuit.add_gate(time_evo_gate)
+
+
+            # Add depolarizing noise
+            for i in range(nqubit):
+                circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+            # Add Y gates to all odd qubits
+            for i in range(nqubit):
+                if (i+1) % 2 != 0:
+                    circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
+
+            # Again add multi-qubit U gate
+            if i == 0:
+                ti = 0
+                tf = param[i]
+                time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
+                circuit.add_gate(time_evo_gate)
+
+            else:
+                ti = param[i]
+                tf = param[i+1]
+                time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
+                circuit.add_gate(time_evo_gate)
+
+            # Add depolarizing noise
+            for i in range(nqubit):
+                circuit.add_noise_gate(Identity(i), "Depolarizing", noise_prob)
+
+        
+        flag += 4 # Each layer has four angle-params
+
+    return circuit
+    
