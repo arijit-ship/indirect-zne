@@ -16,7 +16,7 @@ circuit:
   noise:
     status: True
     value: 0
-    factor: 2
+    factor: 0
   param: "random"
   draw: True
 
