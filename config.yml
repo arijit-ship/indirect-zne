@@ -1,0 +1,25 @@
+nqubits: 4
+layer: 10
+iteration: 1
+optimizer: "SLSQP"
+constraint: False
+# Circuit config
+circuit:
+  ansatztype: xy
+  time:
+    ti: 0
+    tf: 10
+  coefficients:
+    cn: 1
+    bn: 1
+    r: 0
+  noise:
+    status: True
+    value: 0
+    factor: 2
+  param: "random"
+  draw: True
+
+  
+
+
