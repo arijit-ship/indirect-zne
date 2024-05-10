@@ -102,11 +102,15 @@ class VQE:
     def drawCircuit(self, time_stamp, dpi):
         
         global ansatz_circuit
-        output_file = f"circuit_{time_stamp}.png"
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)  # Go up one level
+        output_dir = os.path.join(parent_dir, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"circuit_{time_stamp}.png")
+        
         circuit_drawer(ansatz_circuit, "mpl") # type: ignore
-        plt.savefig(output_file, dpi = dpi)
+        plt.savefig(output_file, dpi=dpi)
         plt.close()
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
-
     

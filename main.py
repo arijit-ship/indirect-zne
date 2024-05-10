@@ -37,7 +37,9 @@ draw_circ = config["circuit"]["draw"]
 
 # Generate timestamp for unique file name
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_file = f"output_{timestamp}.txt"
+output_dir = os.path.join(current_dir, "output")
+os.makedirs(output_dir, exist_ok=True)
+output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
 nR, nT, nY = noise_param(noise_factor)
