@@ -40,7 +40,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_file = f"output_{timestamp}.txt"
 
 # Noise parameters
-nR, nT, nY = noise_param(noise_factor, layer)
+nR, nT, nY = noise_param(noise_factor)
 
 
 # Open file for writing
