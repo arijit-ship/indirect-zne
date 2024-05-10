@@ -359,7 +359,7 @@ def create_noisy_ansatz(nqubit, layer, noise_prob, noise_factor, hamiltonian, pa
         layer: `int`, number of layer
         noise_prob: `float`, noise probability between 0-1
         hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
-        noise_factor: `int`, noise factor for rotational gates, time evolution unitary gate and Y gate.. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        noise_factor: `list`, noise factor for rotational gates, time evolution unitary gate and Y gate.. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
         param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -369,7 +369,7 @@ def create_noisy_ansatz(nqubit, layer, noise_prob, noise_factor, hamiltonian, pa
 
     circuit = QuantumCircuit(nqubit)
 
-    
+   
     if noise_factor == 0:
         # Creates a noisy standard parametric circuit.
         circuit = create_default_noisy_circuit(nqubit, layer, noise_prob, hamiltonian, param)
@@ -431,7 +431,7 @@ def create_default_noisy_circuit(nqubit, layer, noise_prob, hamiltonian, param):
     return circuit
 
 
-def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param):
+def create_redundant(nqubit, layers, noise_prob, noise_factor, hamiltonian, param):
     """
     Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
 
@@ -439,6 +439,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
         nqubit: `int`, number of qubit
         layer: `int`, number of layer
         noise_prob: `float`, noise probability between 0-1
+        noise_factor: `list`, containts identity scaling factor got rotational gates and time evolution gate
         hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
         param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
@@ -450,9 +451,12 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
 
     circuit = QuantumCircuit(nqubit)
 
-    flag = layer # Tracking angles in param ndarrsy
+    flag = layers # Tracking angles in param ndarrsy
+
+    r_gate_factor = noise_factor[0] # Identity sacaling factor for rotational gates
+    e_gate_factor = noise_factor[1] # Identity scaling factor for time evolution gates
     
-    for i in range(layer):
+    for layer in range(layers):
 
         # Add Rx to first and second qubits
         circuit.add_noise_gate(RX(0, param[flag]),"Depolarizing", noise_prob)
@@ -460,7 +464,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
 
         # Add identities with Rx and make redudant circuit
 
-        for _ in range(noise_factor):
+        for _ in range(r_gate_factor):
 
             # First qubit
             circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), "Depolarizing", noise_prob)  # Rx_dagger
@@ -476,7 +480,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
 
         # Add identities with Ry and make redudant circuit
 
-        for _ in range(noise_factor):
+        for _ in range(r_gate_factor):
             # First qubit
             circuit.add_noise_gate(RY(0, param[flag+2]).get_inverse(), "Depolarizing", noise_prob)  # Ry_dagger
             circuit.add_noise_gate(RY(0, param[flag+2]), "Depolarizing", noise_prob)
@@ -489,15 +493,15 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
         circuit.add_noise_gate(CZ(0,1), "Depolarizing", noise_prob)
 
         # Add multi-qubit U gate
-        if i == 0:
+        if layer == 0:
             ti = 0
-            tf = param[i]
+            tf = param[layer]
             time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
             circuit.add_gate(time_evo_gate)
 
         else:
-            ti = param[i]
-            tf = param[i+1]
+            ti = param[layer]
+            tf = param[layer+1]
             time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
             circuit.add_gate(time_evo_gate)
 
@@ -507,7 +511,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
 
         # XY spin chain identity 
 
-        for _ in range(noise_factor):
+        for _ in range(e_gate_factor):
             # Add Y gates to all odd qubits
             for i in range(nqubit):
                 if (i+1) % 2 != 0:
@@ -515,7 +519,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
             
 
             # Again add multi-qubit U gate
-            if i == 0:
+            if layer == 0:
                 ti = 0
                 tf = param[i]
                 time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
@@ -538,7 +542,7 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
                     circuit.add_noise_gate(Y(i), "Depolarizing", noise_prob)
 
             # Again add multi-qubit U gate
-            if i == 0:
+            if layer == 0:
                 ti = 0
                 tf = param[i]
                 time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
@@ -559,12 +563,12 @@ def create_redundant(nqubit, layer, noise_prob, noise_factor, hamiltonian, param
 
     return circuit
 
-def noise_param(noise_factor, layer):
+def noise_param(noise_factor):
     """
     Finds nR, nT, and nY for a given noise factor.
 
     Arg:
-        noise_factor: `int`, represernts the redundant noisy indities for qubit gates and time evolution gate.
+        noise_factor: `list[int, int]`, represernts the redundant noisy indities for qubit gates and time evolution gate.
         layer: `int`, depth of the quantum circuit.
 
     Returns:
@@ -575,14 +579,17 @@ def noise_param(noise_factor, layer):
     nR = 4
     nT = 1
 
-    if noise_factor == 0:
+    r_gate_factor = noise_factor [0]
+    e_gate_factor = noise_factor [1]
+
+    if r_gate_factor == 0 and e_gate_factor == 0:
         nY = nY
         nR = nR
         nT = nT
 
     else:
-        nY = noise_factor
-        nR += 8*noise_factor
-        nT += 2*noise_factor
+        nY = e_gate_factor
+        nR += 8*r_gate_factor
+        nT += 2*e_gate_factor
 
     return nR, nT, nY
