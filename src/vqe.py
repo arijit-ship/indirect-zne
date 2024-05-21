@@ -51,6 +51,7 @@ class VQE:
                 ansatz_circuit = create_noisy_ansatz(self.n, self.layer, self.noise_value, self.noise_factor, self.xy_ham, param)
             else:
                 ansatz_circuit = parametric_ansatz(self.n, self.layer, self.xy_ham, param)
+                
 
         if self.type == "ising":
 

@@ -42,7 +42,7 @@ os.makedirs(output_dir, exist_ok=True)
 output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
-nR, nT, nY = noise_param(noise_factor)
+nR, nT, nY = noise_param(nqubits, noise_factor)
 
 
 # Open file for writing
@@ -80,9 +80,10 @@ with open(output_file, "w") as file:
 
     end_time = time.time()
     exe_time = end_time - start_time
-
+  
     file.write(f"Exact sol: {exact_sol}\n")
     file.write(f"Min cost: {min_cost}\n")
+    file.write(f"nR, nT, nY, E: [{nR}, {nT}, {nY}, {min_cost}]\n")
     file.write(f"Parameters: {param}\n")
     file.write(f"Execution time: {exe_time} sec\n") if execution_time else None
     file.write("-----------------\n")
@@ -104,6 +105,7 @@ with open(output_file, "w") as file:
     print("-----------------")
     print(f"Exact sol: {exact_sol}")
     print(f"Min cost: {min_cost}")
+    print(f"nR, nT, nY, E: [{nR}, {nT}, {nY}, {min_cost}]")
     print(f"Parameters: {param}")
     print(f"Execution time: {exe_time} sec") if execution_time else None
     print("-----------------")
