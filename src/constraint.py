@@ -1,5 +1,7 @@
 """
 Scipy SLSQP constraint. It ensures the time params to be in incrementing order.
+This code is based on a part of the following repository:
+https://github.com/tanan/vqe-by-indirect-ctl
 """
 import numpy as np
 from scipy.optimize import LinearConstraint
