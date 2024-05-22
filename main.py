@@ -18,19 +18,16 @@ with open(config_path, "r") as file:
 nqubits = config["nqubits"]
 state = config["state"]
 layer = config["layer"]
-iteration = config["iteration"]
-optimizer = config["optimizer"]
-constraint = config["constraint"]
+
 execution_time = config["etime"]
 
+optimization = config["optimization"]
+
 ansatz_type = config["circuit"]["ansatztype"]
-ti = config["circuit"]["time"]["ti"]
-tf = config["circuit"]["time"]["tf"]
-cn = config["circuit"]["coefficients"]["cn"]
-bn = config["circuit"]["coefficients"]["bn"]
-r = config["circuit"]["coefficients"]["r"]
-noise_status = config["circuit"]["noise"]["status"]
-noise_val = config["circuit"]["noise"]["value"]
+time_unitary = config["circuit"]["time"]
+coeffiecients = config["circuit"]["coefficients"]
+
+noise_profile = config["circuit"]["noise"]
 noise_factor = config["circuit"]["noise"]["factor"]
 init_param = config["circuit"]["param"]
 draw_circ = config["circuit"]["draw"]
@@ -38,11 +35,12 @@ draw_circ = config["circuit"]["draw"]
 # Generate timestamp for unique file name
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_dir = os.path.join(current_dir, "output")
-os.makedirs(output_dir, exist_ok=True)
+os.makedirs(output_dir, exist_ok = True)
 output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
 nR, nT, nY = noise_param(nqubits, noise_factor)
+
 
 
 # Open file for writing
@@ -52,39 +50,39 @@ with open(output_file, "w") as file:
     file.write(f"Qubit: {nqubits}\n")
     file.write(f"State: {state}\n")
     file.write(f"Layer: {layer}\n")
-    file.write(f"Iteration: {iteration}\n")
-    file.write(f"Optimizer: {optimizer}\n")
-    file.write(f"Constraint: {constraint}\n")
+    file.write(f"Optimizer: {optimization}\n")
     file.write(f"Ansatz type: {ansatz_type}\n")
-    file.write(f"Time: [{ti}, {tf}]\n")
-    file.write(f"cn, bn, r: [{cn}, {bn}, {r}]\n")
-    file.write(f"Noise: [{noise_status}, {noise_val}, {noise_factor}]\n")
+    file.write(f"Time: {time_unitary}\n")
+    file.write(f"Coefficients: {coeffiecients}\n")
+    file.write(f"Noise profile: {noise_profile}\n")
     file.write(f"nR, nT, nY: [{nR}, {nT}, {nY}]\n")
-    file.write(f"Parameters: {init_param}\n")
+    file.write(f"Initial parameters: {init_param}\n")
     file.write(f"Draw: {draw_circ}\n")
     file.write("-----------------\n")
 
     
     start_time = time.time()
-    vqe_instance = VQE(nqubits,
-                        state, 
-                        layer, 
-                        iteration, 
-                        optimizer, 
-                        constraint,
-                        ansatz_type, 
-                        ti, tf, cn, bn, r, 
-                        noise_status, noise_val, noise_factor, init_param, draw_circ)
-    
-    exact_sol, min_cost, param = vqe_instance.run_vqe()
+    vqe_instance = VQE(n = nqubits,
+                    state = state,
+                    layer = layer,
+                    type = ansatz_type,
+                    time = time_unitary,
+                    optimization = optimization,
+                    noise_profile = noise_profile,
+                    init_param = init_param,
+                    coefficients = coeffiecients,
+                    draw = draw_circ
+                    )
+
+    cost_value, exact_cost, min_cost_history, optimized_param  = vqe_instance.run_vqe()
 
     end_time = time.time()
     exe_time = end_time - start_time
   
-    file.write(f"Exact sol: {exact_sol}\n")
-    file.write(f"Min cost: {min_cost}\n")
-    file.write(f"nR, nT, nY, E: [{nR}, {nT}, {nY}, {min_cost}]\n")
-    file.write(f"Parameters: {param}\n")
+    file.write(f"Exact sol: {exact_cost}\n")
+    file.write(f"Initial cost: {cost_value}\n")
+    file.write(f"Optimized minimum costs: {min_cost_history}\n")
+    file.write(f"Optimized parameters: {optimized_param}\n")
     file.write(f"Execution time: {exe_time} sec\n") if execution_time else None
     file.write("-----------------\n")
     
@@ -92,21 +90,19 @@ with open(output_file, "w") as file:
     print(f"Qubit: {nqubits}")
     print(f"State: {state}")
     print(f"Layer: {layer}")
-    print(f"Iteration: {iteration}")
-    print(f"Optimizer: {optimizer}")
-    print(f"Constraint: {constraint}")
+    print(f"Optimizer: {optimization}")
     print(f"Ansatz type: {ansatz_type}")
-    print(f"Time: [{ti}, {tf}]")
-    print(f"cn, bn, r: [{cn}, {bn}, {r}]")
-    print(f"Noise: [{noise_status}, {noise_val}, {noise_factor}]")
+    print(f"Time: {time_unitary}")
+    print(f"Coefficients: {coeffiecients}")
+    print(f"Noise profile: {noise_profile}")
     print(f"nR, nT, nY: [{nR}, {nT}, {nY}]")  # Updated line
     print(f"Parameters: {init_param}")
     print(f"Draw: {draw_circ}")
     print("-----------------")
-    print(f"Exact sol: {exact_sol}")
-    print(f"Min cost: {min_cost}")
-    print(f"nR, nT, nY, E: [{nR}, {nT}, {nY}, {min_cost}]")
-    print(f"Parameters: {param}")
+    print(f"Exact sol: {exact_cost}")
+    print(f"Initial cost: {cost_value}")
+    print(f"Optimized minimum costs: {min_cost_history}")
+    print(f"Optimized parameters: {optimized_param}")
     print(f"Execution time: {exe_time} sec") if execution_time else None
     print("-----------------")
 
