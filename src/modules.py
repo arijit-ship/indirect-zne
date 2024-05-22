@@ -14,7 +14,7 @@ from openfermion.ops.operators.qubit_operator import QubitOperator
 diag = None
 eigen_vecs = None
 
-def create_param(layer, ti, tf):
+def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
     """
     Creates parameter for the citcuit. Parameters are time, and theta: angle for rotation gates.
     
@@ -48,7 +48,7 @@ def create_param(layer, ti, tf):
 
     return(param)
 
-def create_xy_hamiltonian(nqubit, cn, bn, r):
+def create_xy_hamiltonian(nqubit: int, cn: float, bn: float, r: float) -> Observable:
     """
     Args:
         nqubit: `int`, number of qubits
@@ -70,7 +70,7 @@ def create_xy_hamiltonian(nqubit, cn, bn, r):
     return (create_observable_from_openfermion_text(str(hami)))
 
 
-def create_ising_hamiltonian(nqubit, cn, bn):
+def create_ising_hamiltonian(nqubit: int, cn: float, bn: float) -> Observable:
     """"
     Args:
         nqubit: int, number of qubits
@@ -88,7 +88,7 @@ def create_ising_hamiltonian(nqubit, cn, bn):
     
     return(create_observable_from_openfermion_text(str(hami)))
 
-def exact_sol(hamiltonian):
+def exact_sol(hamiltonian: Observable) -> float:
     """
     Finds the exact minimum eigen value for a given matrix.
 
@@ -96,13 +96,13 @@ def exact_sol(hamiltonian):
         hamiltonian: `qulacs_core.Observable`
     
     Returns:
-        `float`, minimum eigen value
+        min_eigenvalue: `float`, minimum eigen value
     """
     eigenvalues, _ = np.linalg.eigh(hamiltonian.get_matrix().toarray())
     min_eigenvalue = np.min(eigenvalues)
     return min_eigenvalue  
     
-def create_time_evo_unitary(observable, ti, tf):
+def create_time_evo_unitary(observable: Observable, ti: float, tf: float):
     """
     Args:
         observable: qulacs observable
@@ -385,7 +385,7 @@ def create_redundant(nqubit: int, layers: int, noise_prob: list[float], noise_fa
 
     return circuit
 
-def noise_param(nqubit, noise_factor):
+def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     """
     Finds nR, nT, and nY for a given noise factor.
 
@@ -421,43 +421,3 @@ def noise_param(nqubit, noise_factor):
         nT += 2 * u_gate_factor
 
     return nR, nT, nY
-
-def create_noisy_redundent_circuit(nqubit: int, layers: int, noise_prob: list[float], noise_factor: list[int], hamiltonian, param: list[float]) -> QuantumCircuit:
-
-    """
-    Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
-
-    Args:
-        nqubit: `int`, number of qubit
-        layer: `int`, number of layer
-        noise_prob: `float`, noise probability between 0-1
-        noise_factor: `list`, containts identity scaling factor got rotational gates and time evolution gate
-        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
-        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
-        t1, t2, ... td, theta1, ..., theatd * 4]
-
-    Returns:
-        circuit: `QuantumCircuit`
-    """
-
-    circuit = QuantumCircuit(n)
-
-    time_param = param[:layers]
-    angle_param = param[layers:]
-
-    # Noise propabilities
-    noise_r_prob = noise_prob [0]
-    noise_cz_prob = noise_prob [1]
-    noise_u_prob = noise_prob [2]
-    noise_y_prob = noise_prob [3] 
-
-    # Noisy identy factors
-    r_gate_factor = noise_factor[0] # Identity sacaling factor for rotational gates
-    u_gate_factor = noise_factor[1] # Identity scaling factor for time evolution gates
-    y_gate_factor = noise_factor [2] # Identity scaling factor for Y gate
-
-    for layer in range(layers):
-
-        # Add Rx to first and second qubits
-        #circuit = createLayer()
-        ...
