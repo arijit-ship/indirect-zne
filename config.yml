@@ -10,7 +10,7 @@ optimization:
   constraint: False
 # Circuit config
 circuit:
-  draw: False
+  draw: False # Draw the circuit
   ansatztype: "xy"
   time:
     min: 0.0
@@ -21,6 +21,6 @@ circuit:
     r: 0.0
   noise:
     status: True
-    value: [0.0001, 0.0001, 0.0001, 0.0001]  # Noise probabilities for [r, cz, u, y] gates. Example: [0.0001, 0.0001, 0.0001, 0]
+    value: [0.000001, 0.000001, 0.000001, 0.000001]  # Noise probabilities for [r, cz, u, y] gates.
     factor: [0, 0, 0] # Noise identity factors for [r, u, y] gates
   param: "random"
