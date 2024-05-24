@@ -1,12 +1,12 @@
 nqubits: 8
 state: "DMatrix"
-layer: 10
+layer: 25
 etime: True
 # Optimization
 optimization:
   status: True
   algorithm: "SLSQP"
-  iteration: 10
+  iteration: 1
   constraint: False
 # Circuit config
 circuit:
