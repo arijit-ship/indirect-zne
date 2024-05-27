@@ -1,6 +1,6 @@
-nqubits: 8
+nqubits: 4
 state: "DMatrix"
-layer: 25
+layer: 10
 etime: True
 # Optimization
 optimization:
