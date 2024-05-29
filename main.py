@@ -39,7 +39,10 @@ os.makedirs(output_dir, exist_ok = True)
 output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
-nR, nT, nY = noise_param(nqubits, noise_factor)
+if noise_profile["status"]:
+    nR, nT, nY = noise_param(nqubits, noise_factor)
+else:
+    nR , nT,nY = None, None, None
 
 
 
