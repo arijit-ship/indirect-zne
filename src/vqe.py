@@ -122,11 +122,16 @@ class VQE:
         exact_cost = None
         min_cost_history = []
         optimized_param = []
-
-        if self.init_param.lower() == "random":
-            param = create_param(self.layer, self.ti, self.tf)
+        
+        if isinstance(self.init_param, str):
+            if self.init_param.lower() == "random":
+                param = create_param(self.layer, self.ti, self.tf)
+            else:
+                raise ValueError(f"Unsupported initial parameters: {self.init_param}")
+        elif isinstance(self.init_param, list):
+                param = self.init_param
         else:
-            param = self.init_param
+            raise ValueError(f"Unsupported initial parameters: {self.init_param}")
 
         cost_value = self.cost(param) # type: ignore
         exact_cost = exact_sol(self.ising_ham)

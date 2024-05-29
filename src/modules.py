@@ -412,11 +412,11 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     if u_gate_factor == 0:
         nY = 0
 
-    else:
-        # Count the number of odd qubits
-        odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
-        nY += (odd_n + (2 * y_gate_factor*odd_n))
-        nR += 8 * r_gate_factor
-        nT += 2 * u_gate_factor
+    # Count the number of odd qubits
+    odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
+    # Calculating the values of different noise parameters
+    nY += (odd_n + (2 * y_gate_factor*odd_n))
+    nR += 8 * r_gate_factor
+    nT += 2 * u_gate_factor
 
     return nR, nT, nY
