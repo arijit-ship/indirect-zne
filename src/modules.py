@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import expm
 from qulacs.gate import *
 from qulacs.observable import create_observable_from_openfermion_text
-from qulacs import Observable, QuantumCircuit 
+from qulacs import Observable, QuantumCircuit
 from openfermion.ops.operators.qubit_operator import QubitOperator
 
 
@@ -31,10 +31,8 @@ def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
         t1, t2, ... td, theta1, ..., theatd * 4
     ]
 
-    """
-    
+    """  
     param = np.array([])
-    
     # Time param
     time = np.random.uniform(ti,tf, layer)
     time = np.sort(time) # Time must be in incresing order
@@ -131,7 +129,7 @@ def create_time_evo_unitary(observable: Observable, ti: float, tf: float):
 
     return DenseMatrix([i for i in range(n)], time_evol_op)
 
-def parametric_ansatz(nqubit: int, layer: int, hamitolian: Observable, param: list[float]) -> QuantumCircuit:
+def parametric_ansatz(nqubit: int, layers: int, hamitolian: Observable, param: list[float]) -> QuantumCircuit:
     """
     Args:
         nqubit: `int`, number of qubit
@@ -145,9 +143,9 @@ def parametric_ansatz(nqubit: int, layer: int, hamitolian: Observable, param: li
     """
     circuit = QuantumCircuit(nqubit)
 
-    flag = layer # Tracking angles in param ndarray
+    flag = layers # Tracking angles in param ndarray
     
-    for i in range(layer):
+    for layer in range(layers):
 
         # Rotation gate
         circuit.add_gate(RX(0, param[flag]))
@@ -159,21 +157,21 @@ def parametric_ansatz(nqubit: int, layer: int, hamitolian: Observable, param: li
         # CZ gate
         circuit.add_gate(CZ(0,1))
 
-        if i == 0:
+        if layer == 0:
             # Time evolution gate
             ti = 0
-            tf = param [i]
+            tf = param [layer]
             time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
             circuit.add_gate(time_evo_gate)
         else:
-            ti = param[i]
-            tf = param[i+1]
+            ti = param[layer]
+            tf = param[layer+1]
             time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
             circuit.add_gate(time_evo_gate)
 
         flag += 4 # Each layer has four angle-params. 
         
-    return(circuit)
+    return circuit
 
 def he_ansatz_circuit(n_qubit, depth, theta_list):
     """he_ansatz_circuit
@@ -346,13 +344,13 @@ def create_redundant(nqubit: int, layers: int, noise_prob: list[float], noise_fa
             # Again add multi-qubit U gate
             if layer == 0:
                 ti = 0
-                tf = param[i]
+                tf = param[layer]
                 time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[i]
-                tf = param[i+1]
+                ti = param[layer]
+                tf = param[layer+1]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -366,13 +364,13 @@ def create_redundant(nqubit: int, layers: int, noise_prob: list[float], noise_fa
             # Again add multi-qubit U gate
             if layer == 0:
                 ti = 0
-                tf = param[i]
+                tf = param[layer]
                 time_evo_gate =  create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[i]
-                tf = param[i+1]
+                ti = param[layer]
+                tf = param[layer+1]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -410,12 +408,13 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     u_gate_factor = noise_factor [1]    # For time evolution gate
     y_gate_factor = noise_factor [2]    # For Y gate
     
+    # If there is not U†U identity, then there is no Y gate
+    if u_gate_factor == 0:
+        nY = 0
 
-    if r_gate_factor != 0 or u_gate_factor != 0:
-
+    else:
         # Count the number of odd qubits
         odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
-
         nY += (odd_n + (2 * y_gate_factor*odd_n))
         nR += 8 * r_gate_factor
         nT += 2 * u_gate_factor
