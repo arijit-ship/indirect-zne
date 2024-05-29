@@ -3,8 +3,10 @@ Scipy SLSQP constraint. It ensures the time params to be in incrementing order.
 This code is based on a part of the following repository:
 https://github.com/tanan/vqe-by-indirect-ctl
 """
+
 import numpy as np
 from scipy.optimize import LinearConstraint
+
 
 def create_time_constraints(time_params_length, all_params_length) -> LinearConstraint:
     """
@@ -29,4 +31,4 @@ def create_time_constraints(time_params_length, all_params_length) -> LinearCons
         matrix[time_params_length + (i - 1), i - 1] = -1  # -t_{i-1}
         matrix[time_params_length + (i - 1), i] = 1  # t_i
 
-    return LinearConstraint(matrix, np.zeros(2 * time_params_length), np.inf) # type: ignore
+    return LinearConstraint(matrix, np.zeros(2 * time_params_length), np.inf)  # type: ignore

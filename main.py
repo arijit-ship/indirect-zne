@@ -1,7 +1,8 @@
 import os
-import yaml
 import time
 from datetime import datetime
+import yaml
+
 from src.modules import *
 from src.vqe import *
 
@@ -35,15 +36,14 @@ draw_circ = config["circuit"]["draw"]
 # Generate timestamp for unique file name
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 output_dir = os.path.join(current_dir, "output")
-os.makedirs(output_dir, exist_ok = True)
+os.makedirs(output_dir, exist_ok=True)
 output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
 if noise_profile["status"]:
     nR, nT, nY = noise_param(nqubits, noise_factor)
 else:
-    nR , nT,nY = None, None, None
-
+    nR, nT, nY = None, None, None
 
 
 # Open file for writing
@@ -63,32 +63,32 @@ with open(output_file, "w") as file:
     file.write(f"Draw: {draw_circ}\n")
     file.write("-----------------\n")
 
-    
     start_time = time.time()
-    vqe_instance = VQE(n = nqubits,
-                    state = state,
-                    layer = layer,
-                    type = ansatz_type,
-                    time = time_unitary,
-                    optimization = optimization,
-                    noise_profile = noise_profile,
-                    init_param = init_param,
-                    coefficients = coeffiecients,
-                    draw = draw_circ
-                    )
+    vqe_instance = VQE(
+        n=nqubits,
+        state=state,
+        layer=layer,
+        type=ansatz_type,
+        time=time_unitary,
+        optimization=optimization,
+        noise_profile=noise_profile,
+        init_param=init_param,
+        coefficients=coeffiecients,
+        draw=draw_circ,
+    )
 
-    cost_value, exact_cost, min_cost_history, optimized_param  = vqe_instance.run_vqe()
+    cost_value, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
 
     end_time = time.time()
     exe_time = end_time - start_time
-  
+
     file.write(f"Exact sol: {exact_cost}\n")
     file.write(f"Initial cost: {cost_value}\n")
     file.write(f"Optimized minimum costs: {min_cost_history}\n")
     file.write(f"Optimized parameters: {optimized_param}\n")
     file.write(f"Execution time: {exe_time} sec\n") if execution_time else None
     file.write("-----------------\n")
-    
+
     # Print output to console
     print(f"Qubit: {nqubits}")
     print(f"State: {state}")
