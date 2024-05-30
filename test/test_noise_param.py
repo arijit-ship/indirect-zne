@@ -39,3 +39,7 @@ def test_noise_param8():
 def test_noise_param9():
     nR, nT, nY = noise_param(nqubit= 9, noise_factor=[2, 2, 2])
     assert (nR, nT, nY) == (4 + (2*8), 5, (5 + (5*2*2)))
+
+def test_noise_param10():
+    nR, nT, nY = noise_param(nqubit= 4, noise_factor=[3, 3, 3])
+    assert (nR, nT, nY) == (4 + (3*8), 1 + (3*2), (2 + (2*3*2)))
