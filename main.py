@@ -4,7 +4,7 @@ from datetime import datetime
 import yaml
 
 from src.modules import *
-from src.vqe import *
+from src.vqe import VQE
 
 # Get the current directory
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +41,7 @@ output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
 
 # Noise parameters
 if noise_profile["status"]:
-    nR, nT, nY = noise_param(nqubits, noise_factor)
+    nR, nT, nY = noise_param(nqubits, noise_factor)["params"]
 else:
     nR, nT, nY = None, None, None
 
@@ -111,7 +111,6 @@ with open(output_file, "w") as file:
 
     if draw_circ:
         vqe_instance.drawCircuit(timestamp, 100)
-
 
 # Print the path of the output file
 print(f"Output saved to: {os.path.abspath(output_file)}")

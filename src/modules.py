@@ -452,6 +452,9 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     u_gate_factor = noise_factor[1]  # For time evolution gate
     y_gate_factor = noise_factor[2]  # For Y gate
 
+    # Count the number of odd qubits
+    odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
+    
     if r_gate_factor > 0:
         nR += 8 * r_gate_factor
 
@@ -466,4 +469,4 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     elif u_gate_factor == 0:
         nY = 0
 
-    return nR, nT, nY
+    return {"params": (nR, nT, nY), "odd_wires" : odd_n}
