@@ -1,4 +1,5 @@
 output/*
+!output/.gitkeep
 env
 # from boilerplate
 # Byte-compiled / optimized / DLL files
