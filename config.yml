@@ -1,12 +1,12 @@
-nqubits: 8
+nqubits: 7
 state: "DMatrix"
-layer: 25
+layer: 30
 etime: True
 # Optimization
 optimization:
   status: True
   algorithm: "SLSQP"
-  iteration: 5
+  iteration: 1
   constraint: False
 # Circuit config
 circuit:
@@ -21,6 +21,6 @@ circuit:
     r: 0.0
   noise:
     status: True
-    value: [0.00001, 0.00001, 0.00001, 0.00001]  # Noise probabilities for [r, cz, u, y] gates.
+    value: [0.001, 0.001, 0.001, 0.001] # Noise probabilities for [r, cz, u, y] gates.
     factor: [0, 0, 0] # Noise identity factors for [r, u, y] gates
   param: "random"
