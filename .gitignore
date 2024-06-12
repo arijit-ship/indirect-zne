@@ -1,6 +1,7 @@
 output/*
 !output/.gitkeep
 env
+.vscode
 # from boilerplate
 # Byte-compiled / optimized / DLL files
 __pycache__/
