@@ -114,5 +114,3 @@ with open(output_file, "w") as file:
 
 # Print the path of the output file
 print(f"Output saved to: {os.path.abspath(output_file)}")
-
-print(f"Data: ({nR}, {nT}, {nY}, {cost_value}), # Noise factor")
