@@ -44,7 +44,7 @@ if __name__ == "__main__":
         file_name_prefix = config["fprefix"]
 
         if ansatz["noise"]["status"]:
-            nR, nT, nY = noise_param(nqubits=nqubits, noise_factor=ansatz["noise"]["factor"])["param"]
+            nR, nT, nY = noise_param(nqubits=nqubits, noise_factor=ansatz["noise"]["factor"])["params"]
         else:
             nR, nT, nY = None, None, None
 

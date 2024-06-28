@@ -88,21 +88,20 @@ class IndirectVQE:
         **Also, for bogus input, value error should be raised.**
         """
         if self.observable_hami_def.lower() == "ising":
-            self.observable_hami = create_xy_hamiltonian(
+            self.observable_hami = create_ising_hamiltonian(
                 self.nqubits,
                 self.observable_hami_coeffi_cn,
                 self.observable_hami_coeffi_bn,
-                self.observable_hami_coeffi_r,
             )
         else:
             raise ValueError(f"Unsupported observable Hamiltonian: {self.observable_hami_def}")
 
         if self.ansatz_evolution.lower() == "xy":
-            self.unitary_hami = create_ising_hamiltonian(
+            self.unitary_hami = create_xy_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
                 self.ansatz_coeffi_bn,
-                # self.ansatz_coeffi_r,
+                self.ansatz_coeffi_r,
             )
         else:
             raise ValueError(f"Unsupported time-evolution Hamiltonian: {self.ansatz_evolution}")
