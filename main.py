@@ -1,116 +1,95 @@
 import os
+from sre_parse import State
+import sys
 import time
 from datetime import datetime
+
 import yaml
 
 from src.modules import *
-from src.vqe import VQE
-
-# Get the current directory
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Construct the full path to the config file
-config_path = os.path.join(current_dir, "config.yml")
-
-# Load YAML file
-with open(config_path, "r") as file:
-    config = yaml.safe_load(file)
-
-# Parsing config file
-nqubits = config["nqubits"]
-state = config["state"]
-layer = config["layer"]
-
-execution_time = config["etime"]
-
-optimization = config["optimization"]
-
-ansatz_type = config["circuit"]["ansatztype"]
-time_unitary = config["circuit"]["time"]
-coeffiecients = config["circuit"]["coefficients"]
-
-noise_profile = config["circuit"]["noise"]
-noise_factor = config["circuit"]["noise"]["factor"]
-init_param = config["circuit"]["param"]
-draw_circ = config["circuit"]["draw"]
-
-# Generate timestamp for unique file name
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-output_dir = os.path.join(current_dir, "output")
-os.makedirs(output_dir, exist_ok=True)
-output_file = os.path.join(output_dir, f"output_{timestamp}.txt")
-
-# Noise parameters
-if noise_profile["status"]:
-    nR, nT, nY = noise_param(nqubits, noise_factor)["params"]
-else:
-    nR, nT, nY = None, None, None
+from src.vqe import IndirectVQE
 
 
-# Open file for writing
-with open(output_file, "w") as file:
+def load_config(config_path):
+    # Check if the config file exists
+    if not os.path.exists(config_path):
+        print(f"Error: Config file '{config_path}' not found.")
+        return None
 
-    # Write output to file
-    file.write(f"Qubit: {nqubits}\n")
-    file.write(f"State: {state}\n")
-    file.write(f"Layer: {layer}\n")
-    file.write(f"Optimizer: {optimization}\n")
-    file.write(f"Ansatz type: {ansatz_type}\n")
-    file.write(f"Time: {time_unitary}\n")
-    file.write(f"Coefficients: {coeffiecients}\n")
-    file.write(f"Noise profile: {noise_profile}\n")
-    file.write(f"nR, nT, nY: [{nR}, {nT}, {nY}]\n")
-    file.write(f"Initial parameters: {init_param}\n")
-    file.write(f"Draw: {draw_circ}\n")
-    file.write("-----------------\n")
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
 
-    start_time = time.time()
-    vqe_instance = VQE(
-        n=nqubits,
-        state=state,
-        layer=layer,
-        type=ansatz_type,
-        time=time_unitary,
-        optimization=optimization,
-        noise_profile=noise_profile,
-        init_param=init_param,
-        coefficients=coeffiecients,
-        draw=draw_circ,
-    )
+    return config
 
-    cost_value, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
 
-    end_time = time.time()
-    exe_time = end_time - start_time
+if __name__ == "__main__":
+    # Check if a config file argument is provided
+    if len(sys.argv) < 2:
+        print("Usage: python3 main.py <config_file>")
+        sys.exit(1)
 
-    file.write(f"Exact sol: {exact_cost}\n")
-    file.write(f"Initial cost: {cost_value}\n")
-    file.write(f"Optimized minimum costs: {min_cost_history}\n")
-    file.write(f"Optimized parameters: {optimized_param}\n")
-    file.write(f"Execution time: {exe_time} sec\n") if execution_time else None
-    file.write("-----------------\n")
+    # Get the config file path from command-line arguments
+    config_file = sys.argv[1]
+    config = load_config(config_file)
 
-    # Print output to console
-    print(f"Qubit: {nqubits}")
-    print(f"State: {state}")
-    print(f"Layer: {layer}")
-    print(f"Optimizer: {optimization}")
-    print(f"Ansatz type: {ansatz_type}")
-    print(f"Time: {time_unitary}")
-    print(f"Coefficients: {coeffiecients}")
-    print(f"Noise profile: {noise_profile}")
-    print(f"nR, nT, nY: [{nR}, {nT}, {nY}]")  # Updated line
-    print(f"Parameters: {init_param}")
-    print(f"Draw: {draw_circ}")
-    print("-----------------")
-    print(f"Exact sol: {exact_cost}")
-    print(f"Initial cost: {cost_value}")
-    print(f"Optimized minimum costs: {min_cost_history}")
-    print(f"Optimized parameters: {optimized_param}")
-    print(f"Execution time: {exe_time} sec") if execution_time else None
-    print("-----------------")
+    if config:
 
-    if draw_circ:
-        vqe_instance.drawCircuit(timestamp, 100)
+        # Parse the configuration
+        nqubits = config["nqubits"]
+        state = config["state"]
+        observable = config["observable"]
+        optimization = config["optimization"]
+        ansatz = config["ansatz"]
+        initialparam = config["param"]
+        file_name_prefix = config["fprefix"]
 
-# Print the path of the output file
-print(f"Output saved to: {os.path.abspath(output_file)}")
+        if ansatz["noise"]["status"]:
+            nR, nT, nY = noise_param(nqubits=nqubits, noise_factor=ansatz["noise"]["factor"])["param"]
+        else:
+            nR, nT, nY = None, None, None
+
+        vqe_instance = IndirectVQE(
+            nqubits=nqubits,
+            state=state,
+            observable=observable,
+            optimization=optimization,
+            ansatz=ansatz,
+            init_param=initialparam,
+        )
+        print("==========================Config==========================")
+        print(config)
+        print("==========================Optimization==========================")
+        start_time = time.time()
+        cost_value, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
+        end_time = time.time()
+        runtime = end_time-start_time
+        print("==========================Output==========================")
+        print(f"Exact sol: {exact_cost}")
+        print(f"Initial cost: {cost_value}")
+        print(f"Optimized minimum cost: {min_cost_history}")
+        print(f"Optimized parameters: {optimized_param}")
+        print(f"(nR, nT, nY, E): ({nR}, {nT}, {nY}, {cost_value})")
+        print(f"Run time: {runtime} sec")
+
+        # Generate timestamp for unique file name
+        # Get the current directory
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = os.path.join(current_dir, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.txt")
+        with open(output_file, "w") as file:
+            file.write(f"Config: {config}\n")
+            file.write(f"==========================\n")
+            file.write(f"Exact sol: {exact_cost}\n")
+            file.write(f"Initial cost: {cost_value}\n")
+            file.write(f"Optimized minimum cost: {min_cost_history}\n")
+            file.write(f"Optimized parameters: {optimized_param}\n")
+            file.write((f"(nR, nT, nY, E): ({nR}, {nT}, {nY}, {cost_value})\n"))
+            file.write(f"Run time: {runtime} sec")
+
+        # Print the path of the output file
+        print(f"Output saved to: {os.path.abspath(output_file)}")
+        if ansatz["draw"]:
+            vqe_instance.drawCircuit(time_stamp=timestamp, dpi=100)
+       

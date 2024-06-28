@@ -3,6 +3,7 @@ This scripts contains all the necessary functions for VQE and ZNE.
 """
 
 import time
+from typing import Dict, List, Union
 
 import numpy as np
 from openfermion.ops.operators.qubit_operator import QubitOperator
@@ -24,12 +25,12 @@ def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
     theta: 0 - 1
 
     Args:
-        layer: int, number of layer
-        ti: float, initial time
-        tf: float, final time
+        layer (int): number of layer
+        ti (float): initial time
+        tf (float): final time
 
     Returns:
-        class:`numpy.ndarray`: [
+        numpy.ndarray: An nd-array [
         t1, t2, ... td, theta1, ..., theatd * 4
     ]
 
@@ -49,43 +50,48 @@ def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
     return param
 
 
-def create_xy_hamiltonian(nqubit: int, cn: float, bn: float, r: float) -> Observable:
+def create_xy_hamiltonian(
+    nqubit: int, cn: List[float], bn: List[float], r: float
+) -> Observable:
     """
+    Creates a one-dimensional XY-Hamiltonian.
+
     Args:
-        nqubit: `int`, number of qubits
-        cn: `float`, 0 - 1, coupling constant
-        bn: `float`, 0 - 1, magnetic field
-        r: `float`, 0 - 1, anisotropy param
+        nqubit (int): The number of qubits.
+        cn (List[float]): Coupling coefficients with values between 0.0 and 1.0.
+        bn (List[float]): Magnetic fields with values between 0.0 and 1.0.
+        r (float): Anisotropy parameter with values between 0.0 and 1.0.
 
     Returns:
-        qulacs observable
+        Observable: Qulacs observable representing the Hamiltonian.
     """
     hami = QubitOperator()
+
     for i in range(nqubit - 1):
-        hami += (0.5 * cn * (1 + r)) * QubitOperator(f"X{i} X{i+1}")
+        hami += (0.5 * cn[i] * (1 + r)) * QubitOperator(f"X{i} X{i+1}")
         # hami += (0.5*cn*(1-r)) * QubitOperator(f"Y{i} Y{i+1}")
-        hami += (0.5 * cn * (1 - r)) * QubitOperator(f"Z{i} Z{i+1}")
+        hami += (0.5 * cn[i] * (1 - r)) * QubitOperator(f"Z{i} Z{i+1}")
     for j in range(nqubit):
-        hami += bn * QubitOperator(f"Y{j}")
+        hami += bn[j] * QubitOperator(f"Y{j}")
 
     return create_observable_from_openfermion_text(str(hami))
 
 
-def create_ising_hamiltonian(nqubit: int, cn: float, bn: float) -> Observable:
+def create_ising_hamiltonian(nqubit: int, cn: List, bn: List) -> Observable:
     """ "
     Args:
         nqubit: int, number of qubits
-        cn: `float`, 0 - 1, coupling constant
-        bn: `float`, 0 - 1, magnetic field
+        cn: `List`, 0.0 - 1.0, coupling constant
+        bn: `List`, 0.0 - 1.0, magnetic field
 
     Returns:
         qulacs observable
     """
     hami = QubitOperator()
     for i in range(nqubit - 1):
-        hami += cn * QubitOperator(f"X{i} X{i+1}")
+        hami += cn[i] * QubitOperator(f"X{i} X{i+1}")
     for j in range(nqubit):
-        hami += bn * QubitOperator(f"Z{j}")
+        hami += bn[i] * QubitOperator(f"Z{j}")
 
     return create_observable_from_openfermion_text(str(hami))
 
@@ -136,20 +142,20 @@ def create_time_evo_unitary(observable: Observable, ti: float, tf: float):
 
 
 def parametric_ansatz(
-    nqubit: int, layers: int, hamitolian: Observable, param: list[float]
+    nqubits: int, layers: int, unitaryH: Observable, param: list[float]
 ) -> QuantumCircuit:
     """
     Args:
-        nqubit: `int`, number of qubit
-        layer: `int`, number of layer
-        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
-        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        nqubits (int): Number of qubits.
+        layer (int): Depth of the ansatz circuit.
+        unitaryH (Observable): `qulacs_core.Observable`, Hamiltonian used in time evolution gate i.e. exp(-iHt)
+        param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
     Returns:
-        :class:`qulacs.QuantumCircuit`
+        QuantumCircuit
     """
-    circuit = QuantumCircuit(nqubit)
+    circuit = QuantumCircuit(nqubits)
 
     flag = layers  # Tracking angles in param ndarray
 
@@ -169,12 +175,12 @@ def parametric_ansatz(
             # Time evolution gate
             ti = 0
             tf = param[layer]
-            time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
+            time_evo_gate = create_time_evo_unitary(unitaryH, ti, tf)
             circuit.add_gate(time_evo_gate)
         else:
             ti = param[layer]
             tf = param[layer + 1]
-            time_evo_gate = create_time_evo_unitary(hamitolian, ti, tf)
+            time_evo_gate = create_time_evo_unitary(unitaryH, ti, tf)
             circuit.add_gate(time_evo_gate)
 
         flag += 4  # Each layer has four angle-params.
@@ -223,30 +229,32 @@ def he_ansatz_circuit(n_qubit, depth, theta_list):
 def create_noisy_ansatz(
     nqubit: int,
     layer: int,
-    noise_prob: list[float],
-    noise_factor: list[int],
-    hamiltonian: Observable,
-    param: list[float],
+    gateset: int,
+    unitaryH: Observable,
+    noise_prob: List[float],
+    noise_factor: List[int],
+    param: List[float],
 ) -> QuantumCircuit:
     """
     Creates noisy redundant ansatz.
 
     Args:
-        nqubit: `int`, number of qubit
-        layer: `int`, number of layer
-        noise_prob: `float`, noise probability between 0-1
-        hamiltonian: `qulacs_core.Observable`, hamiltonian used in time evolution gate i.e. exp(-iHt)
-        noise_factor: `list`, noise factor for rotational gates, time evolution unitary gate and Y gate.. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
-        param: class:`numpy.ndarray`, params for rotation gates, time evolution gate: [
+        nqubit (int): Number of qubit.
+        layer (int): Depth of the quantum circuit.
+        gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
+        unitaryH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
+        noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
+        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
     Returns:
-        :class:`QuantumCircuit`
+        QuantumCircuit
     """
 
     # Creates redundant circuit
     circuit = create_redundant(
-        nqubit, layer, noise_prob, noise_factor, hamiltonian, param
+        nqubit, layer, noise_prob, noise_factor, unitaryH, param
     )
 
     return circuit
@@ -282,10 +290,10 @@ def add_ygate_odd(
 def create_redundant(
     nqubit: int,
     layers: int,
-    noise_prob: list[float],
-    noise_factor: list[int],
+    noise_prob: List[float],
+    noise_factor: List[int],
     hamiltonian,
-    param: list[float],
+    param: List[float],
 ) -> QuantumCircuit:
     """
     Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
@@ -317,6 +325,7 @@ def create_redundant(
     r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
     u_gate_factor = noise_factor[1]  # Identity scaling factor for time evolution gates
     y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
+    cz_gate_facot = noise_factor[3]
 
     for layer in range(layers):
 
@@ -427,13 +436,13 @@ def create_redundant(
     return circuit
 
 
-def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
+def noise_param(nqubits: int, noise_factor: list[int]) -> tuple[int, int, int]:
     """
     Finds nR, nT, and nY for a given noise factor.
 
     Arg:
 
-        nqubit: `int`, number of qubits.
+        nqubits: `int`, number of qubits.
 
         noise_factor: `list[int, int, int]`, represernts the redundant noisy indities for qubit gates and time evolution gate. For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
 
@@ -453,15 +462,15 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     y_gate_factor = noise_factor[2]  # For Y gate
 
     # Count the number of odd qubits
-    odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
-    
+    odd_n = (nqubits // 2) + 1 if nqubits % 2 != 0 else nqubits // 2
+
     if r_gate_factor > 0:
         nR += 8 * r_gate_factor
 
     # If there is not U†U identity, then there is no Y gate
     if u_gate_factor > 0:
         # Count the number of odd qubits
-        odd_n = (nqubit // 2) + 1 if nqubit % 2 != 0 else nqubit // 2
+        odd_n = (nqubits // 2) + 1 if nqubits % 2 != 0 else nqubits // 2
         # Calculating the values of different noise parameters
         nY += odd_n + (2 * y_gate_factor * odd_n)
         nT += 2 * u_gate_factor
@@ -469,4 +478,4 @@ def noise_param(nqubit: int, noise_factor: list[int]) -> tuple[int, int, int]:
     elif u_gate_factor == 0:
         nY = 0
 
-    return {"params": (nR, nT, nY), "odd_wires" : odd_n}
+    return {"params": (nR, nT, nY), "odd_wires": odd_n}
