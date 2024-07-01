@@ -1,5 +1,6 @@
+from ast import Tuple
 import os
-from typing import Dict, List, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from qulacs import DensityMatrix, QuantumState
@@ -8,6 +9,7 @@ from scipy.optimize import minimize
 
 from src.constraint import create_time_constraints
 from src.modules import *
+from src.createparam import create_param
 
 # Global variables
 ansatz_circuit = None
@@ -20,20 +22,15 @@ class IndirectVQE:
         self,
         nqubits: int,
         state: str,
-        observable: Dict,
+        observable: Observable,
         optimization: Dict,
         ansatz: Dict,
+        identity_factor: List[int],
         init_param: Union[List[float], str],
     ) -> None:
 
         self.nqubits = nqubits
         self.state = state
-        
-        # Trget observable (many-body Hamiltonian most likely)
-        self.observable_hami_def: str = observable["def"]
-        self.observable_hami_coeffi_cn: List = observable["coefficients"]["cn"]
-        self.observable_hami_coeffi_bn: List = observable["coefficients"]["bn"]
-        self.observable_hami_coeffi_r: float = observable["coefficients"]["r"]
 
         # Optimization variables
         self.optimization_status: bool = optimization["status"]
@@ -43,68 +40,59 @@ class IndirectVQE:
 
         # Ansatz variables
         self.ansatz_draw: bool = ansatz["draw"]
+        self.ansatz_type: str = ansatz["type"]
         self.ansatz_layer: int = ansatz["layer"]
         self.ansatz_gateset: int = ansatz["gateset"]
-        self.ansatz_evolution: str = ansatz["unitary"]["def"]
-        self.ansatz_ti: float = ansatz["unitary"]["time"]["min"]
-        self.ansatz_tf: float = ansatz["unitary"]["time"]["max"]
-        self.ansatz_coeffi_cn: List = ansatz["unitary"]["coefficients"]["cn"]
-        self.ansatz_coeffi_bn: List = ansatz["unitary"]["coefficients"]["bn"]
-        self.ansatz_coeffi_r: float = ansatz["unitary"]["coefficients"]["r"]
+        self.ansatz_ti: float = ansatz["ugate"]["time"]["min"]
+        self.ansatz_tf: float = ansatz["ugate"]["time"]["max"]
+        self.ansatz_coeffi_cn: List = ansatz["ugate"]["coefficients"]["cn"]
+        self.ansatz_coeffi_bn: List = ansatz["ugate"]["coefficients"]["bn"]
+        self.ansatz_coeffi_r: float = ansatz["ugate"]["coefficients"]["r"]
         self.ansatz_noise_status: bool = ansatz["noise"]["status"]
         self.ansatz_noise_value: float = ansatz["noise"]["value"]
-        self.ansatz_noise_factor: int = ansatz["noise"]["factor"]
+        self.ansatz_identity_factor: List[int] = identity_factor
         self.init_param = init_param
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
         """
         noise_value_len = len(ansatz["noise"]["value"])
-        noise_factor_len = len(ansatz["noise"]["factor"])
-        unitary_cn_len = len(self.ansatz_coeffi_cn)
-        unitary_bn_len = len(self.ansatz_coeffi_bn)
-
-        observable_cn_len = len(self.observable_hami_coeffi_cn)
-        observable_bn_len = len(self.observable_hami_coeffi_bn)
+        identity_factor_len = len(self.ansatz_identity_factor)
+        ugate_cn_len = len(self.ansatz_coeffi_cn)
+        ugate_bn_len = len(self.ansatz_coeffi_bn)
 
         if noise_value_len != 4:
             raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
-        if noise_factor_len != 4:
-            raise ValueError(f"Unsupported length of noise factor: {noise_factor_len}. Expected length: 4.")
-        if observable_cn_len != nqubits - 1 or observable_bn_len != nqubits:
+
+        if identity_factor_len != 4:
+            raise ValueError(f"Unsupported length of noise factor: {identity_factor_len}. Expected length: 4.")
+
+        if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
             raise ValueError(
-                f"Inconsistent lengths in observable Hamiltonian parameters. "
-                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
-            )
-        if unitary_cn_len != nqubits - 1 or unitary_bn_len != nqubits:
-            raise ValueError(
-                f"Inconsistent lengths in unitary Hamiltonian parameters. "
-                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {unitary_cn_len} and bn: {unitary_bn_len}."
+                f"Inconsistent lengths in ugate Hamiltonian parameters. "
+                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
             )
 
         """
-        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the unitary gate's Hamiltonian. Based on the agrs provided in the config file, these two Hamiltonian needs to be created.
+        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
 
         **Also, for bogus input, value error should be raised.**
         """
-        if self.observable_hami_def.lower() == "ising":
-            self.observable_hami = create_ising_hamiltonian(
-                self.nqubits,
-                self.observable_hami_coeffi_cn,
-                self.observable_hami_coeffi_bn,
-            )
-        else:
-            raise ValueError(f"Unsupported observable Hamiltonian: {self.observable_hami_def}")
 
-        if self.ansatz_evolution.lower() == "xy":
-            self.unitary_hami = create_xy_hamiltonian(
+        # Time-evolution gate's U(t)=exp(-iHt) Hamiltonian. For ZNE purpose H must be XY-Hamiltonian.
+        if self.ansatz_type.lower() == "xy":
+            self.ugate_hami = create_xy_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
                 self.ansatz_coeffi_bn,
                 self.ansatz_coeffi_r,
             )
+        elif self.ansatz_type.lower() == "hardware":
+            self.ugate_hami = None
         else:
-            raise ValueError(f"Unsupported time-evolution Hamiltonian: {self.ansatz_evolution}")
+            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}.")
+
+        self.observable_hami = observable
 
     def create_ansatz(self, param: List[float]) -> QuantumCircuit:
         """
@@ -116,13 +104,15 @@ class IndirectVQE:
                 nqubits=self.nqubits,
                 layer=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
-                unitaryH=self.unitary_hami,
+                ugateH=self.ugate_hami,
                 noise_prob=self.ansatz_noise_value,
-                noise_factor=self.ansatz_noise_factor,
+                noise_factor=self.ansatz_identity_factor,
                 param=param,
             )
         else:
-            ansatz = parametric_ansatz(nqubits=self.nqubits, layers=self.ansatz_layer, unitaryH=self.unitary_hami, param=param)
+            ansatz = parametric_ansatz(
+                nqubits=self.nqubits, layers=self.ansatz_layer, ugateH=self.ugate_hami, param=param
+            )
         return ansatz
 
     def cost_function(self, param: List[float]) -> float:
@@ -202,7 +192,7 @@ class IndirectVQE:
                 start_time = time.time()
                 cost, param = self.run_optimization(param, constraint)  # type: ignore
                 end_time = time.time()
-                run_time = end_time-start_time
+                run_time = end_time - start_time
                 min_cost_history.append(cost)
                 optimized_param.append(param)
                 param = create_param(self.ansatz_layer, self.ansatz_ti, self.ansatz_tf)
@@ -224,3 +214,14 @@ class IndirectVQE:
         plt.close()
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
+
+    def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
+        """
+        Returns the noise levels.
+        """
+        if self.ansatz_noise_status:
+            nR, nT, nY = noise_param(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
+        else:
+            nR, nT, nY = None, None, None
+
+        return nR, nT, nY

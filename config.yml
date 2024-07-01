@@ -1,36 +1,48 @@
-# General
-nqubits: 6
-state: "statevector"
-# Target Hamiltonian
-observable:
-  def: "ising"
-  coefficients:
-    cn: [1.0, 1.0, 1.0, 1.0, 1.0]
-    bn: [0, 0, 0, 0, 0, 0]
-    r: 0
-# Optimization
-optimization:
-  status: True
-  algorithm: "SLSQP"
-  iteration: 1
-  constraint: False
-# Circuit config
-ansatz:
-  draw: True # Draw the circuit
-  layer: 10
-  gateset: 1
-  unitary: 
-    def: "xy"
-    coefficients:
-      cn: [1.0, 1.0, 1.0, 1.0, 1.0]
-      bn: [0, 0, 0, 0, 0, 0]
-      r: 0
-    time:
-      min: 0.0
-      max: 10.0
-  noise:
-    status: False
-    value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
-    factor: [0, 0, 0, 0] # Noise identity factors for [r, u, y, cz] gates
+run: "zne"
 fprefix: "test"
-param: "random"
+# Variational quantum eigensolver config
+vqe:
+  # General
+  nqubits: 4
+  state: "statevector"
+  # Target Hamiltonian
+  observable:
+    def: "ising"
+    coefficients:
+      cn: [1.0, 1.0, 1.0]
+      bn: [0, 0, 0, 0]
+      r: 0
+  # Optimization
+  optimization:
+    status: True
+    algorithm: "SLSQP"
+    iteration: 2
+    constraint: False
+  # Circuit config
+  ansatz:
+    draw: True # Draw the circuit
+    type: "xy"
+    layer: 10
+    gateset: 1
+    ugate: 
+      coefficients:
+        cn: [1.0, 1.0, 1.0]
+        bn: [0, 0, 0, 0]
+        r: 0
+      time:
+        min: 0.0
+        max: 10.0
+    noise:
+      status: True
+      value: [0.01, 0.01, 0.01, 0.01] # Noise probabilities for [r, cz, u, y] gates.
+  param: "random"
+
+# Zero noise extrapolation config
+zne:
+  extrapolation:
+    method: "Richardson"
+    degrees: [1, 2, 3, 4, 5]
+  redundant_ansatz:
+    identity_factors: [
+      [0, 0, 0, 0], [1, 0, 0, 0]
+    ]
