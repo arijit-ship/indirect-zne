@@ -1,9 +1,0 @@
-extrapolation:
-  method: "Richardson"
-  degree: [1, 2, 3, 4, 5]
-redundant_ansatz:
-  identity_factors: [
-    [0, 0, 0], [1, 0, 0]
-  ]
-
-  

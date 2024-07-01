@@ -2,7 +2,7 @@ run: "zne"
 fprefix: "test"
 # Variational quantum eigensolver config
 vqe:
-  # General
+  # System
   nqubits: 4
   state: "statevector"
   # Target Hamiltonian
@@ -36,13 +36,13 @@ vqe:
       status: True
       value: [0.01, 0.01, 0.01, 0.01] # Noise probabilities for [r, cz, u, y] gates.
   param: "random"
-
 # Zero noise extrapolation config
 zne:
   extrapolation:
     method: "Richardson"
     degrees: [1, 2, 3, 4, 5]
   redundant_ansatz:
+    # Identity factors for the redundant ansatz
     identity_factors: [
       [0, 0, 0, 0], [1, 0, 0, 0]
     ]
