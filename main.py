@@ -3,7 +3,7 @@ from sre_parse import State
 import sys
 import time
 from datetime import datetime
-from typing import List
+from typing import List, Union
 import yaml
 
 from src.modules import *

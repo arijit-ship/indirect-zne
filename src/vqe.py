@@ -1,5 +1,5 @@
-from ast import Tuple
 import os
+import time
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -10,6 +10,8 @@ from scipy.optimize import minimize
 from src.constraint import create_time_constraints
 from src.modules import *
 from src.createparam import create_param
+from src.xy_hamiltonian import create_xy_hamiltonian
+from src.ansatz import *
 
 # Global variables
 ansatz_circuit = None
@@ -110,7 +112,7 @@ class IndirectVQE:
                 param=param,
             )
         else:
-            ansatz = parametric_ansatz(
+            ansatz = noiseless_ansatz(
                 nqubits=self.nqubits, layers=self.ansatz_layer, ugateH=self.ugate_hami, param=param
             )
         return ansatz
@@ -220,7 +222,7 @@ class IndirectVQE:
         Returns the noise levels.
         """
         if self.ansatz_noise_status:
-            nR, nT, nY = noise_param(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
+            nR, nT, nY = noise_level(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
         else:
             nR, nT, nY = None, None, None
 
