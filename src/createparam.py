@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
+def create_param(layer: int, gateset: int, ti: float, tf: float) -> np.ndarray:
     """
     Creates parameter for the citcuit. Parameters are time, and theta: angle for rotation gates.
 
@@ -9,7 +9,8 @@ def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
     theta: 0 - 1
 
     Args:
-        layer (int): number of layer
+        layer (int): number of layer.
+        gateset (int): Number of rotation gate set. Each set has 4 gates.
         ti (float): initial time
         tf (float): final time
 
@@ -27,7 +28,7 @@ def create_param(layer: int, ti: float, tf: float) -> np.ndarray:
         param = np.append(param, i)
 
     # Theta param
-    theta = np.random.random(layer * 4) * 1e-1  # Each layer has 4 rotation gates
+    theta = np.random.random(layer * gateset * 4) * 1e-1  # Each layer has 4 rotation gates
     for i in theta:
         param = np.append(param, i)
 

@@ -16,7 +16,7 @@ vqe:
   optimization:
     status: True
     algorithm: "SLSQP"
-    iteration: 2
+    iteration: 1
     constraint: False
   # Circuit config
   ansatz:
@@ -33,7 +33,7 @@ vqe:
         min: 0.0
         max: 10.0
     noise:
-      status: True
+      status: False
       value: [0.01, 0.01, 0.01, 0.01] # Noise probabilities for [r, cz, u, y] gates.
   param: "random"
 # Zero noise extrapolation config

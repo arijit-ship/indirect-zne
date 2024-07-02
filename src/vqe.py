@@ -113,7 +113,7 @@ class IndirectVQE:
             )
         else:
             ansatz = noiseless_ansatz(
-                nqubits=self.nqubits, layers=self.ansatz_layer, ugateH=self.ugate_hami, param=param
+                nqubits=self.nqubits, layers=self.ansatz_layer, gateset= self.ansatz_gateset, ugateH=self.ugate_hami, param=param
             )
         return ansatz
 
@@ -168,7 +168,7 @@ class IndirectVQE:
 
         if isinstance(self.init_param, str):
             if self.init_param.lower() == "random":
-                param = create_param(self.ansatz_layer, self.ansatz_ti, self.ansatz_tf)
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
             else:
                 raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
         elif isinstance(self.init_param, list):
@@ -197,7 +197,7 @@ class IndirectVQE:
                 run_time = end_time - start_time
                 min_cost_history.append(cost)
                 optimized_param.append(param)
-                param = create_param(self.ansatz_layer, self.ansatz_ti, self.ansatz_tf)
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
                 print(f"Iteration {i+1} done with time taken: {run_time} sec.")
 
         return cost_value, exact_cost, min_cost_history, optimized_param
