@@ -42,7 +42,7 @@ def he_ansatz_circuit(n_qubit, depth, theta_list):
     return circuit
 
 
-def noiseless_ansatz(nqubits: int, layers: int, ugateH: Observable, param: list[float]) -> QuantumCircuit:
+def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable, param: list[float]) -> QuantumCircuit:
     """
     Args:
         nqubits (int): Number of qubits.
@@ -60,12 +60,13 @@ def noiseless_ansatz(nqubits: int, layers: int, ugateH: Observable, param: list[
 
     for layer in range(layers):
 
-        # Rotation gate
-        circuit.add_gate(RX(0, param[flag]))
-        circuit.add_gate(RX(1, param[flag + 1]))
+        for i in range(gateset):
+            # Rotation gate
+            circuit.add_gate(RX(0, param[flag + i]))
+            circuit.add_gate(RX(1, param[flag + i + 1]))
 
-        circuit.add_gate(RY(0, param[flag + 2]))
-        circuit.add_gate(RY(1, param[flag + 3]))
+            circuit.add_gate(RY(0, param[flag + i + 2]))
+            circuit.add_gate(RY(1, param[flag + i + 3]))
 
         # CZ gate
         circuit.add_gate(CZ(0, 1))
@@ -82,7 +83,7 @@ def noiseless_ansatz(nqubits: int, layers: int, ugateH: Observable, param: list[
             time_evo_gate = create_time_evo_unitary(ugateH, ti, tf)
             circuit.add_gate(time_evo_gate)
 
-        flag += 4  # Each layer has four angle-params.
+        flag += 4 * gateset # Each layer has 4 * gateset angle-params.
 
     return circuit
 
