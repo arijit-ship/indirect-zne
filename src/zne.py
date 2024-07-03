@@ -1,207 +1,198 @@
-import os
-from typing import Dict, List, Union
+import itertools
+from collections import Counter
+from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
-from qulacs import DensityMatrix, QuantumState
-from qulacsvis import circuit_drawer
-from scipy.optimize import minimize
+import numpy as np
+import scipy.linalg as la
+from matplotlib.ticker import MaxNLocator
+from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import PolynomialFeatures
+from sympy import Monomial
 
-from src.constraint import create_time_constraints
-from src.modules import *
-from src.createparam import create_param
+from src.modules import noise_level
 
-# Global variables
-ansatz_circuit = None
-constraint = None
-
-
+"""
+Parts of the following class are adapted from their notebook, which can be found at the
+following GitHub repository: 
+https://github.com/unitaryfund/research/blob/main/lre/layerwise_richardson_extrapolation.ipynb.
+"""
 class ZeroNoiseExtrapolation:
 
     def __init__(
         self,
-        nqubits: int,
-        state: str,
-        observable: Observable,
-        ansatz: Dict,
-        init_param: Union[List[float], str],
+        datapoints: List[Tuple[Union[int, float], ...]],
+        degree: int,
+        method: str,
+        sampling: str
     ) -> None:
+        
+        self.datapoints = datapoints
+        self.degree = degree
+        self.method = method
+        self.sampling = sampling
 
-        self.nqubits = nqubits
-        self.state = state
+        self.unknown_var = len(datapoints[0]) - 1
+        self.noise_data = [tuple(point[: self.unknown_var]) for point in self.datapoints]
+        self.expectation_vals = [point[-1] for point in datapoints]
 
-        # Ansatz variables
-        self.ansatz_draw: bool = ansatz["draw"]
-        self.ansatz_type: str = ansatz["type"]
-        self.ansatz_layer: int = ansatz["layer"]
-        self.ansatz_gateset: int = ansatz["gateset"]
-        self.ansatz_ti: float = ansatz["ugate"]["time"]["min"]
-        self.ansatz_tf: float = ansatz["ugate"]["time"]["max"]
-        self.ansatz_coeffi_cn: List = ansatz["ugate"]["coefficients"]["cn"]
-        self.ansatz_coeffi_bn: List = ansatz["ugate"]["coefficients"]["bn"]
-        self.ansatz_coeffi_r: float = ansatz["ugate"]["coefficients"]["r"]
-        self.ansatz_noise_status: bool = ansatz["noise"]["status"]
-        self.ansatz_noise_value: float = ansatz["noise"]["value"]
-        self.ansatz_noise_factor: int = ansatz["noise"]["factor"]
-        self.init_param = init_param
 
+    def get_noise_levels(self) -> List[Tuple[int]]:
         """
-        Validate the different args parsed form the config file and raise an error if inconsistancy found.
+        Returns a list containing all the noise-level values (independent variable values) extracted from the given datapoints.
         """
-        noise_value_len = len(ansatz["noise"]["value"])
-        noise_factor_len = len(ansatz["noise"]["factor"])
-        ugate_cn_len = len(self.ansatz_coeffi_cn)
-        ugate_bn_len = len(self.ansatz_coeffi_bn)
-
-        if noise_value_len != 4:
-            raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
-
-        if noise_factor_len != 4:
-            raise ValueError(f"Unsupported length of noise factor: {noise_factor_len}. Expected length: 4.")
-
-        if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
-            raise ValueError(
-                f"Inconsistent lengths in ugate Hamiltonian parameters. "
-                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
-            )
-
+        return self.noise_data
+    
+    def get_expec_vals(self) -> List[float]:
         """
-        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
-
-        **Also, for bogus input, value error should be raised.**
+        Returns a list containing all the expectations values (dependent variable values) extracted from the given datapoints.
         """
-
-        # Time-evolution gate's U(t)=exp(-iHt) Hamiltonian. For ZNE purpose H must be XY-Hamiltonian.
-        if self.ansatz_type.lower() == "xy":
-            self.ugate_hami = create_xy_hamiltonian(
-                self.nqubits,
-                self.ansatz_coeffi_cn,
-                self.ansatz_coeffi_bn,
-                self.ansatz_coeffi_r,
-            )
-        elif self.ansatz_type.lower() == "hardware":
-            self.ugate_hami = None
-        else:
-            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}.")
-
-        self.observable_hami = observable
-
-    def create_ansatz(self, param: List[float]) -> QuantumCircuit:
+        return self.expectation_vals
+    
+    def get_required_points(self) -> int:
         """
-        Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit. Noisy circuit with noise probability 0 is equivalent to noiseless circuit.
+        Returns the number of datapoints required in order to perform Richardson extrapolation at a given degree and independent variables.
         """
-
-        if self.ansatz_noise_status:
-            ansatz = create_noisy_ansatz(
-                nqubits=self.nqubits,
-                layer=self.ansatz_layer,
-                gateset=self.ansatz_gateset,
-                ugateH=self.ugate_hami,
-                noise_prob=self.ansatz_noise_value,
-                noise_factor=self.ansatz_noise_factor,
-                param=param,
-            )
-        else:
-            ansatz = parametric_ansatz(
-                nqubits=self.nqubits, layers=self.ansatz_layer, ugateH=self.ugate_hami, param=param
-            )
-        return ansatz
-
-    def cost_function(self, param: List[float]) -> float:
+        monomials = self.get_monomials(self.unknown_var, self.degree)
+        return len(monomials)
+    
+    def get_independent_var(self) -> int:
         """
-        Variational quantum eigensolver cost function.
+        Returns the unmber of independent variables.
         """
+        return self.unknown_var
+    
+    def getRichardsonZNE(self) -> float:
 
-        if self.state.lower() == "dmatrix":
-            state = DensityMatrix(self.nqubits)
-        elif self.state.lower() == "statevector":
-            state = QuantumState(self.nqubits)
-        else:
-            raise ValueError(f"Unsupported state: {self.state}. Supported states are: 'dmatrix', 'statevector'")
+        if self.sampling.lower() == "default":
+            number_of_required_points = self.get_required_points()
+            richardson_datapoints = self.datapoints[ : number_of_required_points]
+            richardson_noise_vals = [tuple(point[: self.unknown_var]) for point in richardson_datapoints]
+            richardson_expectation_vals = [point[-1] for point in richardson_datapoints]
 
-        global ansatz_circuit
-        ansatz_circuit = self.create_ansatz(param=param)
-        ansatz_circuit.update_quantum_state(state)
-        cost = self.observable_hami.get_expectation_value(state)
+        RichardsonZNEval = 0
+        sampleMatrix = self.sample_matrix(sample_points = richardson_noise_vals, degree = self.degree) # type: ignore
+        detA = np.linalg.det(sampleMatrix)
+        if abs(detA) <= 1e-9:
+            raise ValueError(f"Determinant of sample matrix is/close to zero. Det: {detA}, Deg: {self.degree}")
+        # elif abs(detA) >= 1e+50:
+        #     raise ValueError(f"Determinant of sample matrix close to inf. Det: {detA}, Deg: {self.degree}")
+        
+        matrices = self.generate_modified_matrices(sampleMatrix) # type: ignore
 
-        return cost
+        if len(richardson_expectation_vals) != len(matrices):
+            raise ValueError(f"Unmatched length.")
+        
+        for E, matrix in zip(richardson_expectation_vals, matrices):
+            eta = (np.linalg.det(matrix)/detA)
+            RichardsonZNEval += E * eta
+            eta = 0
+        
+        return RichardsonZNEval
+    
+    @staticmethod
+    def get_monomials(n: int, d: int) -> list[str]:
+        """
+        Compute monomials of degree `d` in graded lexicographical order.
+        """
+        variables = [f"λ_{i}" for i in range(1, n + 1)]
+        
+        monomials = []
+        for degree in range(d, -1, -1):
+            # Generate combinations for the current degree
+            combos = list(itertools.combinations_with_replacement(variables, degree))
+            
+            # Sort combinations lexicographically
+            combos.sort()
+            
+            # Construct monomials from sorted combinations
+            for combo in combos:
+                monomial_parts = []
+                counts = Counter(combo)
+                # Ensure variables are processed in lexicographical order
+                for var in sorted(counts.keys()):
+                    count = counts[var]
+                    if count > 1:
+                        monomial_parts.append(f"{var}**{count}")
+                    else:
+                        monomial_parts.append(var)
+                monomial = "*".join(monomial_parts)
+                # Handle the case where degree is 0
+                if not monomial:
+                    monomial = "1"
+                monomials.append(monomial)
+        # "1" should be the first monomial. Note that order d > c > b > a means vector of monomials = [a, b, c, d].            
+        return monomials[::-1]
 
-    def run_optimization(self, parameters, constraint):
+    @staticmethod
+    def sample_matrix(sample_points: list[int], degree: int) -> np.ndarray:
+        """Construct a matrix from monomials evaluated at sample points."""
+        n = len(sample_points[0])  # type: ignore # Number of variables based on the first sample point
+        monomials = ZeroNoiseExtrapolation.get_monomials(n, degree) # type: ignore
+        matrix = np.zeros((len(sample_points), len(monomials)))
 
-        cost_history = []
-        min_cost = None
-        optimized_params = None  # List to store optimized parameters (solutions)
-        param_constraint = None
+        for i, point in enumerate(sample_points):
+            for j, monomial in enumerate(monomials):
+                var_mapping = {f"λ_{k+1}": point[k] for k in range(n)} # type: ignore
+                matrix[i, j] = eval(monomial, {}, var_mapping)
+        return matrix
+    
+    @staticmethod
+    def get_eta_coeffs_from_sample_matrix(mat: np.ndarray) -> list[float]:
+        """Given a sample matrix compute the eta coefficients."""
+        n_rows, n_cols = mat.shape
+        if n_rows != n_cols:
+            raise ValueError("The matrix must be square.")
 
-        opt = minimize(
-            self.cost_function,
-            parameters,
-            method=self.optimizer,
-            constraints=constraint,
-            callback=lambda x: cost_history.append(self.cost_function(x)),
-        )
+        det_m = np.linalg.det(mat)    
+        if det_m == 0:
+            raise ValueError("The matrix is singular.")
+        
+        terms = []
+        for i in range(n_rows):
+            new_mat = mat.copy()
+            new_mat[i] = np.array([[0] * (n_cols - 1) + [1]])        
+            terms.append(np.linalg.det(new_mat) / det_m)
 
-        min_cost = np.min(cost_history)
+        return terms
+    
+    @staticmethod
+    def get_eta_coeffs_single_variable(scale_factors: list[float]) -> list[float]:
+        """Returns the array of single-variable Richardson extrapolation coefficients associated
+        to the input array of scale factors."""
+        
+        # Lagrange interpolation formula.
+        richardson_coeffs = []
+        for l in scale_factors:
+            coeff = 1.0
+            for l_prime in scale_factors:
+                if l_prime == l:
+                    continue
+                coeff *= l_prime / (l_prime - l)
+            richardson_coeffs.append(coeff)
 
-        optimized_params = opt.x.tolist()
-        # optimized_params.append(np.array2string(opt.x, separator=', '))
+        return richardson_coeffs
 
-        return min_cost, optimized_params
+    @staticmethod
+    def generate_modified_matrices(matrix):
+        """
+        It generates the Mi(0) matreces for i = 1 to length of sample matrix.
+        See this papaer for the detail mathematical formalism: 
+        "Quantum error mitigation by layerwise Richardson extrapolation" by Vincent Russo, Andrea Mari, https://arxiv.org/abs/2402.04000
+        """
+        n = len(matrix)  # Size of the square matrix
+        identity_row = [1] + [0] * (n - 1)  # Row to replace with
 
-    def run_vqe(self):
-
-        global constraint
-        cost_value = None
-        exact_cost = None
-        min_cost_history = []
-        optimized_param = []
-
-        if isinstance(self.init_param, str):
-            if self.init_param.lower() == "random":
-                param = create_param(self.ansatz_layer, self.ansatz_ti, self.ansatz_tf)
-            else:
-                raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
-        elif isinstance(self.init_param, list):
-            param = self.init_param
-        else:
-            raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
-
-        cost_value = self.cost_function(param)  # type: ignore
-        exact_cost = exact_sol(self.observable_hami)
-
-        if not self.optimization_status:
-            min_cost_history = None
-            optimized_param = None
-
-        else:
-            if self.constraint and self.optimizer == "SLSQP":
-                constraint = create_time_constraints(self.layer, len(param))
-
-            elif self.optimizer != "SLSQP" and self.constraint:
-                raise ValueError(f"Constaint not supported for: {self.optimizer}")
-
-            for i in range(self.iteration):
-                start_time = time.time()
-                cost, param = self.run_optimization(param, constraint)  # type: ignore
-                end_time = time.time()
-                run_time = end_time - start_time
-                min_cost_history.append(cost)
-                optimized_param.append(param)
-                param = create_param(self.ansatz_layer, self.ansatz_ti, self.ansatz_tf)
-                print(f"Iteration {i+1} done with time taken: {run_time} sec.")
-
-        return cost_value, exact_cost, min_cost_history, optimized_param
-
-    def drawCircuit(self, time_stamp, dpi):
-
-        global ansatz_circuit
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(current_dir)  # Go up one level
-        output_dir = os.path.join(parent_dir, "output")
-        os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"circuit_{time_stamp}.png")
-
-        circuit_drawer(ansatz_circuit, "mpl")  # type: ignore
-        plt.savefig(output_file, dpi=dpi)
-        plt.close()
-        # Print the path of the output file
-        print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
+        modified_matrices = []
+        determinants = []
+        for i in range(n):
+            # Create a copy of the original matrix
+            modified_matrix = np.copy(matrix)
+            # Replace the i-th row with the identity_row
+            modified_matrix[i] = identity_row
+            modified_matrices.append(modified_matrix)
+            # Calculate the determinant of the modified matrix
+            determinant = np.linalg.det(modified_matrix)
+            determinants.append(determinant)
+        
+        return modified_matrices

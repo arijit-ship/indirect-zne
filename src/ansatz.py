@@ -159,7 +159,7 @@ def create_redundant(
     r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
     u_gate_factor = noise_factor[1]  # Identity scaling factor for time evolution gates
     y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
-    cz_gate_facot = noise_factor[3]
+    #cz_gate_factor = noise_factor[3]
 
     for layer in range(layers):
 
