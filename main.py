@@ -12,8 +12,8 @@ from src.observable import create_ising_hamiltonian
 from src.vqe import IndirectVQE
 from src.zne import ZeroNoiseExtrapolation
 
-symbol_count = 20
-
+# Global symbol count
+symbol_count = 25
 
 def load_config(config_path):
     # Check if the config file exists
@@ -88,17 +88,18 @@ def initialize_zne() -> None:
     identity_factors: Union[List[int], List[List[int]]] = config["zne"]["redundant_ansatz"]["identity_factors"]
 
     data_points = []
+    zne_values = []
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
-    print("=" * symbol_count + "VQE at different noise levels" + "=" * symbol_count)
+    print("=" * symbol_count + "VQE values at different noise levels" + "=" * symbol_count)
 
     start_time = time.time()
     # Turn off the optimization
     optimization["status"] = False
     i = 1
     for factor in identity_factors:
-
+        start_iteration_time = time.time()
         vqe_instance = IndirectVQE(
             nqubits=nqubits,
             state=state,
@@ -111,6 +112,7 @@ def initialize_zne() -> None:
         initial_cost, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
         nR, nT, nY = vqe_instance.get_noise_level()
         data_points.append((nR, nT, nY, initial_cost))
+        end_iteration_time = time.time()
         print(f"#{i}")
         print(f"Exact sol: {exact_cost}")
         print(f"Initial cost: {initial_cost}")
@@ -118,19 +120,39 @@ def initialize_zne() -> None:
         print(f"Optimized parameters: {optimized_param}")
         print(f"Identity factor: {factor}")
         print(f"Noise level (nR, nT, nY): ({nR}, {nT}, {nY}) ")
+        print(f"Time taken: {end_iteration_time-start_iteration_time} sec")
         print("-" * 50)
         i += 1
 
-    end_time = time.time()
-    runtime = end_time - start_time
-    print(f"No of dataspoints: {len(data_points)}")
+    print(f"No of data points: {len(data_points)}")
     print(f"Data points: {data_points}")
     print("=" * symbol_count + "ZNE" + "=" * symbol_count)
     print(f"Exact sol: {exact_cost}")
     for degree in zne_degrees:
-        zne_instance = ZeroNoiseExtrapolation(datapoints=data_points, degree=degree, method=zne_method, sampling=zne_sampling)
+        zne_instance = ZeroNoiseExtrapolation(
+            datapoints=data_points, degree=degree, method=zne_method, sampling=zne_sampling
+        )
         zne_value = zne_instance.getRichardsonZNE()
+        zne_values.append({"degree": {degree}, "value": zne_value})
         print(f"ZNE value at degree {degree}: {zne_value}")
+
+    end_time = time.time()
+    runtime = end_time - start_time
+    print(f"Total runtime: {runtime} sec")
+    # Generate timestamp for unique file name
+    # Get the current directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join(current_dir, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.txt")
+    with open(output_file, "w") as file:
+        file.write(f"Config: {config}\n")
+        file.write(f"==========================\n")
+        file.write(f"Data points: {data_points}")
+        file.write(f"ZNE values: {zne_values}")
+        file.write(f"Run time: {runtime} sec")
+
 
 if __name__ == "__main__":
     # Check if a config file argument is provided

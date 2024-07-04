@@ -55,31 +55,28 @@ class IndirectVQE:
         self.ansatz_identity_factor: List[int] = identity_factor
         self.init_param = init_param
 
-        # """
-        # Validate the different args parsed form the config file and raise an error if inconsistancy found.
-        # """
-        # noise_value_len = len(ansatz["noise"]["value"])
-        # identity_factor_len = len(self.ansatz_identity_factor)
-        # ugate_cn_len = len(self.ansatz_coeffi_cn)
-        # ugate_bn_len = len(self.ansatz_coeffi_bn)
+        """
+        Validate the different args parsed form the config file and raise an error if inconsistancy found.
+        """
+        noise_value_len = len(ansatz["noise"]["value"])
+        identity_factor_len = len(self.ansatz_identity_factor)
+        ugate_cn_len = len(self.ansatz_coeffi_cn)
+        ugate_bn_len = len(self.ansatz_coeffi_bn)
 
-        # if noise_value_len != 4:
-        #     raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
+        if noise_value_len != 4:
+            raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
 
-        # if identity_factor_len != 3:
-        #     raise ValueError(f"Unsupported length of noise factor: {identity_factor_len}. Expected length: 3.")
+        if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
+            raise ValueError(
+                f"Inconsistent lengths in ugate Hamiltonian coefficients. "
+                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
+            )
 
-        # if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
-        #     raise ValueError(
-        #         f"Inconsistent lengths in ugate Hamiltonian coefficients. "
-        #         f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
-        #     )
+        """
+        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
 
-        # """
-        # Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
-
-        # **Also, for bogus input, value error should be raised.**
-        # """
+        **Also, for bogus input, value error should be raised.**
+        """
 
         # Time-evolution gate's U(t)=exp(-iHt) Hamiltonian. For ZNE purpose H must be XY-Hamiltonian.
         if self.ansatz_type.lower() == "xy":
