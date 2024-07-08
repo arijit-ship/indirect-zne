@@ -15,6 +15,7 @@ from src.zne import ZeroNoiseExtrapolation
 # Global symbol count
 symbol_count = 25
 
+
 def load_config(config_path):
     # Check if the config file exists
     if not os.path.exists(config_path):
@@ -121,7 +122,7 @@ def initialize_zne() -> None:
         print(f"Identity factor: {factor}")
         print(f"Noise level (nR, nT, nY): ({nR}, {nT}, {nY}) ")
         print(f"Time taken: {end_iteration_time-start_iteration_time} sec")
-        print("-" * 50)
+        print("-" * symbol_count)
         i += 1
 
     print(f"No of data points: {len(data_points)}")
@@ -133,7 +134,7 @@ def initialize_zne() -> None:
             datapoints=data_points, degree=degree, method=zne_method, sampling=zne_sampling
         )
         zne_value = zne_instance.getRichardsonZNE()
-        zne_values.append({"degree": {degree}, "value": zne_value})
+        zne_values.append({"degree": degree, "value": zne_value})
         print(f"ZNE value at degree {degree}: {zne_value}")
 
     end_time = time.time()
@@ -148,10 +149,14 @@ def initialize_zne() -> None:
     output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.txt")
     with open(output_file, "w") as file:
         file.write(f"Config: {config}\n")
-        file.write(f"==========================\n")
-        file.write(f"Data points: {data_points}")
-        file.write(f"ZNE values: {zne_values}")
+        file.write(f"{'*' * symbol_count}\n")
+        file.write(f"Data points: {data_points}\n")
+        file.write(f"{'*' * symbol_count}\n")
+        file.write(f"ZNE values: {zne_values}\n")
+        file.write(f"{'*' * symbol_count}\n")
         file.write(f"Run time: {runtime} sec")
+    print("=" * symbol_count + "File path" + "=" * symbol_count)
+    print(f"Output saved to: {os.path.abspath(output_file)}")
 
 
 if __name__ == "__main__":
