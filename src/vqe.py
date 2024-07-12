@@ -1,113 +1,135 @@
 import os
+import time
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 from qulacs import DensityMatrix, QuantumState
 from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
-from src.constraint import *
+from src.constraint import create_time_constraints
 from src.modules import *
+from src.createparam import create_param
+from src.xy_hamiltonian import create_xy_hamiltonian
+from src.ansatz import *
 
 # Global variables
 ansatz_circuit = None
 constraint = None
 
 
-class VQE:
+class IndirectVQE:
 
     def __init__(
         self,
-        n: int,
+        nqubits: int,
         state: str,
-        layer: int,
-        type: str,
-        time: dict,
-        coefficients: dict,
-        optimization: dict,
-        noise_profile: dict,
-        init_param: list[float],
-        draw: bool,
+        observable: Observable,
+        optimization: Dict,
+        ansatz: Dict,
+        identity_factor: List[int],
+        init_param: Union[List[float], str],
     ) -> None:
 
-        self.n = n
+        self.nqubits = nqubits
         self.state = state
-        self.layer = layer
-        self.optimization_status = optimization["status"]
-        self.optimizer = optimization["algorithm"]
-        self.iteration = optimization["iteration"]
-        self.constraint = optimization["constraint"]
-        self.type = type
-        self.ti = time["min"]
-        self.tf = time["max"]
-        self.cn = coefficients["cn"]
-        self.bn = coefficients["bn"]
-        self.r = coefficients["r"]
-        self.noise_status = noise_profile["status"]
-        self.noise_value = noise_profile["value"]
-        self.noise_factor = noise_profile["factor"]
+
+        # Optimization variables
+        self.optimization_status: bool = optimization["status"]
+        self.optimizer: str = optimization["algorithm"]
+        self.iteration: int = optimization["iteration"]
+        self.constraint: bool = optimization["constraint"]
+
+        # Ansatz variables
+        self.ansatz_draw: bool = ansatz["draw"]
+        self.ansatz_type: str = ansatz["type"]
+        self.ansatz_layer: int = ansatz["layer"]
+        self.ansatz_gateset: int = ansatz["gateset"]
+        self.ansatz_ti: float = ansatz["ugate"]["time"]["min"]
+        self.ansatz_tf: float = ansatz["ugate"]["time"]["max"]
+        self.ansatz_coeffi_cn: List = ansatz["ugate"]["coefficients"]["cn"]
+        self.ansatz_coeffi_bn: List = ansatz["ugate"]["coefficients"]["bn"]
+        self.ansatz_coeffi_r: float = ansatz["ugate"]["coefficients"]["r"]
+        self.ansatz_noise_status: bool = ansatz["noise"]["status"]
+        self.ansatz_noise_value: float = ansatz["noise"]["value"]
+        self.ansatz_identity_factor: List[int] = identity_factor
         self.init_param = init_param
-        self.draw = draw
 
-        # XY spin chain Hamiltonian in time evolution gate
-        self.xy_ham = create_xy_hamiltonian(self.n, self.cn, self.bn, self.r)
+        """
+        Validate the different args parsed form the config file and raise an error if inconsistancy found.
+        """
+        noise_value_len = len(ansatz["noise"]["value"])
+        identity_factor_len = len(self.ansatz_identity_factor)
+        ugate_cn_len = len(self.ansatz_coeffi_cn)
+        ugate_bn_len = len(self.ansatz_coeffi_bn)
 
-        # Ising spin chain Hamiltonian to be used as observable
-        self.ising_ham = create_ising_hamiltonian(self.n, self.cn, self.bn)
+        if noise_value_len != 4:
+            raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
 
-    def create_ansatz(self, param: list[float]):
+        if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
+            raise ValueError(
+                f"Inconsistent lengths in ugate Hamiltonian coefficients. "
+                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
+            )
 
-        if self.type == "xy":
-            if self.noise_status:
-                ansatz = create_noisy_ansatz(
-                    self.n,
-                    self.layer,
-                    self.noise_value,
-                    self.noise_factor,
-                    self.xy_ham,
-                    param,
-                )
-            else:
-                ansatz = parametric_ansatz(self.n, self.layer, self.xy_ham, param)
+        """
+        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
 
-        elif self.type == "ising":
-            if self.noise_status:
-                ansatz = create_noisy_ansatz(
-                    self.n,
-                    self.layer,
-                    self.noise_value,
-                    self.noise_factor,
-                    self.ising_ham,
-                    param,
-                )
-            else:
-                ansatz = parametric_ansatz(self.n, self.layer, self.ising_ham, param)
+        **Also, for bogus input, value error should be raised.**
+        """
 
-        elif self.type == "hardware":
-            ansatz = he_ansatz_circuit(self.n, self.layer, param)
-
+        # Time-evolution gate's U(t)=exp(-iHt) Hamiltonian. For ZNE purpose H must be XY-Hamiltonian.
+        if self.ansatz_type.lower() == "xy":
+            self.ugate_hami = create_xy_hamiltonian(
+                self.nqubits,
+                self.ansatz_coeffi_cn,
+                self.ansatz_coeffi_bn,
+                self.ansatz_coeffi_r,
+            )
+        elif self.ansatz_type.lower() == "hardware":
+            self.ugate_hami = None
         else:
-            raise ValueError(f"Unsupported ansatz type: {self.type}")
+            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}.")
 
+        self.observable_hami = observable
+
+    def create_ansatz(self, param: List[float]) -> QuantumCircuit:
+        """
+        Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit. Noisy circuit with noise probability 0 is equivalent to noiseless circuit.
+        """
+
+        if self.ansatz_noise_status:
+            ansatz = create_noisy_ansatz(
+                nqubits=self.nqubits,
+                layer=self.ansatz_layer,
+                gateset=self.ansatz_gateset,
+                ugateH=self.ugate_hami,
+                noise_prob=self.ansatz_noise_value,
+                noise_factor=self.ansatz_identity_factor,
+                param=param,
+            )
+        else:
+            ansatz = noiseless_ansatz(
+                nqubits=self.nqubits, layers=self.ansatz_layer, gateset= self.ansatz_gateset, ugateH=self.ugate_hami, param=param
+            )
         return ansatz
 
-    # Cost function
-    def cost(self, param: list[float]):
+    def cost_function(self, param: List[float]) -> float:
+        """
+        Variational quantum eigensolver cost function.
+        """
 
-        # Create the quantum state
-        if self.state == "DMatrix":
-            state = DensityMatrix(self.n)
-
-        elif self.state == "Satevector":
-            state = QuantumState(self.n)
-
+        if self.state.lower() == "dmatrix":
+            state = DensityMatrix(self.nqubits)
+        elif self.state.lower() == "statevector":
+            state = QuantumState(self.nqubits)
         else:
-            raise ValueError(f"Unsupported quantum state: {self.state}")
+            raise ValueError(f"Unsupported state: {self.state}. Supported states are: 'dmatrix', 'statevector'")
 
-        global ansatz_circuit  # Access the global ansatz_circuit
+        global ansatz_circuit
         ansatz_circuit = self.create_ansatz(param=param)
-
-        ansatz_circuit.update_quantum_state(state)  # type: ignore
-        cost = self.ising_ham.get_expectation_value(state)
+        ansatz_circuit.update_quantum_state(state)
+        cost = self.observable_hami.get_expectation_value(state)
 
         return cost
 
@@ -119,11 +141,11 @@ class VQE:
         param_constraint = None
 
         opt = minimize(
-            self.cost,
+            self.cost_function,
             parameters,
             method=self.optimizer,
             constraints=constraint,
-            callback=lambda x: cost_history.append(self.cost(x)),
+            callback=lambda x: cost_history.append(self.cost_function(x)),
         )
 
         min_cost = np.min(cost_history)
@@ -143,16 +165,16 @@ class VQE:
 
         if isinstance(self.init_param, str):
             if self.init_param.lower() == "random":
-                param = create_param(self.layer, self.ti, self.tf)
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
             else:
-                raise ValueError(f"Unsupported initial parameters: {self.init_param}")
+                raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
         elif isinstance(self.init_param, list):
             param = self.init_param
         else:
-            raise ValueError(f"Unsupported initial parameters: {self.init_param}")
+            raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
 
-        cost_value = self.cost(param)  # type: ignore
-        exact_cost = exact_sol(self.ising_ham)
+        cost_value = self.cost_function(param)  # type: ignore
+        exact_cost = exact_sol(self.observable_hami)
 
         if not self.optimization_status:
             min_cost_history = None
@@ -165,12 +187,15 @@ class VQE:
             elif self.optimizer != "SLSQP" and self.constraint:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
-            for _ in range(self.iteration):
-
+            for i in range(self.iteration):
+                start_time = time.time()
                 cost, param = self.run_optimization(param, constraint)  # type: ignore
+                end_time = time.time()
+                run_time = end_time - start_time
                 min_cost_history.append(cost)
                 optimized_param.append(param)
-                param = create_param(self.layer, self.ti, self.tf)
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+                print(f"Iteration {i+1} done with time taken: {run_time} sec.")
 
         return cost_value, exact_cost, min_cost_history, optimized_param
 
@@ -188,3 +213,14 @@ class VQE:
         plt.close()
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
+
+    def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
+        """
+        Returns the noise levels.
+        """
+        if self.ansatz_noise_status:
+            nR, nT, nY = noise_level(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
+        else:
+            nR, nT, nY = None, None, None
+
+        return nR, nT, nY
