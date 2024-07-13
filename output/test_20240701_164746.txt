@@ -1,0 +1,7 @@
+Config: {'run': 'vqe', 'fprefix': 'test', 'vqe': {'nqubits': 4, 'state': 'statevector', 'observable': {'def': 'ising', 'coefficients': {'cn': [1.0, 1.0, 1.0], 'bn': [0, 0, 0, 0], 'r': 0}}, 'optimization': {'status': False, 'algorithm': 'SLSQP', 'iteration': 2, 'constraint': False}, 'ansatz': {'draw': True, 'type': 'xy', 'layer': 10, 'gateset': 1, 'ugate': {'coefficients': {'cn': [1.0, 1.0, 1.0], 'bn': [0, 0, 0, 0], 'r': 0}, 'time': {'min': 0.0, 'max': 10.0}}, 'noise': {'status': True, 'value': [0.01, 0.01, 0.01, 0.01]}}, 'param': 'random'}, 'zne': {'extrapolation': {'method': 'Richardson', 'degrees': [1, 2, 3, 4, 5]}, 'redundant_ansatz': {'identity_factors': [[0, 0, 0, 0], [1, 0, 0, 0]]}}}
+==========================
+Exact sol: -3.0000000000000036
+Initial cost: 1.200460274098935
+Optimized minimum cost: None
+Optimized parameters: None
+Run time: 0.009999752044677734 sec
