@@ -1,0 +1,6 @@
+Config: {'nqubits': 4, 'state': 'statevector', 'observable': {'def': 'ising', 'coefficients': {'cn': [1.0, 1.0, 1.0], 'bn': [0, 0, 0, 0], 'r': 0}}, 'optimization': {'status': False, 'algorithm': 'SLSQP', 'iteration': 4, 'constraint': False}, 'ansatz': {'draw': False, 'layer': 30, 'gateset': 1, 'unitary': {'def': 'xy', 'coefficients': {'cn': [1.0, 1.0, 1.0], 'bn': [0, 0, 0, 0], 'r': 0}, 'time': {'min': 0.0, 'max': 10.0}}, 'noise': {'status': False, 'value': [0.001, 0.001, 0.001, 0.001], 'factor': [3, 3, 3, 0]}}, 'fprefix': 'test', 'param': 'random'}
+==========================
+Exact sol: -2.2360679774997894
+Initial cost: 0.3501255494923956
+Optimized minimum cost: None
+Run time: 0.02944779396057129 sec
