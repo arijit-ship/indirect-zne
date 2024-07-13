@@ -11,7 +11,7 @@ observable:
     r: 0
 # Output
 output:
-  file_name_prefix: "vqe_vals_q7_l30_n1"
+  file_name_prefix: "vqe_vals_q7_l30_n2"
   fig_dpi: 100
 # Variational quantum eigensolver config
 vqe:
@@ -19,7 +19,7 @@ vqe:
   optimization:
     status: True
     algorithm: "SLSQP"
-    iteration: 9
+    iteration: 5
     constraint: False
   # Circuit config
   ansatz:
@@ -36,8 +36,8 @@ vqe:
         min: 0.0
         max: 10.0
     noise:
-      status: False
-      value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
+      status: True
+      value: [0.0001, 0.0001, 0.0001, 0.0001] # Noise probabilities for [r, cz, u, y] gates.
 # Zero noise extrapolation config
 zne:
   extrapolation:
