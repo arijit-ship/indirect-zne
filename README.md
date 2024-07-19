@@ -7,7 +7,7 @@ Quantum error mitigation with Zero Noise Extrapolation (ZNE) approach for indire
 
 | Parameters | Explanation |
 |------------|--------------|
-| `run` | type: `str`, what should be run |
+| `run` | type: `str`, what should be run: `vqe`, `zne` |
 | `nqubits` | type: `int`, number of qubits |
 | `state` | type: `str`, Density matrix or state vector formalism, acceptable values: `dmatrix`, `statevector` |
 | `observable.def` | type: `str`, the Hamiltonian model to be used, acceptable values: `ising` |
