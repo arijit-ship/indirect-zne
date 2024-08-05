@@ -1,4 +1,4 @@
-run: "zne"
+run: "vqe"
 # System
 nqubits: 7
 state: "dmatrix"
@@ -6,9 +6,9 @@ state: "dmatrix"
 observable:
   def: "ising"
   coefficients:
-    cn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     bn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    r: 0
+    r: 1
 # Output
 output:
   file_name_prefix: "vqe_vals_q7_l30_n2"
@@ -29,7 +29,7 @@ vqe:
     gateset: 1
     ugate: 
       coefficients:
-        cn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
         bn: [0, 0, 0, 0, 0, 0, 0]
         r: 0
       time:

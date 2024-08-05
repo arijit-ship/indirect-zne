@@ -10,7 +10,8 @@ from scipy.optimize import minimize
 from src.constraint import create_time_constraints
 from src.modules import *
 from src.createparam import create_param
-from src.xy_hamiltonian import create_xy_hamiltonian
+#from src.xy_hamiltonian import create_xy_hamiltonian
+from src.hamiltonian import create_xy_hamiltonian
 from src.ansatz import *
 
 # Global variables
