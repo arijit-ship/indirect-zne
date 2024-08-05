@@ -8,7 +8,8 @@ from typing import List, Union
 import yaml
 
 from src.modules import *
-from src.observable import create_ising_hamiltonian
+#from src.observable import create_ising_hamiltonian
+from src.hamiltonian import create_xy_hamiltonian
 from src.vqe import IndirectVQE
 from src.zne import ZeroNoiseExtrapolation
 
@@ -203,8 +204,8 @@ if __name__ == "__main__":
                 f"Inconsistent lengths in observable Hamiltonian coeffiecients. "
                 f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
             )
-        target_obsevable = create_ising_hamiltonian(
-            nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn
+        target_obsevable = create_xy_hamiltonian(
+            nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r= observable_hami_coeffi_r
         )
 
         if operation == "vqe":
