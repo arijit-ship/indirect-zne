@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import List, Union
 
 import yaml
+import json
 
 from src.modules import *
 #from src.observable import create_ising_hamiltonian
@@ -15,7 +16,6 @@ from src.zne import ZeroNoiseExtrapolation
 
 # Global symbol count
 symbol_count = 25
-
 
 def load_config(config_path):
     # Check if the config file exists
@@ -65,15 +65,19 @@ def initialize_vqe() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.txt")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+    
+    # Prepare the data to be written in JSON format
+    output_data = {
+        "Config": config,
+        "Exact_sol": exact_cost,
+        "Initial_cost": initial_cost,
+        "Optimized_minimum_cost": min_cost_history,
+        "Optimized_parameters": optimized_param,
+        "Run_time_sec": runtime
+    }
     with open(output_file, "w") as file:
-        file.write(f"Config: {config}\n")
-        file.write(f"==========================\n")
-        file.write(f"Exact sol: {exact_cost}\n")
-        file.write(f"Initial cost: {initial_cost}\n")
-        file.write(f"Optimized minimum cost: {min_cost_history}\n")
-        file.write(f"Optimized parameters: {optimized_param}\n")
-        file.write(f"Run time: {runtime} sec")
+        json.dump(output_data, file, indent=None, separators=(',', ':'))
 
     # Print the path of the output file
     print("=" * symbol_count + "File path" + "=" * symbol_count)
@@ -147,15 +151,21 @@ def initialize_zne() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.txt")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+
+    output_data = {
+        "Config": config,
+        "Symbol_count": symbol_count,
+        "Separator_1": "*" * symbol_count,
+        "Data_points": data_points,
+        "Separator_2": "*" * symbol_count,
+        "ZNE_values": zne_values,
+        "Separator_3": "*" * symbol_count,
+        "Run_time_sec": runtime
+    }
+
     with open(output_file, "w") as file:
-        file.write(f"Config: {config}\n")
-        file.write(f"{'*' * symbol_count}\n")
-        file.write(f"Data points: {data_points}\n")
-        file.write(f"{'*' * symbol_count}\n")
-        file.write(f"ZNE values: {zne_values}\n")
-        file.write(f"{'*' * symbol_count}\n")
-        file.write(f"Run time: {runtime} sec")
+        json.dump(output_data, file, indent=None, separators=(',', ':'))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
 
