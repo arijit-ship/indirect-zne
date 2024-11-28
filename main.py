@@ -9,13 +9,15 @@ import yaml
 import json
 
 from src.modules import *
-#from src.observable import create_ising_hamiltonian
+
+# from src.observable import create_ising_hamiltonian
 from src.hamiltonian import create_xy_hamiltonian
 from src.vqe import IndirectVQE
 from src.zne import ZeroNoiseExtrapolation
 
 # Global symbol count
 symbol_count = 25
+
 
 def load_config(config_path):
     # Check if the config file exists
@@ -66,7 +68,7 @@ def initialize_vqe() -> None:
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
-    
+
     # Prepare the data to be written in JSON format
     output_data = {
         "Config": config,
@@ -74,10 +76,10 @@ def initialize_vqe() -> None:
         "Initial_cost": initial_cost,
         "Optimized_minimum_cost": min_cost_history,
         "Optimized_parameters": optimized_param,
-        "Run_time_sec": runtime
+        "Run_time_sec": runtime,
     }
     with open(output_file, "w") as file:
-        json.dump(output_data, file, indent=None, separators=(',', ':'))
+        json.dump(output_data, file, indent=None, separators=(",", ":"))
 
     # Print the path of the output file
     print("=" * symbol_count + "File path" + "=" * symbol_count)
@@ -86,15 +88,11 @@ def initialize_vqe() -> None:
         vqe_instance.drawCircuit(time_stamp=timestamp, dpi=fig_dpi)
 
 
-def initialize_zne() -> None:
-
+def run_redundant() -> None:
     global symbol_count
-    extrapolation_method: str = config["zne"]["extrapolation"]["method"]
-    degrees: List[int] = config["zne"]["extrapolation"]["degrees"]
-    identity_factors: Union[List[int], List[List[int]]] = config["zne"]["redundant_ansatz"]["identity_factors"]
+    identity_factors: Union[List[int], List[List[int]]] = config["identity_factors"]
 
     data_points = []
-    zne_values = []
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
@@ -117,7 +115,7 @@ def initialize_zne() -> None:
         )
         initial_cost, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
         nR, nT, nY = vqe_instance.get_noise_level()
-        data_points.append((nR, nT, nY, initial_cost))
+        data_points.append([nR, nT, nY, *initial_cost])
         end_iteration_time = time.time()
         print(f"#{i}")
         print(f"Exact sol: {exact_cost}")
@@ -127,21 +125,12 @@ def initialize_zne() -> None:
         print(f"Identity factor: {factor}")
         print(f"Noise level (nR, nT, nY): ({nR}, {nT}, {nY}) ")
         print(f"Time taken: {end_iteration_time-start_iteration_time} sec")
-        print("-" * symbol_count)
+        if i < len(identity_factors):
+            print("-" * symbol_count)
         i += 1
-
+    print("=" * symbol_count + "Data points" + "=" * symbol_count)
     print(f"No of data points: {len(data_points)}")
     print(f"Data points: {data_points}")
-    print("=" * symbol_count + "ZNE" + "=" * symbol_count)
-    print(f"Exact sol: {exact_cost}")
-    for degree in zne_degrees:
-        zne_instance = ZeroNoiseExtrapolation(
-            datapoints=data_points, degree=degree, method=zne_method, sampling=zne_sampling
-        )
-        zne_value = zne_instance.getRichardsonZNE()
-        zne_values.append({"degree": degree, "value": zne_value})
-        print(f"ZNE value at degree {degree}: {zne_value}")
-
     end_time = time.time()
     runtime = end_time - start_time
     print(f"Total runtime: {runtime} sec")
@@ -156,16 +145,60 @@ def initialize_zne() -> None:
     output_data = {
         "Config": config,
         "Symbol_count": symbol_count,
-        "Separator_1": "*" * symbol_count,
         "Data_points": data_points,
-        "Separator_2": "*" * symbol_count,
-        "ZNE_values": zne_values,
-        "Separator_3": "*" * symbol_count,
-        "Run_time_sec": runtime
+        "Run_time_sec": runtime,
     }
 
     with open(output_file, "w") as file:
-        json.dump(output_data, file, indent=None, separators=(',', ':'))
+        json.dump(output_data, file, indent=None, separators=(",", ":"))
+    print("=" * symbol_count + "File path" + "=" * symbol_count)
+    print(f"Output saved to: {os.path.abspath(output_file)}")
+
+
+def initialize_zne() -> None:
+
+    global symbol_count
+    zne_config: Dict = config["zne"]
+    extrapolation_method: str = zne_config["method"]
+    zne_degree: int = zne_config["degree"]
+    
+
+    data_points = zne_config["data_points"]
+
+    print("=" * symbol_count + "Config" + "=" * symbol_count)
+    print(config)
+    print("=" * symbol_count + "Zero-noise extrapolation result" + "=" * symbol_count)
+
+    start_time = time.time()
+    # Turn off the optimization
+    optimization["status"] = False   
+
+    zne_instance = ZeroNoiseExtrapolation(
+            datapoints=data_points, degree=zne_degree, method=zne_method, sampling=zne_sampling
+        )
+    zne_value = zne_instance.getRichardsonZNE()
+    print(f"Value: {zne_value}")
+        
+
+    end_time = time.time()
+    runtime = end_time - start_time
+    print(f"Total runtime: {runtime} sec")
+    # Generate timestamp for unique file name
+    # Get the current directory
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_dir = os.path.join(current_dir, "output")
+    os.makedirs(output_dir, exist_ok=True)
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+
+    output_data = {
+        "Config": config,
+        "ZNE_values": zne_value,
+        "Run_time_sec": runtime,
+    }
+
+    with open(output_file, "w") as file:
+        json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
 
@@ -197,11 +230,11 @@ if __name__ == "__main__":
         ansatz: Dict = config["vqe"]["ansatz"]
 
         zne: Dict = config["zne"]
-        zne_method: str = zne["extrapolation"]["method"]
-        zne_degrees: List[int] = zne["extrapolation"]["degrees"]
-        zne_sampling: str = zne["extrapolation"]["sampling"]
+        zne_method: str = zne["method"]
+        zne_degrees: List[int] = zne["degree"]
+        zne_sampling: str = zne["sampling"]
 
-        initialparam: Union[str, List[float]] = config["param"]
+        initialparam: Union[str, List[float]] = ansatz["init_param"]
 
         """
         Validate the user input.
@@ -215,10 +248,12 @@ if __name__ == "__main__":
                 f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
             )
         target_obsevable = create_xy_hamiltonian(
-            nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r= observable_hami_coeffi_r
+            nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r=observable_hami_coeffi_r
         )
 
         if operation == "vqe":
             initialize_vqe()
+        elif operation == "redundant":
+            run_redundant()
         elif operation == "zne":
             initialize_zne()
