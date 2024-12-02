@@ -67,7 +67,7 @@ def initialize_vqe() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_VQE.json")
 
     # Prepare the data to be written in JSON format
     output_data = {
@@ -140,7 +140,7 @@ def run_redundant() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_redundant.json")
 
     output_data = {
         "Config": config,
@@ -153,6 +153,8 @@ def run_redundant() -> None:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
+    if ansatz["draw"]:
+        vqe_instance.drawCircuit(time_stamp=timestamp, dpi=fig_dpi)
 
 
 def initialize_zne() -> None:
@@ -189,7 +191,7 @@ def initialize_zne() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}.json")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_ZNE.json")
 
     output_data = {
         "Config": config,
@@ -201,6 +203,7 @@ def initialize_zne() -> None:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
+    
 
 
 if __name__ == "__main__":
