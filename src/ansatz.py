@@ -137,7 +137,7 @@ def create_redundant(
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
-        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        noise_factor (List[]): Noise factor/identity for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is [1, 1, 1] only one set of identities are introduced for rotational, unitary and Y gates.
         param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -157,7 +157,7 @@ def create_redundant(
 
     # Noisy identy factors
     r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
-    u_gate_factor = noise_factor[1]  # Identity scaling factor for time evolution gates
+    u_gate_factor = noise_factor[1]  # Identity scaling factor for time-evolution gates
     y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
     #cz_gate_factor = noise_factor[3]
 
