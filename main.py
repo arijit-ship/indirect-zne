@@ -174,10 +174,10 @@ def initialize_zne() -> None:
     optimization["status"] = False   
 
     zne_instance = ZeroNoiseExtrapolation(
-            datapoints=data_points, degree=zne_degree, method=zne_method, sampling=zne_sampling
+            datapoints=data_points, degree=zne_degree, method=zne_method, sampling_mode=zne_sampling
         )
-    zne_value = zne_instance.getRichardsonZNE()
-    print(f"Value: {zne_value}")
+    zne_value = zne_instance.getZne()
+    print(zne_value)
         
 
     end_time = time.time()
