@@ -153,8 +153,6 @@ def run_redundant() -> None:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
-    if ansatz["draw"]:
-        vqe_instance.drawCircuit(time_stamp=timestamp, dpi=fig_dpi)
 
 
 def initialize_zne() -> None:
