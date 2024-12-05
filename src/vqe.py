@@ -10,7 +10,9 @@ from scipy.optimize import minimize
 from src.constraint import create_time_constraints
 from src.modules import *
 from src.createparam import create_param
-from src.xy_hamiltonian import create_xy_hamiltonian
+
+# from src.xy_hamiltonian import create_xy_hamiltonian
+from src.hamiltonian import create_xy_hamiltonian
 from src.ansatz import *
 
 # Global variables
@@ -110,7 +112,11 @@ class IndirectVQE:
             )
         else:
             ansatz = noiseless_ansatz(
-                nqubits=self.nqubits, layers=self.ansatz_layer, gateset= self.ansatz_gateset, ugateH=self.ugate_hami, param=param
+                nqubits=self.nqubits,
+                layers=self.ansatz_layer,
+                gateset=self.ansatz_gateset,
+                ugateH=self.ugate_hami,
+                param=param,
             )
         return ansatz
 
@@ -158,27 +164,33 @@ class IndirectVQE:
     def run_vqe(self):
 
         global constraint
-        cost_value = None
+        isRandom = None
         exact_cost = None
+        initial_costs = []
         min_cost_history = []
         optimized_param = []
 
         if isinstance(self.init_param, str):
             if self.init_param.lower() == "random":
-                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+                isRandom = True
             else:
                 raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
         elif isinstance(self.init_param, list):
-            param = self.init_param
+            isRandom = False
         else:
             raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
 
-        cost_value = self.cost_function(param)  # type: ignore
         exact_cost = exact_sol(self.observable_hami)
 
         if not self.optimization_status:
             min_cost_history = None
             optimized_param = None
+            if isRandom:
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+                initial_costs.append(self.cost_function(param=param))
+            else:
+                param = self.init_param
+                initial_costs.append(self.cost_function(param=param))
 
         else:
             if self.constraint and self.optimizer == "SLSQP":
@@ -188,16 +200,21 @@ class IndirectVQE:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             for i in range(self.iteration):
+                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+                initial_costs.append(self.cost_function(param=param))
+
+                # Optimization
                 start_time = time.time()
-                cost, param = self.run_optimization(param, constraint)  # type: ignore
+                cost, sol_optimized_param = self.run_optimization(param, constraint)  # type: ignore
                 end_time = time.time()
+
                 run_time = end_time - start_time
                 min_cost_history.append(cost)
-                optimized_param.append(param)
-                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+                optimized_param.append(sol_optimized_param)
+
                 print(f"Iteration {i+1} done with time taken: {run_time} sec.")
 
-        return cost_value, exact_cost, min_cost_history, optimized_param
+        return initial_costs, exact_cost, min_cost_history, optimized_param
 
     def drawCircuit(self, time_stamp, dpi):
 

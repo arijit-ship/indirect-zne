@@ -1,5 +1,5 @@
 """
-XY Hamiltonian for the time-evolution unitary.
+General form of XY-model Hamiltonia.
 """
 
 from typing import List
@@ -24,9 +24,9 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
     hami = QubitOperator()
 
     for i in range(nqubits - 1):
-        hami += (0.5 * cn[i] * (1 + r)) * QubitOperator(f"X{i} X{i+1}")
+        hami += (cn[i] * (1 + r)) * QubitOperator(f"X{i} X{i+1}")
         # hami += (0.5*cn*(1-r)) * QubitOperator(f"Y{i} Y{i+1}")
-        hami += (0.5 * cn[i] * (1 - r)) * QubitOperator(f"Z{i} Z{i+1}")
+        hami += (cn[i] * (1 - r)) * QubitOperator(f"Z{i} Z{i+1}")
     for j in range(nqubits):
         hami += bn[j] * QubitOperator(f"Y{j}")
 

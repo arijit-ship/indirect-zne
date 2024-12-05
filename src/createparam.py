@@ -3,7 +3,7 @@ import numpy as np
 
 def create_param(layer: int, gateset: int, ti: float, tf: float) -> np.ndarray:
     """
-    Creates parameter for the citcuit. Parameters are time, and theta: angle for rotation gates.
+    Creates initial parameters for the citcuit. Parameters are time, and theta: angle for rotation gates.
 
     time: 0 - max time
     theta: 0 - 1
