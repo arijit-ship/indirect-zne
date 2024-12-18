@@ -98,22 +98,12 @@ class IndirectVQE:
             ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
             ugate_bn = [0.0 for _ in range(self.nqubits)]
             ugate_r = 0
-            self.ugate_hami = create_xy_hamiltonian(
-                nqubits=self.nqubits,
-                cn=ugate_cn,
-                bn=ugate_bn,
-                r=ugate_r
-            )
+            self.ugate_hami = create_xy_hamiltonian(nqubits=self.nqubits, cn=ugate_cn, bn=ugate_bn, r=ugate_r)
         elif self.ansatz_type.lower() == "ising":
             ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
             ugate_bn = [1.0 for _ in range(self.nqubits)]
             ugate_r = 1
-            self.ugate_hami = create_xy_hamiltonian(
-                self.nqubits,
-                self.ansatz_coeffi_cn,
-                self.ansatz_coeffi_bn,
-                self.ansatz_coeffi_r,
-            )
+            self.ugate_hami = create_xy_hamiltonian(nqubits=self.nqubits, cn=ugate_cn, bn=ugate_bn, r=ugate_r)
         elif self.ansatz_type.lower() == "heisenberg":
             self.ugate_hami = create_heisenberg_hamiltonian(
                 self.nqubits,
@@ -122,8 +112,10 @@ class IndirectVQE:
         # elif self.ansatz_type.lower() == "hardware":
         #     self.ugate_hami = None
         else:
-            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}. "
-                             f"Expected type: 'custom', 'ising', 'xy-iss', or 'heisenberg'.")
+            raise ValueError(
+                f"Unsupported ansatz type: {self.ansatz_type}. "
+                f"Expected type: 'custom', 'ising', 'xy-iss', or 'heisenberg'."
+            )
 
         self.observable_hami = observable
 
