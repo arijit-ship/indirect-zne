@@ -3,6 +3,8 @@ output/*
 env
 .vscode
 .VSCodeCounter
+
+src/optimizer
 # from boilerplate
 # Byte-compiled / optimized / DLL files
 __pycache__/
