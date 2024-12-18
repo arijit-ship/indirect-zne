@@ -82,15 +82,32 @@ class IndirectVQE:
         **Also, for bogus input, value error should be raised.**
         """
 
-        # Time-evolution gate's i.e. U(t)=exp(-iHt) Hamiltonian H. For ZNE purpose H must be XY-Hamiltonian.
-        if self.ansatz_type.lower() == "xy_model-xz-z":
+        # Time-evolution gate's i.e. U(t)=exp(-iHt) Hamiltonian H.
+        # Ansatz type can be: 'custom', 'xy-iss' (stands for xy-identity scaling supported), 'ising', or 'heisenberg'.
+        # For ZNE purpose, type mus be 'xy-iss' which is an XY-Hamiltonian.
+        # Coeffiecients are applicable for only 'custom' and are overwritten for others.
+        if self.ansatz_type.lower() == "custom":
             self.ugate_hami = create_xy_hamiltonian(
-                self.nqubits,
-                self.ansatz_coeffi_cn,
-                self.ansatz_coeffi_bn,
-                self.ansatz_coeffi_r,
+                nqubits=self.nqubits,
+                cn=self.ansatz_coeffi_cn,
+                bn=self.ansatz_coeffi_bn,
+                r=self.ansatz_coeffi_r,
+            )
+        elif self.ansatz_type.lower() == "xy-iss":
+            # Identity scaling supported
+            ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
+            ugate_bn = [0.0 for _ in range(self.nqubits)]
+            ugate_r = 0
+            self.ugate_hami = create_xy_hamiltonian(
+                nqubits=self.nqubits,
+                cn=ugate_cn,
+                bn=ugate_bn,
+                r=ugate_r
             )
         elif self.ansatz_type.lower() == "ising":
+            ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
+            ugate_bn = [1.0 for _ in range(self.nqubits)]
+            ugate_r = 1
             self.ugate_hami = create_xy_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
@@ -102,10 +119,11 @@ class IndirectVQE:
                 self.nqubits,
                 self.ansatz_coeffi_cn,
             )
-        elif self.ansatz_type.lower() == "hardware":
-            self.ugate_hami = None
+        # elif self.ansatz_type.lower() == "hardware":
+        #     self.ugate_hami = None
         else:
-            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}.")
+            raise ValueError(f"Unsupported ansatz type: {self.ansatz_type}. "
+                             f"Expected type: 'custom', 'ising', 'xy-iss', or 'heisenberg'.")
 
         self.observable_hami = observable
 

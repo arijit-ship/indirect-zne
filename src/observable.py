@@ -58,7 +58,7 @@ def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, fl
 
         target_observable = create_xy_hamiltonian(nqubits=nqubits, cn=observable_cn, bn=observable_bn, r=observable_r)
 
-    elif definition.lower() == "xy_model_xz-y":
+    elif definition.lower() == "xy_model-xz-z":
 
         observable_cn = [1.0 for _ in range(nqubits - 1)]
         observable_bn = [1.0 for _ in range(nqubits)]
