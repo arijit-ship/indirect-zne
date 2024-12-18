@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'
-run: "redundant"
+run: "zne"
 
 # System configuration
 nqubits: 4
@@ -26,7 +26,7 @@ output:
 
 # (1) Variational Quantum Eigensolver (VQE) configuration
 vqe:
-  iteration: 3
+  iteration: 1
 
   # Optimization configuration
   optimization:
@@ -37,7 +37,7 @@ vqe:
   # Circuit configuration
   ansatz:
     type: "xy_model-xz-y"
-    layer: 1
+    layer: 10
     gateset: 1
     ugate: 
       coefficients:
@@ -52,7 +52,7 @@ vqe:
       value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
 
     # Initial parameters for the ansatz
-    init_param: "random"
+    init_param: [1.680289051496918, 2.1505422787583894, 1.4944106032481597, 4.640769286399301, 5.7182574621303734, 6.857961206974318, 8.041408503567755, 8.23067163130046, 8.085831595597748, 9.818035718436082, -0.41537291893615835, -0.33435051912665753, -0.06623102732697012, -0.10287519496553041, -0.04580242962481022, -0.19747096129481492, -0.48286432396985945, 0.8284193787692484, -0.673177080439198, 0.3758072729211817, -1.1877951597334953, 0.39081102658539174, 0.03193852169011834, -0.1299220721105691, 0.13936201980584523, 0.025329411524652796, -0.2916194955332766, -0.0757967467547441, 0.41920104477835946, 0.3124575856674924, 0.2723844849336973, -0.24304158561406244, -0.47057157111081166, -0.3765870862611265, -0.4611391443908779, -0.6549644689510006, -0.7060419296590451, -0.09963087352368039, 0.6661242946923601, 0.28585090280480374, -0.2499331204012045, 0.216013781720684, -0.3069295519371179, 0.3492898337936126, 0.037218649654455475, 0.3358424124625691, 0.08720297901861428, -0.10913746908071763, 0.5261523913167105, 0.9324647072029325]
 # (2) Redundant circuit configuration
 
   # Identity factors for r, U, Y, and CZ gates
@@ -74,7 +74,7 @@ zne:
   # 'default' - samples all points.
   # 'default-N' - samples first N points.
   # 'random-N' - samples N points randomly.
-  sampling: "default-5"
+  sampling: "default"
   
   # Data points for extrapolation
-  data_points: 
+  data_points: [[12, 1, 0, 3, -4.758769501305926], [4, 3, 10, 3, -4.758769501305916]]

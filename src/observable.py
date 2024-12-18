@@ -21,7 +21,7 @@ def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, fl
         dict: A dictionary representing the constructed Hamiltonian.
     """
 
-     # Validate the coefficient dictionary to ensure all required keys are present
+    # Validate the coefficient dictionary to ensure all required keys are present
     required_keys = ["cn", "bn", "r"]
     for key in required_keys:
         if key not in coefficient:
