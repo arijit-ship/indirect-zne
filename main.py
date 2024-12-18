@@ -334,6 +334,7 @@ if __name__ == "__main__":
 
         # Exact minimum eigen value of the target observable
         exact_cost: float = get_eigen_min(hamiltonian=target_observable)
+        
 
         # """
         # Validate the user input.

@@ -7,12 +7,11 @@ from qulacs import DensityMatrix, QuantumState
 from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
-from src.constraint import create_time_constraints
-from src.modules import *
-from src.createparam import create_param
-
-from src.hamiltonian import *
 from src.ansatz import *
+from src.constraint import create_time_constraints
+from src.createparam import create_param
+from src.hamiltonian import *
+from src.modules import *
 
 
 class IndirectVQE:
@@ -174,11 +173,17 @@ class IndirectVQE:
         min_cost: float | None = None
         sol_optimized_param = None
 
-        # (1) Decide the initial param type: random or provided
+        # Decide the initial param type: random or provided. If provided, validate the length.
         if isinstance(self.init_param, str) and self.init_param.lower() == "random":
             isRandom = True
         elif isinstance(self.init_param, list):
-            isRandom = False
+            expected_length = self.ansatz_layer + (self.ansatz_layer * 4 * self.ansatz_gateset)
+            if len(self.init_param) == expected_length:
+                isRandom = False
+            else:
+                raise ValueError(
+                    f"Invalid initial parameters length: {len(self.init_param)}. Expected: {expected_length}."
+                )
         else:
             raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
 
