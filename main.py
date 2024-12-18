@@ -6,6 +6,7 @@ from ast import Dict
 from datetime import datetime
 from typing import List, Union
 
+import uuid
 import yaml
 
 from configValidator import validate_yml_config
@@ -230,9 +231,12 @@ def run_redundant() -> None:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
+
     if circuit_draw_status:
         for instance in vqe_instances:
-            vqe_instance.drawCircuit(prefix=file_name_prefix, dpi=fig_dpi, filetype=fig_filetype)
+            # Sometimes time-based identifier did not work.
+            unique_id: str = uuid.uuid4().hex  # Generate a unique identifier
+            instance.drawCircuit(prefix=f"{file_name_prefix}_{unique_id}", dpi=fig_dpi, filetype=fig_filetype)
 
 
 def initialize_zne() -> None:

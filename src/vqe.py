@@ -238,7 +238,7 @@ class IndirectVQE:
 
         return {"initial_cost": initial_cost, "min_cost": min_cost, "optimized_param": sol_optimized_param}
 
-    def drawCircuit(self, prefix: str, dpi: int, filetype: str):
+    def drawCircuit(self, prefix: str, dpi: int, filetype: str) -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(current_dir)  # Go up one level
