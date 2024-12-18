@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -6,12 +7,11 @@ from datetime import datetime
 from typing import List, Union
 
 import yaml
-import json
 
+from configValidator import validate_yml_config
+from src.hamiltonian import *
+from src.observable import constructObservable
 from src.modules import *
-
-# from src.observable import create_ising_hamiltonian
-from src.hamiltonian import create_xy_hamiltonian
 from src.vqe import IndirectVQE
 from src.zne import ZeroNoiseExtrapolation
 
@@ -35,32 +35,63 @@ def initialize_vqe() -> None:
     """
     Initializes the variational quantum eigensolver.
     """
+    initial_costs_history = []
+    min_cost_history = []
+    all_optimized_param = []
+    time_evolution_hamiltonian_string = []
 
-    vqe_instance = IndirectVQE(
-        nqubits=nqubits,
-        state=state,
-        observable=target_obsevable,
-        optimization=optimization,
-        ansatz=ansatz,
-        identity_factor=[0, 0, 0, 0],
-        init_param=initialparam,
-    )
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
-    print("=" * symbol_count + "Optimization" + "=" * symbol_count)
-    start_time = time.time()
-    initial_cost, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
-    nR, nT, nY = vqe_instance.get_noise_level()
-    end_time = time.time()
+    print("=" * symbol_count + "VQE running" + "=" * symbol_count)
 
-    runtime = end_time - start_time
+    start_time = time.time()
+
+    for i in range(vqe_iteration):
+
+        each_start_time = time.time()
+        vqe_instance = IndirectVQE(
+            nqubits=nqubits,
+            state=state,
+            observable=target_observable,
+            optimization=optimization,
+            ansatz=ansatz,
+            identity_factor=[0, 0, 0, 0],
+            init_param=initialparam,
+        )
+        vqe_output = vqe_instance.run_vqe()
+        each_end_time = time.time()
+
+        each_run_time = each_end_time - each_start_time
+
+        print(f"VQE #{i+1} done with time taken: {each_run_time} sec.")
+
+        # Extracting output
+        initial_cost = vqe_output["initial_cost"]
+        min_cost = vqe_output["min_cost"]
+        optimized_param = vqe_output["optimized_param"]
+
+        initial_costs_history.append(initial_cost)
+        min_cost_history.append(min_cost)
+        all_optimized_param.append(optimized_param)
+
+    # Hamiltonian in time-evolution gate does NOT change in each iteration, so append the Hamiltonian string outside the lopp.
+    time_evolution_hamiltonian_string.append(str(vqe_instance.get_ugate_hamiltonain()))
+
+    end_time = time.time()
+    total_run_time = end_time - start_time
+
+    nR, nT, nY, nCz = vqe_instance.get_noise_level()
+    noise_level_list = [nR, nT, nY, nCz]
+
     print("=" * symbol_count + "Output" + "=" * symbol_count)
+
     print(f"Exact sol: {exact_cost}")
-    print(f"Initial cost: {initial_cost}")
-    print(f"Optimized minimum cost: {min_cost_history}")
-    print(f"Optimized parameters: {optimized_param}")
-    print(f"Noise level (nR, nT, nY): ({nR}, {nT}, {nY}) ")
-    print(f"Run time: {runtime} sec")
+    print(f"Initial costs: {initial_costs_history}")
+    print(f"Optimized minimum costs: {min_cost_history}")
+    print(f"Optimized parameters: {all_optimized_param}")
+    print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
+    print(f"Run time: {total_run_time} sec")
+
     # Generate timestamp for unique file name
     # Get the current directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,69 +102,110 @@ def initialize_vqe() -> None:
 
     # Prepare the data to be written in JSON format
     output_data = {
-        "Config": config,
-        "Exact_sol": exact_cost,
-        "Initial_cost": initial_cost,
-        "Optimized_minimum_cost": min_cost_history,
-        "Optimized_parameters": optimized_param,
-        "Run_time_sec": runtime,
+        "config": config,
+        "output": {
+            "exact_sol": exact_cost,
+            "initial_cost_history": initial_costs_history,
+            "optimized_minimum_cost": min_cost_history,
+            "optimized_parameters": all_optimized_param,
+            "noise_level": noise_level_list,
+            "run_time_sec": total_run_time,
+        },
+        "others": {
+            "observable_string": str(target_observable),
+            "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
+        },
     }
+
     with open(output_file, "w") as file:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
 
     # Print the path of the output file
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
-    if ansatz["draw"]:
-        vqe_instance.drawCircuit(time_stamp=timestamp, dpi=fig_dpi)
+    if circuit_draw_status:
+        vqe_instance.drawCircuit(prefix=file_name_prefix, dpi=fig_dpi, filetype=fig_filetype)
 
 
 def run_redundant() -> None:
-    global symbol_count
-    identity_factors: Union[List[int], List[List[int]]] = config["identity_factors"]
-
+    """
+    Running redundant circuit.
+    """
     data_points = []
+    vqe_instances = []
+    time_evolution_hamiltonian_string = []
+
+    identity_factors: Union[List[int], List[List[int]]] = config["identity_factors"]
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
     print("=" * symbol_count + "VQE values at different noise levels" + "=" * symbol_count)
 
+    if optimization["status"]:
+        """
+        The optimisation status is turned-off by default regardless of what user specify in config file.
+        """
+        print(f"WARNING! Optimization status on, but it will be ignored.")
+        # Turn off the optimization
+        optimization["status"] = False
+
+    i = 1  # Cosmatic purpose only.
+
     start_time = time.time()
-    # Turn off the optimization
-    optimization["status"] = False
-    i = 1
+
     for factor in identity_factors:
-        start_iteration_time = time.time()
+
+        each_start_time = time.time()
         vqe_instance = IndirectVQE(
             nqubits=nqubits,
             state=state,
-            observable=target_obsevable,
+            observable=target_observable,
             optimization=optimization,
             ansatz=ansatz,
             identity_factor=factor,
             init_param=initialparam,
         )
-        initial_cost, exact_cost, min_cost_history, optimized_param = vqe_instance.run_vqe()
-        nR, nT, nY = vqe_instance.get_noise_level()
-        data_points.append([nR, nT, nY, *initial_cost])
-        end_iteration_time = time.time()
+        vqe_output = vqe_instance.run_vqe()
+        each_end_time = time.time()
+
+        each_run_time = each_end_time - each_start_time
+
+        # Extracting output
+        initial_cost = vqe_output["initial_cost"]
+        min_cost = vqe_output["min_cost"]
+        optimized_param = vqe_output["optimized_param"]
+
+        nR, nT, nY, nCz = vqe_instance.get_noise_level()
+        noise_level_list = [nR, nT, nY, nCz]
+        data_points.append([nR, nT, nY, nCz, initial_cost])
+
+        vqe_instances.append(vqe_instance)
+
         print(f"#{i}")
         print(f"Exact sol: {exact_cost}")
         print(f"Initial cost: {initial_cost}")
-        print(f"Optimized minimum cost: {min_cost_history}")
+        print(f"Optimized minimum cost: {min_cost}")
         print(f"Optimized parameters: {optimized_param}")
         print(f"Identity factor: {factor}")
-        print(f"Noise level (nR, nT, nY): ({nR}, {nT}, {nY}) ")
-        print(f"Time taken: {end_iteration_time-start_iteration_time} sec")
+        print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
+        print(f"Time taken: {each_run_time} sec")
+
+        # Not printing - in the list iteration, cosmatic purpose only.
         if i < len(identity_factors):
             print("-" * symbol_count)
         i += 1
+
+    # Hamiltonian in time-evolution gate does NOT change in each iteration, so append the Hamiltonian string outside the lopp.
+    time_evolution_hamiltonian_string.append(str(vqe_instance.get_ugate_hamiltonain()))
+    end_time = time.time()
+    total_run_time = end_time - start_time
+
     print("=" * symbol_count + "Data points" + "=" * symbol_count)
     print(f"No of data points: {len(data_points)}")
     print(f"Data points: {data_points}")
     end_time = time.time()
     runtime = end_time - start_time
-    print(f"Total runtime: {runtime} sec")
+    print(f"Total runtime: {total_run_time} sec")
     # Generate timestamp for unique file name
     # Get the current directory
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -143,26 +215,32 @@ def run_redundant() -> None:
     output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_redundant.json")
 
     output_data = {
-        "Config": config,
-        "Symbol_count": symbol_count,
-        "Data_points": data_points,
-        "Run_time_sec": runtime,
+        "config": config,
+        "output": {
+            "data_points": data_points,
+            "run_time_sec": runtime,
+        },
+        "others": {
+            "observable_string": str(target_observable),
+            "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
+        },
     }
 
     with open(output_file, "w") as file:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
+    if circuit_draw_status:
+        for instance in vqe_instances:
+            vqe_instance.drawCircuit(prefix=file_name_prefix, dpi=fig_dpi, filetype=fig_filetype)
 
 
 def initialize_zne() -> None:
-
-    global symbol_count
+    """
+    Perfrom extrapolation to zero limit.
+    """
     zne_config: Dict = config["zne"]
-    extrapolation_method: str = zne_config["method"]
     zne_degree: int = zne_config["degree"]
-    
-
     data_points = zne_config["data_points"]
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
@@ -170,18 +248,16 @@ def initialize_zne() -> None:
     print("=" * symbol_count + "Zero-noise extrapolation result" + "=" * symbol_count)
 
     start_time = time.time()
-    # Turn off the optimization
-    optimization["status"] = False   
 
     zne_instance = ZeroNoiseExtrapolation(
-            datapoints=data_points, degree=zne_degree, method=zne_method, sampling_mode=zne_sampling
-        )
+        datapoints=data_points, degree=zne_degree, method=zne_method, sampling_mode=zne_sampling
+    )
     zne_value = zne_instance.getZne()
-    print(zne_value)
-        
-
     end_time = time.time()
     runtime = end_time - start_time
+
+    print(f"Exact sol: {exact_cost}")
+    print(f"ZNE: {zne_value}")
     print(f"Total runtime: {runtime} sec")
     # Generate timestamp for unique file name
     # Get the current directory
@@ -192,16 +268,18 @@ def initialize_zne() -> None:
     output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_ZNE.json")
 
     output_data = {
-        "Config": config,
-        "ZNE_values": zne_value,
-        "Run_time_sec": runtime,
+        "config": config,
+        "output": {
+            "exact_sol": exact_cost,
+            "zne_values": zne_value,
+            "run_time_sec": runtime,
+        },
     }
 
     with open(output_file, "w") as file:
         json.dump(output_data, file, indent=None, separators=(",", ":"))
     print("=" * symbol_count + "File path" + "=" * symbol_count)
     print(f"Output saved to: {os.path.abspath(output_file)}")
-    
 
 
 if __name__ == "__main__":
@@ -214,19 +292,27 @@ if __name__ == "__main__":
     config_file = sys.argv[1]
     config = load_config(config_file)
 
-    if config:
+    is_valid_config: bool = validate_yml_config(config)
+
+    if config and is_valid_config:
         operation: str = config["run"]
         nqubits: int = config["nqubits"]
         state: str = config["state"]
 
         observable: Dict = config["observable"]
-        observable_hami_coeffi_cn: List[float] = observable["coefficients"]["cn"]
-        observable_hami_coeffi_bn: List[float] = observable["coefficients"]["bn"]
-        observable_hami_coeffi_r: float = observable["coefficients"]["r"]
+        observable_def: Dict = config["observable"]["def"]
+        observable_coefficients: Dict = config["observable"]["coefficients"]
+
+        # observable_hami_coeffi_cn: List[float] = observable["coefficients"]["cn"]
+        # observable_hami_coeffi_bn: List[float] = observable["coefficients"]["bn"]
+        # observable_hami_coeffi_r: float = observable["coefficients"]["r"]
 
         file_name_prefix: str = config["output"]["file_name_prefix"]
-        fig_dpi: int = config["output"]["fig_dpi"]
+        circuit_draw_status: bool = config["output"]["draw"]["status"]
+        fig_dpi: int = config["output"]["draw"]["fig_dpi"]
+        fig_filetype: str = config["output"]["draw"]["type"]
 
+        vqe_iteration: int = config["vqe"]["iteration"]
         optimization: Dict = config["vqe"]["optimization"]
         ansatz: Dict = config["vqe"]["ansatz"]
 
@@ -237,24 +323,36 @@ if __name__ == "__main__":
 
         initialparam: Union[str, List[float]] = ansatz["init_param"]
 
-        """
-        Validate the user input.
-        """
-        observable_cn_len = len(observable_hami_coeffi_cn)
-        observable_bn_len = len(observable_hami_coeffi_bn)
-
-        if observable_cn_len != nqubits - 1 or observable_bn_len != nqubits:
-            raise ValueError(
-                f"Inconsistent lengths in observable Hamiltonian coeffiecients. "
-                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
-            )
-        target_obsevable = create_xy_hamiltonian(
-            nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r=observable_hami_coeffi_r
+        # Create the target observable
+        target_observable = constructObservable(
+            nqubits=nqubits, definition=observable_def, coefficient=observable_coefficients
         )
 
-        if operation == "vqe":
+        # Exact minimum eigen value of the target observable
+        exact_cost: float = get_eigen_min(hamiltonian=target_observable)
+
+        # """
+        # Validate the user input.
+        # """
+        # observable_cn_len = len(observable_hami_coeffi_cn)
+        # observable_bn_len = len(observable_hami_coeffi_bn)
+
+        # if observable_cn_len != nqubits - 1 or observable_bn_len != nqubits:
+        #     raise ValueError(
+        #         f"Inconsistent lengths in observable Hamiltonian coeffiecients. "
+        #         f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
+        #     )
+        # target_observable = create_xy_hamiltonian(
+        #     nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r=observable_hami_coeffi_r
+        # )
+
+        # exact_cost: float = get_eigen_min(hamiltonian=target_observable)
+
+        if operation.lower() == "vqe":
             initialize_vqe()
-        elif operation == "redundant":
+        elif operation.lower() == "redundant":
             run_redundant()
-        elif operation == "zne":
+        elif operation.lower() == "zne":
             initialize_zne()
+        else:
+            raise ValueError(f"Invalid run: {operation}. Valid runs are: 'vqe', 'redundant', and 'zne'.")

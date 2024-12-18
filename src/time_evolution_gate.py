@@ -1,16 +1,16 @@
 import numpy as np
 from qulacs import Observable
-from qulacs.gate import *
+from qulacs.gate import DenseMatrix
 
 # Global variables to store the eigenvalues and eigenvectors
 diag = None
 eigen_vecs = None
 
 
-def create_time_evo_unitary(observable: Observable, ti: float, tf: float):
+def create_time_evo_unitary(hamiltonian: Observable, ti: float, tf: float):
     """
     Args:
-        observable: qulacs observable
+        hamiltonian: qulacs obsevable
         ti: initial time
         tf: final time
 
@@ -18,14 +18,15 @@ def create_time_evo_unitary(observable: Observable, ti: float, tf: float):
         a dense matrix gate U(t) = exp(-iHt)
     """
     # Get the qubit number
-    n = observable.get_qubit_count()
+    n = hamiltonian.get_qubit_count()
     # Converting to a matrix
-    H_mat = observable.get_matrix().toarray()
+    H_mat = hamiltonian.get_matrix().toarray()
 
     # Compute eigenvalues and eigenvectors only once and reuse them
     global diag, eigen_vecs
 
     if diag is None or eigen_vecs is None:
+        # print("gloabl diag not found")
         diag, eigen_vecs = np.linalg.eigh(H_mat)
 
     # Compute the exponent of diagonalized Hamiltonian

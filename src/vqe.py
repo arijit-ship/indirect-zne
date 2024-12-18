@@ -1,5 +1,5 @@
 import os
-import time
+from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -11,13 +11,8 @@ from src.constraint import create_time_constraints
 from src.modules import *
 from src.createparam import create_param
 
-# from src.xy_hamiltonian import create_xy_hamiltonian
-from src.hamiltonian import create_xy_hamiltonian
+from src.hamiltonian import *
 from src.ansatz import *
-
-# Global variables
-ansatz_circuit = None
-constraint = None
 
 
 class IndirectVQE:
@@ -39,11 +34,9 @@ class IndirectVQE:
         # Optimization variables
         self.optimization_status: bool = optimization["status"]
         self.optimizer: str = optimization["algorithm"]
-        self.iteration: int = optimization["iteration"]
         self.constraint: bool = optimization["constraint"]
 
         # Ansatz variables
-        self.ansatz_draw: bool = ansatz["draw"]
         self.ansatz_type: str = ansatz["type"]
         self.ansatz_layer: int = ansatz["layer"]
         self.ansatz_gateset: int = ansatz["gateset"]
@@ -56,6 +49,9 @@ class IndirectVQE:
         self.ansatz_noise_value: float = ansatz["noise"]["value"]
         self.ansatz_identity_factor: List[int] = identity_factor
         self.init_param = init_param
+
+        # Ansatz
+        self.ansatz_circuit = None
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
@@ -80,13 +76,25 @@ class IndirectVQE:
         **Also, for bogus input, value error should be raised.**
         """
 
-        # Time-evolution gate's U(t)=exp(-iHt) Hamiltonian. For ZNE purpose H must be XY-Hamiltonian.
-        if self.ansatz_type.lower() == "xy":
+        # Time-evolution gate's i.e. U(t)=exp(-iHt) Hamiltonian H. For ZNE purpose H must be XY-Hamiltonian.
+        if self.ansatz_type.lower() == "xy_model-xz-y":
             self.ugate_hami = create_xy_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
                 self.ansatz_coeffi_bn,
                 self.ansatz_coeffi_r,
+            )
+        elif self.ansatz_type.lower() == "ising":
+            self.ugate_hami = create_xy_hamiltonian(
+                self.nqubits,
+                self.ansatz_coeffi_cn,
+                self.ansatz_coeffi_bn,
+                self.ansatz_coeffi_r,
+            )
+        elif self.ansatz_type.lower() == "heisenberg":
+            self.ugate_hami = create_heisenberg_hamiltonian(
+                self.nqubits,
+                self.ansatz_coeffi_cn,
             )
         elif self.ansatz_type.lower() == "hardware":
             self.ugate_hami = None
@@ -101,7 +109,7 @@ class IndirectVQE:
         """
 
         if self.ansatz_noise_status:
-            ansatz = create_noisy_ansatz(
+            self.ansatz_circuit = create_noisy_ansatz(
                 nqubits=self.nqubits,
                 layer=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
@@ -111,14 +119,14 @@ class IndirectVQE:
                 param=param,
             )
         else:
-            ansatz = noiseless_ansatz(
+            self.ansatz_circuit = noiseless_ansatz(
                 nqubits=self.nqubits,
                 layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
                 ugateH=self.ugate_hami,
                 param=param,
             )
-        return ansatz
+        return self.ansatz_circuit
 
     def cost_function(self, param: List[float]) -> float:
         """
@@ -132,9 +140,8 @@ class IndirectVQE:
         else:
             raise ValueError(f"Unsupported state: {self.state}. Supported states are: 'dmatrix', 'statevector'")
 
-        global ansatz_circuit
-        ansatz_circuit = self.create_ansatz(param=param)
-        ansatz_circuit.update_quantum_state(state)
+        self.ansatz_circuit = self.create_ansatz(param=param)
+        self.ansatz_circuit.update_quantum_state(state)
         cost = self.observable_hami.get_expectation_value(state)
 
         return cost
@@ -144,7 +151,6 @@ class IndirectVQE:
         cost_history = []
         min_cost = None
         optimized_params = None  # List to store optimized parameters (solutions)
-        param_constraint = None
 
         opt = minimize(
             self.cost_function,
@@ -157,75 +163,95 @@ class IndirectVQE:
         min_cost = np.min(cost_history)
 
         optimized_params = opt.x.tolist()
-        # optimized_params.append(np.array2string(opt.x, separator=', '))
 
         return min_cost, optimized_params
 
-    def run_vqe(self):
+    def run_vqe(self) -> Dict:
 
-        global constraint
-        isRandom = None
-        exact_cost = None
-        initial_costs = []
-        min_cost_history = []
-        optimized_param = []
+        vqe_constraint = None
+        isRandom: bool = False
+        initial_cost: float = 0
+        min_cost: float | None = None
+        sol_optimized_param = None
 
-        if isinstance(self.init_param, str):
-            if self.init_param.lower() == "random":
-                isRandom = True
-            else:
-                raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
+        # (1) Decide the initial param type: random or provided
+        if isinstance(self.init_param, str) and self.init_param.lower() == "random":
+            isRandom = True
         elif isinstance(self.init_param, list):
             isRandom = False
         else:
             raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
 
-        exact_cost = exact_sol(self.observable_hami)
-
+        # Optimization is off
         if not self.optimization_status:
+
             min_cost_history = None
             optimized_param = None
-            if isRandom:
-                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
-                initial_costs.append(self.cost_function(param=param))
-            else:
-                param = self.init_param
-                initial_costs.append(self.cost_function(param=param))
 
+            if isRandom:
+                random_initial_param = create_param(
+                    self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf
+                )
+                initial_cost = self.cost_function(param=random_initial_param)
+
+            else:
+                initial_param = self.init_param
+                initial_cost = self.cost_function(param=initial_param)
+
+        # Optimization is on
         else:
+
+            # (1) Create random initial param
+            random_initial_param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+
+            # (2) Calculate the initial cost with random initial param
+            initial_cost = self.cost_function(param=random_initial_param)
+
+            # (3) Checking constraint before optimization
             if self.constraint and self.optimizer == "SLSQP":
-                constraint = create_time_constraints(self.layer, len(param))
+                vqe_constraint = create_time_constraints(self.layer, len(random_initial_param))
 
             elif self.optimizer != "SLSQP" and self.constraint:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
-            for i in range(self.iteration):
-                param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
-                initial_costs.append(self.cost_function(param=param))
+            # (4) Run optimization
+            min_cost, sol_optimized_param = self.run_optimization(parameters=random_initial_param, constraint=vqe_constraint)  # type: ignore
 
-                # Optimization
-                start_time = time.time()
-                cost, sol_optimized_param = self.run_optimization(param, constraint)  # type: ignore
-                end_time = time.time()
+            # for i in range(self.iteration):
 
-                run_time = end_time - start_time
-                min_cost_history.append(cost)
-                optimized_param.append(sol_optimized_param)
+            #     # (1) Create random initial param
+            #     param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
 
-                print(f"Iteration {i+1} done with time taken: {run_time} sec.")
+            #     # (2) Calculate the initial cost with random initial param
+            #     initial_costs.append(self.cost_function(param=param))
 
-        return initial_costs, exact_cost, min_cost_history, optimized_param
+            #     # (3) Run optimization
+            #     start_time = time.time()
+            #     cost, sol_optimized_param = self.run_optimization(param, constraint)  # type: ignore
+            #     end_time = time.time()
 
-    def drawCircuit(self, time_stamp, dpi):
+            #     run_time = end_time - start_time
+            #     min_cost_history.append(cost)
+            #     optimized_param.append(sol_optimized_param)
 
-        global ansatz_circuit
+            #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
+
+        return {"initial_cost": initial_cost, "min_cost": min_cost, "optimized_param": sol_optimized_param}
+
+    def drawCircuit(self, prefix: str, dpi: int, filetype: str):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         current_dir = os.path.dirname(os.path.abspath(__file__))
         parent_dir = os.path.dirname(current_dir)  # Go up one level
         output_dir = os.path.join(parent_dir, "output")
         os.makedirs(output_dir, exist_ok=True)
-        output_file = os.path.join(output_dir, f"circuit_{time_stamp}.png")
+        if filetype.lower() == "svg":
+            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.svg")
+        elif filetype.lower() == "png":
+            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.png")
+        else:
+            raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
 
-        circuit_drawer(ansatz_circuit, "mpl")  # type: ignore
+        circuit_drawer(self.ansatz_circuit, "mpl")  # type: ignore
         plt.savefig(output_file, dpi=dpi)
         plt.close()
         # Print the path of the output file
@@ -236,8 +262,14 @@ class IndirectVQE:
         Returns the noise levels.
         """
         if self.ansatz_noise_status:
-            nR, nT, nY = noise_level(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
+            nR, nT, nY, nCz = noise_level(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
         else:
-            nR, nT, nY = None, None, None
+            nR, nT, nY, nCz = None, None, None, None
 
-        return nR, nT, nY
+        return nR, nT, nY, nCz
+
+    def get_ugate_hamiltonain(self) -> Observable:
+        """
+        Returns time-evolution gate Hamiltonian.
+        """
+        return self.ugate_hami

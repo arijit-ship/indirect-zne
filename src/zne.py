@@ -1,4 +1,6 @@
 import itertools
+import random
+import re
 from collections import Counter
 from typing import List, Tuple, Union
 
@@ -11,8 +13,6 @@ from sklearn.preprocessing import PolynomialFeatures
 from sympy import Monomial
 
 from src.modules import noise_level
-import re
-import random
 
 """
 Parts of the following class are adapted from their notebook, which can be found at the
@@ -32,9 +32,10 @@ class ZeroNoiseExtrapolation:
         self.method = method
         self.sampling_mode = sampling_mode
 
-        self.unknown_var = len(datapoints[0]) - 1
-        self.noise_data = [tuple(point[: self.unknown_var])
-                           for point in self.datapoints]
+        # Number of independent variables
+        self.independent_var_number: int = len(datapoints[0]) - 1
+
+        self.noise_data = [tuple(point[: self.independent_var_number]) for point in self.datapoints]
         self.expectation_vals = [point[-1] for point in datapoints]
 
     def get_noise_levels(self) -> List[Tuple[int]]:
@@ -53,24 +54,24 @@ class ZeroNoiseExtrapolation:
         """
         Returns the number of datapoints required in order to perform Richardson extrapolation at a given degree and independent variables.
         """
-        monomials = self.get_monomials(self.unknown_var, self.degree)
+        monomials = self.get_monomials(self.independent_var_number, self.degree)
         return len(monomials)
 
-    def get_independent_var(self) -> int:
+    def get_independent_var_number(self) -> int:
         """
         Returns the unmber of independent variables.
         """
-        return self.unknown_var
-    
+        return self.independent_var_number
+
     def sampling(self) -> list:
         """
-        This method samples data points from the dataset based on the sampling mode specified 
+        This method samples data points from the dataset based on the sampling mode specified
         in the `self.sampling_mode`. The format of `self.sampling_mode` can be:
-        
+
         - "random-N": Randomly selects `N` items from the dataset.
         - "default-N": Selects the first `N` items from the dataset.
         - "default": Selects all the items from the dataset.
-        
+
         The method ensures the number of requested items (`N`) does not exceed the dataset size.
         If the format of `self.sampling_mode` is invalid, it raises a ValueError.
         """
@@ -81,15 +82,17 @@ class ZeroNoiseExtrapolation:
         # Check for "default-N" or "random-N"
         match = re.match(r"(random|default)-(\d+)", self.sampling_mode)
         if not match:
-            raise ValueError("Invalid argument format. Use 'random-N', 'default-N', or 'default', where N is an integer.")
-        
+            raise ValueError(
+                "Invalid argument format. Use 'random-N', 'default-N', or 'default', where N is an integer."
+            )
+
         mode, num_samples = match.groups()
         num_samples = int(num_samples)
-        
+
         # Ensure the number of samples doesn't exceed the data size
         if num_samples > len(self.datapoints):
             raise ValueError("Sample size exceeds the size of the dataset.")
-        
+
         # Handle "random-N" and "default-N"
         if mode == "random":
             return random.sample(self.datapoints, num_samples)
@@ -100,44 +103,22 @@ class ZeroNoiseExtrapolation:
 
         number_of_required_points = self.get_required_points()
         if number_of_required_points < len(data):
-            raise ValueError(f"Multivariate Richardson error. At degree: {self.degree}, Required data points: {number_of_required_points}, but was given: {len(data)}.")
-        
+            raise ValueError(
+                f"Multivariate Richardson error. At degree: {self.degree}, Required data points: {number_of_required_points}, but was given: {len(data)}."
+            )
+
         richardson_datapoints = data[:number_of_required_points]
-        richardson_noise_vals = [
-            tuple(point[: self.unknown_var]) for point in richardson_datapoints]
-        richardson_expectation_vals = [point[-1]
-                                        for point in richardson_datapoints]
-        
-        #if self.sampling.lower() == "default":
-            # number_of_required_points = self.get_required_points()
-            # richardson_datapoints = self.datapoints[:number_of_required_points]
-            # richardson_noise_vals = [
-            #     tuple(point[: self.unknown_var]) for point in richardson_datapoints]
-            # richardson_expectation_vals = [point[-1]
-            #                                for point in richardson_datapoints]
-
-        # Forgot what "default" samping is supposed to do.
-
-
-
-        # else:
-        #     raise ValueError(
-        #         "Some error occurred. I actually forgot what the default sampling was supposed to do! If you figure it out, please fix this else-block."
-        #     )
-
+        richardson_noise_vals = [tuple(point[: self.independent_var_number]) for point in richardson_datapoints]
+        richardson_expectation_vals = [point[-1] for point in richardson_datapoints]
         RichardsonZNEval = 0
-        sampleMatrix = self.sample_matrix(
-            sample_points=richardson_noise_vals,
-            degree=self.degree)  # type: ignore
+        sampleMatrix = self.sample_matrix(sample_points=richardson_noise_vals, degree=self.degree)  # type: ignore
         detA = np.linalg.det(sampleMatrix)
         if abs(detA) <= 1e-9:
-            raise ValueError(
-                f"Determinant of sample matrix is/close to zero. Det: {detA}, Deg: {self.degree}")
+            raise ValueError(f"Determinant of sample matrix is/close to zero. Det: {detA}, Deg: {self.degree}")
         # elif abs(detA) >= 1e+50:
         #     raise ValueError(f"Determinant of sample matrix close to inf. Det: {detA}, Deg: {self.degree}")
 
-        matrices = self.generate_modified_matrices(
-            sampleMatrix)  # type: ignore
+        matrices = self.generate_modified_matrices(sampleMatrix)  # type: ignore
 
         if len(richardson_expectation_vals) != len(matrices):
             raise ValueError(f"Unmatched length.")
@@ -149,6 +130,7 @@ class ZeroNoiseExtrapolation:
             eta = 0
 
         return RichardsonZNEval
+
     @staticmethod
     def get_monomials(n: int, d: int) -> list[str]:
         """
@@ -159,9 +141,7 @@ class ZeroNoiseExtrapolation:
         monomials = []
         for degree in range(d, -1, -1):
             # Generate combinations for the current degree
-            combos = list(
-                itertools.combinations_with_replacement(
-                    variables, degree))
+            combos = list(itertools.combinations_with_replacement(variables, degree))
 
             # Sort combinations lexicographically
             combos.sort()
@@ -188,16 +168,13 @@ class ZeroNoiseExtrapolation:
     @staticmethod
     def sample_matrix(sample_points: list[int], degree: int) -> np.ndarray:
         """Construct a matrix from monomials evaluated at sample points."""
-        n = len(
-            sample_points[0])  # type: ignore # Number of variables based on the first sample point
-        monomials = ZeroNoiseExtrapolation.get_monomials(
-            n, degree)  # type: ignore
+        n = len(sample_points[0])  # type: ignore # Number of variables based on the first sample point
+        monomials = ZeroNoiseExtrapolation.get_monomials(n, degree)  # type: ignore
         matrix = np.zeros((len(sample_points), len(monomials)))
 
         for i, point in enumerate(sample_points):
             for j, monomial in enumerate(monomials):
-                var_mapping = {f"λ_{k+1}": point[k]
-                               for k in range(n)}  # type: ignore
+                var_mapping = {f"λ_{k+1}": point[k] for k in range(n)}  # type: ignore
                 matrix[i, j] = eval(monomial, {}, var_mapping)
         return matrix
 
@@ -221,8 +198,7 @@ class ZeroNoiseExtrapolation:
         return terms
 
     @staticmethod
-    def get_eta_coeffs_single_variable(
-            scale_factors: list[float]) -> list[float]:
+    def get_eta_coeffs_single_variable(scale_factors: list[float]) -> list[float]:
         """Returns the array of single-variable Richardson extrapolation coefficients associated
         to the input array of scale factors."""
 
@@ -261,77 +237,127 @@ class ZeroNoiseExtrapolation:
             determinants.append(determinant)
 
         return modified_matrices
+
     # Standard single variate Richardson Extrapolation
     def getRichardsonZNE2(self, data):
-        richardson_datapoints = data
-        # Sum the noisy gate values (multivariate noise) to get total noise
-        # (single variate noise)
-        total_noise = [sum(point[:3]) for point in richardson_datapoints]
-        richardson_expectation_vals = [point[-1]
-                                       for point in richardson_datapoints]
+        """
+        Perform single-variable Richardson Extrapolation to estimate the zero-noise value.
+        Beta coefficients are calculated using the product formula:
+            beta_k = prod_{i != k} (alpha_i / (alpha_k - alpha_i))
 
+        For further datails refer to: https://doi.org/10.48550/arXiv.2210.00921
+
+
+        Args:
+            data (list of lists): Each data point contains independent noise variables followed by the energy value.
+
+        Returns:
+            float: Zero-noise extrapolated value.
+        """
+        # Step 1: Extract total noise and corresponding expectation values
+        total_noise = [sum(point[: self.independent_var_number]) for point in data]
+        expectation_vals = [point[-1] for point in data]
+
+        # Step 2: Sort data based on total noise in ascending order
+        sorted_pairs = sorted(zip(total_noise, expectation_vals), key=lambda pair: pair[0])
+        sorted_total_noise, sorted_expectation_vals = zip(*sorted_pairs)
+
+        # Step 3: Compute beta coefficients using the product formula
+        n = len(sorted_total_noise)
         betas = []
-        for k in range(len(total_noise)):
-            alpha_k = total_noise[k]
-            product = 1
-            for i in range(len(total_noise)):
+
+        for k in range(n):
+            alpha_k = sorted_total_noise[k]
+            beta_k = 1  # Initialize beta_k product to 1
+            for i in range(n):
                 if i != k:
-                    alpha_i = total_noise[i]
-                    # Check if alpha_k == alpha_i to avoid division by zero
-                    if alpha_k != alpha_i:
-                        product *= alpha_i / (alpha_k - alpha_i)
-                    else:
-                        print(
-                            f"Skipping i={i}, k={k} because alpha_k == alpha_i (alpha_k={alpha_k}, alpha_i={alpha_i})"
-                        )
-            betas.append(product)
+                    alpha_i = sorted_total_noise[i]
+                    beta_k *= alpha_i / (alpha_k - alpha_i)
+            betas.append(beta_k)
 
-        zne_val = sum(betas[i] * richardson_expectation_vals[i]
-                      for i in range(len(betas)))
+        # Step 4: Normalize betas to ensure sum(beta) = 1
+        beta_sum = sum(betas)
+        betas = [beta / beta_sum for beta in betas]
 
-        return zne_val
+        # print("Sorted Total Noise:", sorted_total_noise)
+        # print("Sorted Expectation Values:", sorted_expectation_vals)
+        # print("Betas Coefficients:", betas)
+
+        # Step 5: Compute zero-noise extrapolated value
+        zne_val = sum(betas[i] * sorted_expectation_vals[i] for i in range(n))
+        # print("Zero-Noise Extrapolated Value:", zne_val)
+
+        richardson_steps_details = {
+            "sorted_noise": sorted_total_noise,
+            "sorted_expectation_vals": sorted_expectation_vals,
+            "beta_coeffiecients": betas,
+        }
+
+        return zne_val, richardson_steps_details
 
     def scikit_linear(self, data) -> float:
-        # Extract noise levels (nR, nT, nY) and energy values from datapoints
-        # Extract the noise levels
-        noise = np.array([point[:3] for point in data])
-        # Extract the energy values
-        energy = np.array([point[3] for point in data])
+        """
+        Scikitlearn linear extrapolation.
+        """
+        # Extract noise levels (nR, nT, nY, nCz) and energy values from datapoints
 
-        # Create a Linear Regression model
+        # Extract the noise levels
+        noise = np.array([point[: self.independent_var_number] for point in data])
+
+        # Extract the energy values
+        energy = np.array([point[-1] for point in data])
+
+        # Linear regression model
         model = LinearRegression()
 
         # Train the model on the data
         model.fit(noise, energy)
 
+        # Zero limit
+        zero_limit = []
+        for _ in range(self.independent_var_number):
+            zero_limit.append(0)
+
         # Extrapolate the energy value for the noise level (0, 0, 0)
-        extrapolated_value = model.predict([[0, 0, 0]])[0]
+        extrapolated_value = model.predict([zero_limit])[0]
 
         # Return the predicted energy value at (0, 0, 0)
         return extrapolated_value
 
     def scikit_poly(self, data) -> float:
-        # Step 1: Extract features (noise levels) and target (energy values)
-        # Extract the noise levels (nR, nT, nY)
-        noise = np.array([point[:3] for point in data])
-        # Extract the energy values
-        energy = np.array([point[3] for point in data])
+        """
+        Scikitlearn polynomial extrapolation.
+        """
+        # Extract noise levels (nR, nT, nY, nCz) and energy values from datapoints
 
-        # Step 2: Create polynomial features based on the degree specified
+        # Extract the noise levels
+        noise = np.array([point[: self.independent_var_number] for point in data])
+
+        # Extract the energy values
+        energy = np.array([point[-1] for point in data])
+
+        # Polynomial features based on the degree specified
         poly = PolynomialFeatures(degree=self.degree)
+
         # Transform the input data into polynomial features
         noise_poly = poly.fit_transform(noise)
 
         # Step 3: Create and fit the linear regression model
         model = LinearRegression()
+
         # Fit the model to the polynomial-transformed data
         model.fit(noise_poly, energy)
 
+        # Zero limit
+        zero_limit = []
+        for _ in range(self.independent_var_number):
+            zero_limit.append(0)
+
         # Step 4: Extrapolate the energy value for the noise level (0, 0, 0)
-        # Transform (0, 0, 0) into polynomial features and predict the energy
+        # Transform (0, 0, 0, 0) into polynomial features and predict the energy
         # value
-        # Transform the (0, 0, 0) noise level into polynomial features
-        zero_noise = poly.transform([[0, 0, 0]])
+        # Transform the (0, 0, 0, 0) noise level into polynomial features
+        zero_noise = poly.transform([zero_limit])
         # Predict the energy value at (0, 0, 0)
         extrapolated_value = model.predict(zero_noise)[0]
 
@@ -343,31 +369,37 @@ class ZeroNoiseExtrapolation:
         sampled_data = self.sampling()
         if self.method.lower() == "richardson-mul":
             zne_val = {
-                "Degree": self.degree,
-                "Sampling": self.sampling_mode,
+                "degree": self.degree,
+                "sampling": self.sampling_mode,
                 "sampled data": sampled_data,
-                "Value": self.mul_RichardsonZNE(data=sampled_data)}
+                "extrapolated_value": self.mul_RichardsonZNE(data=sampled_data),
+            }
 
         elif self.method.lower() == "richardson":
+            zne_extrapolated_val, richardson_step_details = self.getRichardsonZNE2(data=sampled_data)
             zne_val = {
-                "Degree": self.degree,
-                "Sampling": self.sampling_mode,
+                "degree": self.degree,
+                "sampling": self.sampling_mode,
                 "sampled data": sampled_data,
-                "Value": self.getRichardsonZNE2()}
+                "extrapolated_value": zne_extrapolated_val,
+                "others": richardson_step_details,
+            }
 
         elif self.method.lower() == "linear":
             zne_val = {
-                "Degree": self.degree,
-                "Sampling": self.sampling_mode,
+                "degree": self.degree,
+                "sampling": self.sampling_mode,
                 "sampled data": sampled_data,
-                "Value": self.scikit_linear(data=sampled_data)}
+                "extrapolated_value": self.scikit_linear(data=sampled_data),
+            }
 
         elif self.method.lower() == "polynomial":
             zne_val = {
-                "Degree": self.degree,
-                "Sampling": self.sampling_mode,
+                "degree": self.degree,
+                "sampling": self.sampling_mode,
                 "sampled data": sampled_data,
-                "Value": self.scikit_poly(data=sampled_data)}
+                "extrapolated_value": self.scikit_poly(data=sampled_data),
+            }
 
         else:
             raise ValueError(
