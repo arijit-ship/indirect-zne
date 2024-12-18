@@ -36,22 +36,38 @@ The program uses a YAML configuration file to define its parameters. Below is a 
 |                                     | `optimization.status`            | `bool`                                                                                   | Whether the optimization should be performed (`True`/`False`).                                                     |
 |                                     | `optimization.algorithm`         | `str`                                                                                    | Optimization algorithm to use, e.g., `"SLSQP"`.                                                                    |
 |                                     | `optimization.constraint`        | `bool`                                                                                   | Whether to apply constraints during optimization (`True`/`False`).                                                 |
-|                                     | `ansatz.type`                    | `str`                                                                                    | Type of ansatz to use, e.g., `"xy_model-xz-z"`.                                                                    |
+|                                     | `ansatz.type`                    | `str`                                                                                    | Type of ansatz to use, e.g., `"xy-iss"`. **Note:** Values for `cn`, `bn`, and `r` will be overwritten to `[0.5]`, `[0]`, and `0` respectively for `type: "xy-iss"`. |
 |                                     | `ansatz.layer`                   | `int`                                                                                    | Number of layers in the ansatz circuit.                                                                            |
 |                                     | `ansatz.gateset`                 | `int`                                                                                    | Number of gates in each layer of the ansatz.                                                                       |
-|                                     | `ansatz.ugate.coefficients.cn`   | `list[float]`                                                                            | Coefficients for the U gate in the ansatz, e.g., `[0.5, 0.5, 0.5]`.                                                |
+|                                     | `ansatz.ugate.coefficients.cn`   | `list[float]`                                                                            | Coefficients for the U gate in the ansatz, e.g., `[0.5]`. **Note:** These values are overwritten if `ansatz.type` is not `"custom"`. |
 |                                     | `ansatz.ugate.coefficients.bn`   | `list[float]`                                                                            | Additional coefficients for the U gate in the ansatz.                                                              |
 |                                     | `ansatz.ugate.coefficients.r`    | `float`                                                                                 | The "r" coefficient for the U gate in the ansatz.                                                                  |
 |                                     | `ansatz.ugate.time.min`          | `float`                                                                                 | Minimum time for the U gate in the ansatz.                                                                         |
 |                                     | `ansatz.ugate.time.max`          | `float`                                                                                 | Maximum time for the U gate in the ansatz.                                                                         |
 |                                     | `ansatz.noise.status`            | `bool`                                                                                   | Whether noise is applied to the ansatz circuit (`True`/`False`).                                                   |
 |                                     | `ansatz.noise.value`             | `list[float]`                                                                            | Noise values for specific gates: `[r, cz, u, y]` gates.                                                            |
-|                                     | `ansatz.init_param`              | `list[float]`                                                                            | Initial parameters for the ansatz circuit (list of floats representing angles and times).                          |
-| **Redundant Circuit Configuration**| `identity_factors`               | `list[list[int]]`                                                                        | Identity factors for the gates: `[r, U, Y, CZ]`.                                                                   |
+|                                     | `ansatz.init_param`              | `str`                                                                                    | Initial parameters for the ansatz circuit, e.g., `"random"`.                                                       |
+| **Redundant Circuit Configuration**| `identity_factors`               | `list[list[int]]`                                                                        | Identity factors for the gates: `[r, u, y, cz]`.                                                                   |
 | **Zero Noise Extrapolation (ZNE)** | `method`                         | `str`                                                                                    | Extrapolation method: `"linear"`, `"polynomial"`, `"richardson"`, or `"richardson-mul"`.                           |
 |                                     | `degree`                         | `int`                                                                                    | Degree of the regression model (relevant for `"polynomial"` and `"richardson-mul"` methods).                        |
 |                                     | `sampling`                       | `str`                                                                                    | Sampling method: `"default"`, `"default-N"`, or `"random-N"`.                                                      |
 |                                     | `data_points`                    | `list[list[float]]`                                                                      | Data points for extrapolation (list of lists containing data point sets).                                           |
+
+**Important Warnings:**
+
+*   **Definition options:** `'custom'`, `'ising'`, `'xy_model-xz-z'`, or `'heisenberg'`. `'custom'` is based on the definition of `'xy_model-xz-z'`, which is an XY-model Hamiltonian.
+*   **For `observable.def`:**
+    *   `'ising'`: `cn`, `bn`, `r` are overwritten to `[0.5]`, `[1]`, `[1]`.
+    *   `'xy_model-xz-z'`: `cn`, `bn`, `r` are overwritten to `[1.0]`, `[1.0]`, `[1.0]`.
+    *   `'heisenberg'`: only `cn` is used (will not be overwritten); `bn` and `r` are not used.
+*   **Type options:** `'custom'`, `'xy-iss'`, `'ising'`, and `'heisenberg'`. `'custom'` and `'xy-iss'` are based on the definition of `'xy_model-xz-z'`, which is an XY-model Hamiltonian.
+*   **For ZNE redundant circuit:**
+    *   Identity-scaling for the ansatz type must be `'xy-iss'` (stands for XY identity-scaling-supported).
+*   **For `ansatz.type`:**
+    *   Coefficients are only applicable for `'type: custom'` and can be overwritten if `'type'` is specified as a different model.
+    *   `'ising'`: `cn`, `bn`, `r` are overwritten to `[0.5]`, `[1]`, `[1]`.
+    *   `'xy-iss'`: `cn`, `bn`, `r` are overwritten to `[0.5]`, `[0]`, `[0]` and supports identity scaling.
+    *   `'heisenberg'`: only `cn` is used (will not be overwritten); `bn` and `r` are not used.
 
 ## Testing
 
