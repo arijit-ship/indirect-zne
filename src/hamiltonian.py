@@ -18,7 +18,7 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
     Mathematical Form:
 
         .. math::
-        H = \sum_{i=1}^{n-1} [c_i(1+r) X_i X_{i+1} + c_i(1-r) Z_i Z_{i+1}] + \sum_{j=1}^{n} b_j Y_j
+        H = \sum_{i=1}^{n-1} [c_i(1+r) X_i X_{i+1} + c_i(1-r) Z_i Z_{i+1}] + \sum_{j=1}^{n} b_j Z_j
 
 
     Args:
@@ -34,11 +34,10 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
 
     for i in range(nqubits - 1):
         hami += (cn[i] * (1 + r)) * QubitOperator(f"X{i} X{i+1}")
-        # hami += (0.5*cn*(1-r)) * QubitOperator(f"Y{i} Y{i+1}")
         hami += (cn[i] * (1 - r)) * QubitOperator(f"Z{i} Z{i+1}")
 
     for i in range(nqubits):
-        hami += bn[i] * QubitOperator(f"Y{i}")
+        hami += bn[i] * QubitOperator(f"Z{i}")
 
     return create_observable_from_openfermion_text(str(hami))
 

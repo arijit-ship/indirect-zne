@@ -83,7 +83,7 @@ class IndirectVQE:
         """
 
         # Time-evolution gate's i.e. U(t)=exp(-iHt) Hamiltonian H. For ZNE purpose H must be XY-Hamiltonian.
-        if self.ansatz_type.lower() == "xy_model-xz-y":
+        if self.ansatz_type.lower() == "xy_model-xz-z":
             self.ugate_hami = create_xy_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
