@@ -3,15 +3,16 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-from qulacs import DensityMatrix, QuantumState
+import numpy as np
+from qulacs import DensityMatrix, Observable, QuantumCircuit, QuantumState
 from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
-from src.ansatz import *
+from src.ansatz import create_noisy_ansatz, noiseless_ansatz
 from src.constraint import create_time_constraints
 from src.createparam import create_param
-from src.hamiltonian import *
-from src.modules import *
+from src.hamiltonian import create_heisenberg_hamiltonian, create_xy_hamiltonian
+from src.modules import noise_level
 
 
 class IndirectVQE:
@@ -62,15 +63,21 @@ class IndirectVQE:
 
         if noise_value_len != 4:
             raise ValueError(f"Unsupported length of noise probability values: {noise_value_len}. Expected length: 4.")
+        if identity_factor_len != 4:
+            raise ValueError(f"Invalid identity factor length: {identity_factor_len}. Expected length: 4.")
 
         if ugate_cn_len != nqubits - 1 or ugate_bn_len != nqubits:
             raise ValueError(
                 f"Inconsistent lengths in ugate Hamiltonian coefficients. "
-                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
+                f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, "
+                f"but got cn: {ugate_cn_len} and bn: {ugate_bn_len}."
             )
 
         """
-        Create the Hamiltonians. We need to define two types of Hamiltonian. One is the observable observable whose expectation value VQE estimates, and the other one is the ugate (time-evolution) gate's XY-Hamiltonian. Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
+        Create the Hamiltonians. We need to define two types of Hamiltonian.
+        One is the observable observable whose expectation value VQE estimates,
+        and the other one is the ugate (time-evolution) gate's XY-Hamiltonian.
+        Based on coefficients provided in the config file, these two Hamiltonian needs to be created.
 
         **Also, for bogus input, value error should be raised.**
         """
@@ -104,7 +111,8 @@ class IndirectVQE:
 
     def create_ansatz(self, param: List[float]) -> QuantumCircuit:
         """
-        Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit. Noisy circuit with noise probability 0 is equivalent to noiseless circuit.
+        Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit.
+        Noisy circuit with noise probability 0 is equivalent to noiseless circuit.
         """
 
         if self.ansatz_noise_status:
@@ -190,9 +198,6 @@ class IndirectVQE:
         # Optimization is off
         if not self.optimization_status:
 
-            min_cost_history = None
-            optimized_param = None
-
             if isRandom:
                 random_initial_param = create_param(
                     self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf
@@ -220,7 +225,9 @@ class IndirectVQE:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             # (4) Run optimization
-            min_cost, sol_optimized_param = self.run_optimization(parameters=random_initial_param, constraint=vqe_constraint)  # type: ignore
+            min_cost, sol_optimized_param = self.run_optimization(
+                parameters=random_initial_param, constraint=vqe_constraint
+            )  # type: ignore
 
             # for i in range(self.iteration):
 

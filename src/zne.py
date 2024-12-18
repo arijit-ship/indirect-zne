@@ -4,15 +4,9 @@ import re
 from collections import Counter
 from typing import List, Tuple, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
-import scipy.linalg as la
-from matplotlib.ticker import MaxNLocator
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
-from sympy import Monomial
-
-from src.modules import noise_level
 
 """
 Parts of the following class are adapted from their notebook, which can be found at the
@@ -40,19 +34,22 @@ class ZeroNoiseExtrapolation:
 
     def get_noise_levels(self) -> List[Tuple[int]]:
         """
-        Returns a list containing all the noise-level values (independent variable values) extracted from the given datapoints.
+        Returns a list containing all the noise-level values (independent variable values)
+        extracted from the given datapoints.
         """
         return self.noise_data
 
     def get_expec_vals(self) -> List[float]:
         """
-        Returns a list containing all the expectations values (dependent variable values) extracted from the given datapoints.
+        Returns a list containing all the expectations values (dependent variable values)
+        extracted from the given datapoints.
         """
         return self.expectation_vals
 
     def get_required_points(self) -> int:
         """
-        Returns the number of datapoints required in order to perform Richardson extrapolation at a given degree and independent variables.
+        Returns the number of datapoints required in order to perform Richardson extrapolation
+        at a given degree and independent variables.
         """
         monomials = self.get_monomials(self.independent_var_number, self.degree)
         return len(monomials)
@@ -104,7 +101,8 @@ class ZeroNoiseExtrapolation:
         number_of_required_points = self.get_required_points()
         if number_of_required_points < len(data):
             raise ValueError(
-                f"Multivariate Richardson error. At degree: {self.degree}, Required data points: {number_of_required_points}, but was given: {len(data)}."
+                f"Multivariate Richardson error. At degree: {self.degree}, "
+                f"Required data points: {number_of_required_points}, but was given: {len(data)}."
             )
 
         richardson_datapoints = data[:number_of_required_points]
@@ -121,7 +119,7 @@ class ZeroNoiseExtrapolation:
         matrices = self.generate_modified_matrices(sampleMatrix)  # type: ignore
 
         if len(richardson_expectation_vals) != len(matrices):
-            raise ValueError(f"Unmatched length.")
+            raise ValueError("Unmatched length.")
 
         for E, matrix in zip(richardson_expectation_vals, matrices):
             eta = np.linalg.det(matrix) / detA
@@ -204,12 +202,12 @@ class ZeroNoiseExtrapolation:
 
         # Lagrange interpolation formula.
         richardson_coeffs = []
-        for l in scale_factors:
+        for factor in scale_factors:
             coeff = 1.0
             for l_prime in scale_factors:
-                if l_prime == l:
+                if l_prime == factor:
                     continue
-                coeff *= l_prime / (l_prime - l)
+                coeff *= l_prime / (l_prime - factor)
             richardson_coeffs.append(coeff)
 
         return richardson_coeffs
@@ -219,7 +217,8 @@ class ZeroNoiseExtrapolation:
         """
         It generates the Mi(0) matreces for i = 1 to length of sample matrix.
         See this papaer for the detail mathematical formalism:
-        "Quantum error mitigation by layerwise Richardson extrapolation" by Vincent Russo, Andrea Mari, https://arxiv.org/abs/2402.04000
+        "Quantum error mitigation by layerwise Richardson extrapolation"
+        by Vincent Russo, Andrea Mari, https://arxiv.org/abs/2402.04000
         """
         n = len(matrix)  # Size of the square matrix
         identity_row = [1] + [0] * (n - 1)  # Row to replace with

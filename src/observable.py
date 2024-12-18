@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from src.hamiltonian import *
+from src.hamiltonian import create_heisenberg_hamiltonian, create_xy_hamiltonian
 
 
 def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, float]) -> Dict[str, float]:
@@ -10,12 +10,14 @@ def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, fl
     definition: 'custom', 'ising', 'xy_model-xz-y', or 'heisenberg'.
     'custom' is created using definition: 'xy_model-xz-y' which is an XY-model Hamiltonian.
 
-    ### WARNING! Coefficients are applicable only for def: 'custom', and are overwritten if def is specified as an in-built: 'ising', 'xy_model-xz-y', or 'heisenberg'.
+    ### WARNING! Coefficients are applicable only for def: 'custom', and are overwritten
+    ### if def is specified as an in-built: 'ising', 'xy_model-xz-y', or 'heisenberg'.
 
     Args:
         nqubits (int): Number of qubits in the system.
         definition (str): A string defining the observable type.
-        coefficient (dict): A dictionary with keys representing observable components and values as their respective coefficients.
+        coefficient (dict): A dictionary with keys representing observable components
+        and values as their respective coefficients.
 
     Returns:
         dict: A dictionary representing the constructed Hamiltonian.
@@ -40,7 +42,8 @@ def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, fl
     if observable_cn_len != nqubits - 1 or observable_bn_len != nqubits:
         raise ValueError(
             f"Inconsistent lengths in observable Hamiltonian coefficients. "
-            f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
+            f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} "
+            f"and bn: {observable_bn_len}."
         )
 
     if definition.lower() == "custom":
@@ -63,7 +66,8 @@ def constructObservable(nqubits: int, definition: str, coefficient: Dict[str, fl
         target_observable = create_heisenberg_hamiltonian(nqubits=nqubits, cn=observable_cn)
     else:
         raise ValueError(
-            f"Invalid target definition: {definition}. Valid definitions are: 'custom', 'ising', 'xy_model-xz-y', or 'heisenberg'."
+            f"Invalid target definition: {definition}. "
+            f"Valid definitions are: 'custom', 'ising', 'xy_model-xz-y', or 'heisenberg'."
         )
 
     return target_observable

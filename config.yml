@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'
-run: "zne"
+run: "redundant"
 
 # System configuration
 nqubits: 4
@@ -37,7 +37,7 @@ vqe:
   # Circuit configuration
   ansatz:
     type: "xy_model-xz-y"
-    layer: 10
+    layer: 1
     gateset: 1
     ugate: 
       coefficients:
@@ -52,23 +52,23 @@ vqe:
       value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
 
     # Initial parameters for the ansatz
-    init_param: [1.680289051496918, 2.1505422787583894, 1.4944106032481597, 4.640769286399301, 5.7182574621303734, 6.857961206974318, 8.041408503567755, 8.23067163130046, 8.085831595597748, 9.818035718436082, -0.41537291893615835, -0.33435051912665753, -0.06623102732697012, -0.10287519496553041, -0.04580242962481022, -0.19747096129481492, -0.48286432396985945, 0.8284193787692484, -0.673177080439198, 0.3758072729211817, -1.1877951597334953, 0.39081102658539174, 0.03193852169011834, -0.1299220721105691, 0.13936201980584523, 0.025329411524652796, -0.2916194955332766, -0.0757967467547441, 0.41920104477835946, 0.3124575856674924, 0.2723844849336973, -0.24304158561406244, -0.47057157111081166, -0.3765870862611265, -0.4611391443908779, -0.6549644689510006, -0.7060419296590451, -0.09963087352368039, 0.6661242946923601, 0.28585090280480374, -0.2499331204012045, 0.216013781720684, -0.3069295519371179, 0.3492898337936126, 0.037218649654455475, 0.3358424124625691, 0.08720297901861428, -0.10913746908071763, 0.5261523913167105, 0.9324647072029325]
+    init_param: [2.8102469779233044, -8.407746636234144, 2.1242537623990576, 1.6936279381479053e-05, -3.141630898701854]
 # (2) Redundant circuit configuration
 
   # Identity factors for r, U, Y, and CZ gates
   # WARNING: Identity scaling for the U gate is only possible if vqe.ansatz.type: 'xy_model-xz-y'. For other types, the identity factor for the U gate must be set to 0.
 identity_factors: [
-    [1, 0, 0, 1], [0, 1, 2, 1]
+    [1, 0, 1, 2]
 ]
 
 # (3) Zero noise extrapolation (ZNE) configuration
 zne:
   # Choose method: 'linear', 'polynomial', 'richardson', or 'richardson-mul'
   # 'linear' and 'polynomial' use scikit-learn for regression. 
-  method: "linear"
+  method: "polynomial"
 
   # Degree is only applicable for 'polynomial' and 'richardson-mul'. For 'richardson', degree is computed based on the number of data points.
-  degree: 1
+  degree: 4
 
   # Sampling method: 'default', 'default-N', or 'random-N', where N is an integer.
   # 'default' - samples all points.
@@ -77,4 +77,4 @@ zne:
   sampling: "default"
   
   # Data points for extrapolation
-  data_points: [[12, 1, 0, 3, -4.758769501305926], [4, 3, 10, 3, -4.758769501305916]]
+  data_points: [[12, 1, 0, 3, -4.7587700891805635], [4, 3, 10, 3, -4.758770089180521], [20, 3, 2, 3, -4.758770089180526], [20, 3, 6, 3, -4.758770089180525], [12, 3, 6, 5, -4.758770089180524]]

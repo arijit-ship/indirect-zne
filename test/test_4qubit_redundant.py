@@ -1,6 +1,7 @@
-from src.vqe import IndirectVQE
-from src.hamiltonian import *
 import math
+
+from src.hamiltonian import create_xy_hamiltonian
+from src.vqe import IndirectVQE
 
 nqubits = 4
 layer = 10

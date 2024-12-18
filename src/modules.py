@@ -4,7 +4,6 @@ This scripts contains supporting functions.
 
 import numpy as np
 from qulacs import Observable
-from qulacs.gate import *
 
 
 def get_eigen_min(hamiltonian: Observable) -> float:
@@ -30,7 +29,10 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
 
         nqubits: `int`, number of qubits.
 
-        noise_factor: `list[int, int, int]`, represernts the redundant noisy indities for qubit gates and time evolution gate. For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
+        noise_factor: `list[int, int, int]`, represernts the redundant noisy indities for
+        qubit gates and time evolution gate.
+        For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate
+        and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
 
         layer: `int`, depth of the quantum circuit.
 
