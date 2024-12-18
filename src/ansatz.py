@@ -1,7 +1,7 @@
-from typing import Dict, List, Union
+from typing import List
 
 from qulacs import Observable, QuantumCircuit
-from qulacs.gate import *
+from qulacs.gate import CZ, RX, RY, RZ, Identity, Y, merge
 
 from .time_evolution_gate import create_time_evo_unitary
 
@@ -108,7 +108,9 @@ def create_noisy_ansatz(
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
-        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate.
+        Based on this redundant noisy identites are constructed.
+        For example, if value is 1, only one set of identities are introduced.
         param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -139,7 +141,10 @@ def create_redundant(
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
-        noise_factor (List[]): Noise factor/identity for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is [1, 1, 1] only one set of identities are introduced for rotational, unitary and Y gates.
+        noise_factor (List[]): Noise factor/identity for rotational gates, time evolution unitary gate and Y gate.
+        Based on this redundant noisy identites are constructed.
+        For example, if value is [1, 1, 1] only one set of
+        identities are introduced for rotational, unitary and Y gates.
         param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 

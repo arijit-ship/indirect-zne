@@ -2,17 +2,16 @@ import json
 import os
 import sys
 import time
+import uuid
 from ast import Dict
 from datetime import datetime
 from typing import List, Union
 
-import uuid
 import yaml
 
 from configValidator import validate_yml_config
-from src.hamiltonian import *
+from src.modules import get_eigen_min
 from src.observable import constructObservable
-from src.modules import *
 from src.vqe import IndirectVQE
 from src.zne import ZeroNoiseExtrapolation
 
@@ -75,7 +74,8 @@ def initialize_vqe() -> None:
         min_cost_history.append(min_cost)
         all_optimized_param.append(optimized_param)
 
-    # Hamiltonian in time-evolution gate does NOT change in each iteration, so append the Hamiltonian string outside the lopp.
+    # Hamiltonian in time-evolution gate does NOT change in each iteration,
+    # so append the Hamiltonian string outside the lopp.
     time_evolution_hamiltonian_string.append(str(vqe_instance.get_ugate_hamiltonain()))
 
     end_time = time.time()
@@ -144,9 +144,10 @@ def run_redundant() -> None:
 
     if optimization["status"]:
         """
-        The optimisation status is turned-off by default regardless of what user specify in config file.
+        The optimisation status is turned-off by default regardless of what
+        user specify in config file.
         """
-        print(f"WARNING! Optimization status on, but it will be ignored.")
+        print("WARNING! Optimization status on, but it will be ignored.")
         # Turn off the optimization
         optimization["status"] = False
 
@@ -196,7 +197,8 @@ def run_redundant() -> None:
             print("-" * symbol_count)
         i += 1
 
-    # Hamiltonian in time-evolution gate does NOT change in each iteration, so append the Hamiltonian string outside the lopp.
+    # Hamiltonian in time-evolution gate does NOT change in each iteration,
+    # so append the Hamiltonian string outside the lopp.
     time_evolution_hamiltonian_string.append(str(vqe_instance.get_ugate_hamiltonain()))
     end_time = time.time()
     total_run_time = end_time - start_time
@@ -334,8 +336,6 @@ if __name__ == "__main__":
 
         # Exact minimum eigen value of the target observable
         exact_cost: float = get_eigen_min(hamiltonian=target_observable)
-        
-
         # """
         # Validate the user input.
         # """
@@ -345,7 +345,8 @@ if __name__ == "__main__":
         # if observable_cn_len != nqubits - 1 or observable_bn_len != nqubits:
         #     raise ValueError(
         #         f"Inconsistent lengths in observable Hamiltonian coeffiecients. "
-        #         f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, but got cn: {observable_cn_len} and bn: {observable_bn_len}."
+        #         f"Expected lengths cn: {nqubits-1} and bn: {nqubits}, "
+        #         f"but got cn: {observable_cn_len} and bn: {observable_bn_len}."
         #     )
         # target_observable = create_xy_hamiltonian(
         #     nqubits=nqubits, cn=observable_hami_coeffi_cn, bn=observable_hami_coeffi_bn, r=observable_hami_coeffi_r

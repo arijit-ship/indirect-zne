@@ -26,7 +26,7 @@ output:
 
 # (1) Variational Quantum Eigensolver (VQE) configuration
 vqe:
-  iteration: 3
+  iteration: 1
 
   # Optimization configuration
   optimization:
@@ -37,7 +37,7 @@ vqe:
   # Circuit configuration
   ansatz:
     type: "xy_model-xz-y"
-    layer: 10
+    layer: 1
     gateset: 1
     ugate: 
       coefficients:

@@ -10,7 +10,7 @@ from qulacs.observable import create_observable_from_openfermion_text
 
 
 def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: float) -> Observable:
-    """
+    r"""
     Creates a one-dimensional XY-Hamiltonian.
 
     Note: For cn = 0.5, bn = 1, and r = 1 it reduces to transverse-field Ising Hamiltonian.
