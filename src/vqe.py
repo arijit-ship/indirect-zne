@@ -11,7 +11,12 @@ from scipy.optimize import minimize
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
 from src.constraint import create_time_constraints
 from src.createparam import create_param
-from src.hamiltonian import create_heisenberg_hamiltonian, create_xy_hamiltonian
+from src.hamiltonian import (
+    create_heisenberg_hamiltonian,
+    create_ising_hamiltonian,
+    create_xy_hamiltonian,
+    create_xy_iss_hamiltonian,
+)
 from src.modules import noise_level
 
 
@@ -87,24 +92,22 @@ class IndirectVQE:
         # For ZNE purpose, type mus be 'xy-iss' which is an XY-Hamiltonian.
         # Coeffiecients are applicable for only 'custom' and are overwritten for others.
         if self.ansatz_type.lower() == "custom":
+            self.is_coef_overwritten = False
             self.ugate_hami = create_xy_hamiltonian(
                 nqubits=self.nqubits,
                 cn=self.ansatz_coeffi_cn,
                 bn=self.ansatz_coeffi_bn,
                 r=self.ansatz_coeffi_r,
             )
+
         elif self.ansatz_type.lower() == "xy-iss":
-            # Identity scaling supported
-            ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
-            ugate_bn = [0.0 for _ in range(self.nqubits)]
-            ugate_r = 0
-            self.ugate_hami = create_xy_hamiltonian(nqubits=self.nqubits, cn=ugate_cn, bn=ugate_bn, r=ugate_r)
+            self.ugate_hami = create_xy_iss_hamiltonian(nqubits=self.nqubits)
+
         elif self.ansatz_type.lower() == "ising":
-            ugate_cn = [0.5 for _ in range(self.nqubits - 1)]
-            ugate_bn = [1.0 for _ in range(self.nqubits)]
-            ugate_r = 1
-            self.ugate_hami = create_xy_hamiltonian(nqubits=self.nqubits, cn=ugate_cn, bn=ugate_bn, r=ugate_r)
+            self.ugate_hami = create_ising_hamiltonian(nqubits=self.nqubits)
+
         elif self.ansatz_type.lower() == "heisenberg":
+            self.is_coef_overwritten = False
             self.ugate_hami = create_heisenberg_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
@@ -258,7 +261,13 @@ class IndirectVQE:
 
             #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
 
-        return {"initial_cost": initial_cost, "min_cost": min_cost, "optimized_param": sol_optimized_param}
+        vqe_result: Dict = {
+            "initial_cost": initial_cost,
+            "min_cost": min_cost,
+            "optimized_param": sol_optimized_param,
+        }
+
+        return vqe_result
 
     def drawCircuit(self, prefix: str, dpi: int, filetype: str) -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

@@ -1,9 +1,9 @@
+import numpy as np
+from qulacs import Observable
+
 """
 This scripts contains supporting functions.
 """
-
-import numpy as np
-from qulacs import Observable
 
 
 def get_eigen_min(hamiltonian: Observable) -> float:

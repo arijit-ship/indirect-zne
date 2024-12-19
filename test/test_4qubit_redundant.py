@@ -1,6 +1,6 @@
 import math
 
-from src.hamiltonian import create_xy_hamiltonian
+from src.hamiltonian import create_ising_hamiltonian
 from src.vqe import IndirectVQE
 
 nqubits = 4
@@ -8,15 +8,15 @@ layer = 10
 
 state: str = "dmatrix"
 
-cn1 = [0.5, 0.5, 0.5]
-bn1 = [1.0, 1.0, 1.0, 1.0]
-r1 = 1
-target_observable = create_xy_hamiltonian(nqubits=nqubits, cn=cn1, bn=bn1, r=r1)
+# cn1 = [0.5, 0.5, 0.5]
+# bn1 = [1.0, 1.0, 1.0, 1.0]
+# r1 = 1
+target_observable = create_ising_hamiltonian(nqubits=nqubits)
 
 opt_dtls = {"status": False, "algorithm": "SLSQP", "constraint": False}
 
 ansatz_dtls = {
-    "type": "xy_model-xz-z",
+    "type": "xy-iss",
     "layer": 10,
     "gateset": 1,
     "ugate": {"coefficients": {"cn": [0.5, 0.5, 0.5], "bn": [0, 0, 0, 0], "r": 0}, "time": {"min": 0.0, "max": 10.0}},

@@ -2,7 +2,7 @@ import itertools
 import random
 import re
 from collections import Counter
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -238,7 +238,7 @@ class ZeroNoiseExtrapolation:
         return modified_matrices
 
     # Standard single variate Richardson Extrapolation
-    def getRichardsonZNE2(self, data):
+    def getRichardsonZNE2(self, data) -> Dict:
         """
         Perform single-variable Richardson Extrapolation to estimate the zero-noise value.
         Beta coefficients are calculated using the product formula:
@@ -252,6 +252,7 @@ class ZeroNoiseExtrapolation:
 
         Returns:
             float: Zero-noise extrapolated value.
+            dict: Contains some other detals
         """
         # Step 1: Extract total noise and corresponding expectation values
         total_noise = [sum(point[: self.independent_var_number]) for point in data]
@@ -259,7 +260,7 @@ class ZeroNoiseExtrapolation:
 
         # Step 2: Sort data based on total noise in ascending order
         sorted_pairs = sorted(zip(total_noise, expectation_vals), key=lambda pair: pair[0])
-        sorted_total_noise, sorted_expectation_vals = zip(*sorted_pairs)
+        sorted_total_noise, sorted_expectation_vals = map(list, zip(*sorted_pairs))  # Convert tuples to lists
 
         # Step 3: Compute beta coefficients using the product formula
         n = len(sorted_total_noise)
@@ -286,13 +287,19 @@ class ZeroNoiseExtrapolation:
         zne_val = sum(betas[i] * sorted_expectation_vals[i] for i in range(n))
         # print("Zero-Noise Extrapolated Value:", zne_val)
 
-        richardson_steps_details = {
-            "sorted_noise": sorted_total_noise,
-            "sorted_expectation_vals": sorted_expectation_vals,
-            "beta_coeffiecients": betas,
-        }
+        # Compute cost_error_mitigation
+        cost_error_mitigation = sum(beta * beta for beta in betas)
 
-        return zne_val, richardson_steps_details
+        result = {
+            "extrapolated_val": zne_val,
+            "richardson_steps_details": {
+                "sorted_noise": sorted_total_noise,
+                "sorted_expectation_vals": sorted_expectation_vals,
+                "beta_coeffiecients": betas,
+                "cost_richardson_zne": cost_error_mitigation,
+            },
+        }
+        return result
 
     def scikit_linear(self, data) -> float:
         """
@@ -365,7 +372,9 @@ class ZeroNoiseExtrapolation:
 
     def getZne(self) -> float:
 
+        # Sample the data
         sampled_data = self.sampling()
+
         if self.method.lower() == "richardson-mul":
             zne_val = {
                 "degree": self.degree,
@@ -375,7 +384,9 @@ class ZeroNoiseExtrapolation:
             }
 
         elif self.method.lower() == "richardson":
-            zne_extrapolated_val, richardson_step_details = self.getRichardsonZNE2(data=sampled_data)
+            result: Dict = self.getRichardsonZNE2(data=sampled_data)
+            zne_extrapolated_val: float = result["extrapolated_val"]
+            richardson_step_details: dict = result["richardson_steps_details"]
             zne_val = {
                 "degree": self.degree,
                 "sampling": self.sampling_mode,

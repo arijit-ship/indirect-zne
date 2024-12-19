@@ -42,6 +42,44 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
     return create_observable_from_openfermion_text(str(hami))
 
 
+def create_ising_hamiltonian(nqubits: int) -> Observable:
+    """
+    Creates an Ising Hamiltonian which is a specific instance of
+    XY-Hamiltonian with coefficients cn = [0.5], bn = [1], and r = 1.
+
+    Args:
+        nqubits (int): The number of qubits.
+
+    Returns:
+        Observable: Qulacs observable representing the Hamiltonian.
+    """
+    cn_ising = [0.5 for _ in range(nqubits - 1)]
+    bn_ising = [1.0 for _ in range(nqubits)]
+    r_ising = 1
+    ising_hamiltonian = create_xy_hamiltonian(nqubits=nqubits, cn=cn_ising, bn=bn_ising, r=r_ising)
+    return ising_hamiltonian
+
+
+def create_xy_iss_hamiltonian(nqubits: int) -> Observable:
+    """
+    Creates an xy-iss Hamiltonian which is a specific instance of
+    XY-Hamiltonian with coefficients cn = [0.5], bn = [0], and r = 0.
+
+    This model supports identity scaling in exp(-iHt) gate by adding Y-gate.
+
+    Args:
+        nqubits (int): The number of qubits.
+
+    Returns:
+        Observable: Qulacs observable representing the Hamiltonian.
+    """
+    cn_xy_iss = [0.5 for _ in range(nqubits - 1)]
+    bn_xy_iss = [0 for _ in range(nqubits)]
+    r_xy_iss = 0
+    xy_iss_hamiltonian = create_xy_hamiltonian(nqubits=nqubits, cn=cn_xy_iss, bn=bn_xy_iss, r=r_xy_iss)
+    return xy_iss_hamiltonian
+
+
 def create_heisenberg_hamiltonian(nqubits: int, cn: List[float]) -> Observable:
     """
     Creates a one-dimensional Heisenberg-Hamiltonian.
