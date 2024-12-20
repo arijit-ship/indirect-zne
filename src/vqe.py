@@ -92,7 +92,6 @@ class IndirectVQE:
         # For ZNE purpose, type mus be 'xy-iss' which is an XY-Hamiltonian.
         # Coeffiecients are applicable for only 'custom' and are overwritten for others.
         if self.ansatz_type.lower() == "custom":
-            self.is_coef_overwritten = False
             self.ugate_hami = create_xy_hamiltonian(
                 nqubits=self.nqubits,
                 cn=self.ansatz_coeffi_cn,
@@ -107,7 +106,6 @@ class IndirectVQE:
             self.ugate_hami = create_ising_hamiltonian(nqubits=self.nqubits)
 
         elif self.ansatz_type.lower() == "heisenberg":
-            self.is_coef_overwritten = False
             self.ugate_hami = create_heisenberg_hamiltonian(
                 self.nqubits,
                 self.ansatz_coeffi_cn,
