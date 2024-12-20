@@ -137,6 +137,7 @@ def run_redundant() -> None:
     time_evolution_hamiltonian_string = []
 
     identity_factors: Union[List[int], List[List[int]]] = config["identity_factors"]
+    ansatz_type: str = ansatz["type"]
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
@@ -147,7 +148,7 @@ def run_redundant() -> None:
         The optimisation status is turned-off by default regardless of what
         user specify in config file.
         """
-        print("WARNING! Optimization status on, but it will be ignored.")
+        print("WARNING! Optimization status is on, but it will be ignored.")
         # Turn off the optimization
         optimization["status"] = False
 
@@ -156,6 +157,15 @@ def run_redundant() -> None:
     start_time = time.time()
 
     for factor in identity_factors:
+
+        # Validiting identity factor for a given ansatz-type.
+        # U and Y gate factor must be zero for any ansatz type other than 'xy-iss'
+        # factor[1] = U gate factor and factor[2] = Y gate factor
+        if ansatz_type.lower() != "xy-iss" and any(map(abs, factor[1:3])):
+            raise ValueError(
+                f"Redundant circuit run failed. Non-zero identity scaling factors "
+                f"of U and Y gates found for ansatz type: {ansatz_type}."
+            )
 
         each_start_time = time.time()
         vqe_instance = IndirectVQE(
