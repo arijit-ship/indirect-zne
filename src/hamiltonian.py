@@ -53,9 +53,9 @@ def create_ising_hamiltonian(nqubits: int) -> Observable:
     Returns:
         Observable: Qulacs observable representing the Hamiltonian.
     """
-    cn_ising = [0.5 for _ in range(nqubits - 1)]
-    bn_ising = [1.0 for _ in range(nqubits)]
-    r_ising = 1
+    cn_ising = [0.5 for _ in range(nqubits - 1)]    # cn = 0.5
+    bn_ising = [1.0 for _ in range(nqubits)]    # bn = 1
+    r_ising = 1 # r = 1
     ising_hamiltonian = create_xy_hamiltonian(nqubits=nqubits, cn=cn_ising, bn=bn_ising, r=r_ising)
     return ising_hamiltonian
 
