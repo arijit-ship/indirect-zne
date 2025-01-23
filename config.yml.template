@@ -9,7 +9,7 @@ state: "dmatrix"
 # Target Hamiltonian configuration
 observable:
   # Definition options: 'custom', 'ising', or 'heisenberg'.
-  # 'custom' and 'ising' are created using the XY-model Hamiltonian with terms XZ-Z.
+  # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model).
   def: "ising"
   # WARNING: Coefficients can be overwritten:
   # 'custom': Not overwritten.
@@ -41,7 +41,7 @@ vqe:
   # Circuit configuration
   ansatz:
     # Type options: 'custom', 'xy-iss', 'ising', and 'heisenberg'.
-    # 'custom', 'ising' and 'xy-iss' are created using the XY-model Hamiltonian with terms XZ-Z.
+    # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model).
     # WARNING: For ZNE redundant circuit, the ansatz type must be 'xy-iss' (stands for XY identity-scaling-supported).
     type: "xy-iss"
     layer: 1
@@ -63,7 +63,7 @@ vqe:
       status: True
       value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
 
-    # Initial parameters for the ansatz
+    # Initial parameters for the ansatz: "random" or "List[float]"
     init_param: "random"
 
 
