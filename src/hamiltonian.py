@@ -10,16 +10,16 @@ from qulacs.observable import create_observable_from_openfermion_text
 
 
 def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: float) -> Observable:
-    r"""
-    Creates a one-dimensional XY-Hamiltonian.
+    """
+    Creates a one-dimensional custom Hamiltonian (this is NOT any standard familier XY model)that has
+    the following mathematical form:
 
-    Note: For cn = 0.5, bn = 1, and r = 1 it reduces to transverse-field Ising Hamiltonian.
-
-    Mathematical Form:
+    Mathematical form:
 
         .. math::
-        H = \sum_{i=1}^{n-1} [c_i(1+r) X_i X_{i+1} + c_i(1-r) Z_i Z_{i+1}] + \sum_{j=1}^{n} b_j Z_j
+        H_\text{custom} = \sum_{k=1}^{N-1}c_{k}[(1+\gamma)X_{k}X_{k+1}+(1-\gamma)Z_{k}Z_{k+1}] + \sum_{k=1}^{N}b_{k}Z_{k}
 
+    Note: For cn = 0.5, bn = 1, and r = 1 it reduces to transverse-field Ising Hamiltonian.
 
     Args:
         nqubits (int): The number of qubits.
@@ -45,7 +45,12 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
 def create_ising_hamiltonian(nqubits: int) -> Observable:
     """
     Creates an Ising Hamiltonian which is a specific instance of
-    XY-Hamiltonian with coefficients cn = [0.5], bn = [1], and r = 1.
+    custom Hamiltonian (this is NOT any standard familier XY model) with coefficients cn = [0.5], bn = [1], and r = 1.
+
+    Mathematical from:
+
+        ..math::
+        H_\text{Ising} = \sum_{k=1}^{N-1}X_k X_{k+1} + \sum_{k=0}^{N} Z_k
 
     Args:
         nqubits (int): The number of qubits.
@@ -53,9 +58,9 @@ def create_ising_hamiltonian(nqubits: int) -> Observable:
     Returns:
         Observable: Qulacs observable representing the Hamiltonian.
     """
-    cn_ising = [0.5 for _ in range(nqubits - 1)]    # cn = 0.5
-    bn_ising = [1.0 for _ in range(nqubits)]    # bn = 1
-    r_ising = 1 # r = 1
+    cn_ising = [0.5 for _ in range(nqubits - 1)]  # cn = 0.5
+    bn_ising = [1.0 for _ in range(nqubits)]  # bn = 1
+    r_ising = 1  # r = 1
     ising_hamiltonian = create_xy_hamiltonian(nqubits=nqubits, cn=cn_ising, bn=bn_ising, r=r_ising)
     return ising_hamiltonian
 
@@ -63,9 +68,14 @@ def create_ising_hamiltonian(nqubits: int) -> Observable:
 def create_xy_iss_hamiltonian(nqubits: int) -> Observable:
     """
     Creates an xy-iss Hamiltonian which is a specific instance of
-    XY-Hamiltonian with coefficients cn = [0.5], bn = [0], and r = 0.
+    custom Hamiltonian with coefficients cn = [0.5], bn = [0], and r = 0.
 
     This model supports identity scaling in exp(-iHt) gate by adding Y-gate.
+
+    Mathematical from:
+
+        ..math::
+        H_{XY}=\frac{1}{2}\sum_{k=1}^{N-1} X_{k}X_{k+1} + Z_{k}Z_{k+1}
 
     Args:
         nqubits (int): The number of qubits.
@@ -87,6 +97,7 @@ def create_heisenberg_hamiltonian(nqubits: int, cn: List[float]) -> Observable:
     Mathematical Form:
 
         .. math::
+        H_\text{Heisenberg} = \frac{1}{2}\sum_{k=1}^{N-1} X_k X_{k+1} + Y_k Y_{k+1} + Z_k Z_{k+1} .
 
 
     Args:
