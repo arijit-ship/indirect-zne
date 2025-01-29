@@ -1,0 +1,143 @@
+# Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
+run: "zne"
+
+# System configuration
+nqubits: 7
+# State options: 'dmatrix' and 'statevector'
+state: "dmatrix"
+
+# Target Hamiltonian configuration
+observable:
+  # Definition options: 'custom', 'ising', or 'heisenberg'.
+  # 'custom' defines the XY-model Hamiltonian with terms XZ-Z.
+  def: "ising"
+  # WARNING: Coefficients can be overwritten:
+  # 'custom': Not overwritten.
+  # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
+  # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+  coefficients:
+    cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+    bn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    r: 1
+
+# Output configuration
+output:
+  file_name_prefix: "noisefree_time_evo_heisenberg_sample#10_ricmuld1v2"  #ricmuld1v2
+  draw:
+    status: False
+    fig_dpi: 100
+    type: "png"
+
+# (1) Variational Quantum Eigensolver (VQE) configuration
+vqe:
+  iteration: 30
+
+  # Optimization configuration
+  optimization:
+    status: True
+    algorithm: "SLSQP"
+    constraint: False
+
+  # Circuit configuration
+  ansatz:
+    # Type options: 'custom', 'xy-iss', 'ising', and 'heisenberg'.
+    # 'custom' and 'xy-iss' define the XY-model Hamiltonian with terms XZ-Z.
+    # WARNING: For ZNE redundant circuit, the ansatz type must be 'xy-iss' (stands for XY identity-scaling-supported).
+    type: "heisenberg"
+    layer: 30
+    gateset: 1
+    ugate:
+      # WARNING: Coefficients can be overwritten:
+      # 'custom': Not overwritten.
+      # 'xy-iss': cn, bn, r are overwritten to [0.5], [0], 0.
+      # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
+      # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+      coefficients:
+        cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+        bn: [0, 0, 0, 0, 0, 0, 0]
+        r: 0
+      time:
+        min: 0.0
+        max: 10.0
+    noise:
+      status: True
+      value: [0.001, 0.001, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
+
+    # Initial parameters for the ansatz
+    init_param:  [
+        1.1864003525048956, -0.962835535612326, 0.09612965939827502,
+        1.830234611104053, 0.9066093033362552, 1.9695616956970328,
+        3.5570309682620787, 4.0953960485165695, 3.639760874602794,
+        3.5352903565737925, 5.899910797415391, 6.078016923777999,
+        7.070324490669917, 5.164250236811352, 6.469975205809311,
+        4.876378667723855, 5.866149619182844, 6.783526539814165,
+        6.79704879658428, 5.52401958904585, 8.196228211195303,
+        6.219762383803818, 7.384911013536843, 7.329525503916601,
+        8.316987433324192, 7.121625178817517, 8.476884356265334,
+        9.659810778125946, 10.99252440023294, 8.607516003176663,
+        3.2912496232496617, 2.9256779491579756, -0.49768629677841286,
+        -0.6286767236972661, 2.1318123966627405, 0.9296591520746862,
+        -0.9953807286257439, -0.6867706504270581, 2.7212766561190973,
+        2.077693454416894, -2.1383313560720816, -1.8771083193565474,
+        3.0733948365698747, 0.5481503245937329, -1.3738920417606173,
+        -2.068525669711362, 2.995698688538225, 2.022759336201686,
+        -0.5930819207958556, -1.2888578770207395, 2.346630632879721,
+        0.09590433226928902, -0.22937034523086125, -0.2958369732881496,
+        -1.7504187459863698, 2.056787888121245, -1.4134446042067617,
+        1.4882626463969004, 1.0228149188423514, 2.699545876554374,
+        -3.009575334237357, 3.9235978623036614, 0.2713131271949001,
+        -0.207883971617282, -0.9188483185526491, 2.5723733331883065,
+        1.951214819009624, -1.256775651215992, -1.4480344460005208,
+        0.9199501828737336, -0.17167168363373983, -0.16951355471040486,
+        0.4550921261939845, -2.164508974311117, 1.029891039854357,
+        2.77131104681417, 0.6511897631668394, -0.4696117346901421,
+        -0.8256073679160821, 1.691210554493982, 0.22802946611437477,
+        1.118421639029896, 0.6664876440573715, 3.5259283050236627,
+        0.26000947267221364, 0.3273233721023888, -1.4933727895560234,
+        1.9570136359860018, 0.547117195175234, -0.18633368647699067,
+        1.314612748167924, 1.6074381872512489, -0.4938334133911504,
+        1.4540086259772764, 1.0445721196599802, -0.31430064379182193,
+        0.6776270195654276, -0.7736282368686846, 0.6599397762257116,
+        0.12748514957041682, 0.5930133568597793, -0.0716447250433149,
+        1.5936457235514063, -1.4897958904340027, 0.8140089797232005,
+        -2.2378372397000565, -0.8603907849656095, 1.0604411470672321,
+        0.6629560885123658, -1.7683101846455853, -0.2382827110395992,
+        0.4062662588870335, 0.09313876978053152, -0.3675677799756248,
+        1.8960351933448851, 1.9240642932167022, 0.24568535137810743,
+        1.787032598262166, -0.793967334816134, 0.5165195590795254,
+        1.3520669049299998, -0.0457288531641247, 1.4845884490618622,
+        0.8801968971404794, 0.7814518733062787, 2.8194027044403525,
+        -2.0016482848637405, 0.3557145379687419, -0.7286104468182685,
+        0.71240677109782, 1.5333359997790148, 2.7621516983232954,
+        1.3196824708263268, 2.1748981408415693, -1.08810440240421,
+        -1.5086617664525255, 0.20772903066714135, 0.057232429271190655,
+        1.0840117711024444, -0.844134490199535, 0.8263500900580252,
+        2.960621297476235, -0.4239382176566933, -2.557411409076426,
+        1.7000998315229356, -0.27145202062106155, 0.24639170706953484,
+        -0.49929631596251256, 2.630376030698057, 3.191832813842645
+      ]
+
+
+# (2) Redundant circuit configuration
+  # Identity factors for r, U, Y, and CZ gates
+  # WARNING: Identity scaling for the U gate is only possible if vqe.ansatz.type is 'xy_model-xz-z'. For other types, the identity factor for the U gate must be set to 0.
+identity_factors: [[0,0,0,0],[1, 0, 0, 1],[2, 0, 0, 1]]
+
+
+# (3) Zero noise extrapolation (ZNE) configuration
+zne:
+  # Method options: 'linear', 'polynomial', 'richardson', or 'richardson-mul'.
+  # 'linear' and 'polynomial' use scikit-learn for regression.
+  method: "richardson-mul"
+
+  # Degree is only applicable for 'polynomial' and 'richardson-mul'. For 'richardson', degree is computed based on the number of data points.
+  degree: 1
+
+  # Sampling method options: 'default', 'default-N', or 'random-N', where N is an integer.
+  # 'default' - samples all points.
+  # 'default-N' - samples the first N points.
+  # 'random-N' - samples N points randomly.
+  sampling: "default-3"
+  
+  # Data points for extrapolation
+  data_points:  [[4, 1, -6.709451845163764], [12, 3, -5.100395004061918], [20, 3, -4.098085922614902]]
