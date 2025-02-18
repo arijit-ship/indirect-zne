@@ -1,15 +1,14 @@
+import numpy as np
+from qulacs import Observable
+
 """
 This scripts contains supporting functions.
 """
 
-import numpy as np
-from qulacs import Observable
-from qulacs.gate import *
 
-
-def exact_sol(hamiltonian: Observable) -> float:
+def get_eigen_min(hamiltonian: Observable) -> float:
     """
-    Finds the exact minimum eigen value for a given matrix.
+    Finds the exact minimum eigen value for a given hamiltonian.
 
     Args:
         hamiltonian: `qulacs_core.Observable`
@@ -30,7 +29,10 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
 
         nqubits: `int`, number of qubits.
 
-        noise_factor: `list[int, int, int]`, represernts the redundant noisy indities for qubit gates and time evolution gate. For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
+        noise_factor: `list[int, int, int]`, represernts the redundant noisy indities for
+        qubit gates and time evolution gate.
+        For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate
+        and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
 
         layer: `int`, depth of the quantum circuit.
 
@@ -42,10 +44,12 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
     nY = 0
     nR = 4
     nT = 1
+    nCz = 1
 
     r_gate_factor = identity_factor[0]  # For rotational gate
     u_gate_factor = identity_factor[1]  # For time evolution gate
     y_gate_factor = identity_factor[2]  # For Y gate
+    cz_gate_factor = identity_factor[3]  # For CZ gate
 
     # Count the number of odd qubits
     odd_n = (nqubits // 2) + 1 if nqubits % 2 != 0 else nqubits // 2
@@ -64,4 +68,8 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
     elif u_gate_factor == 0:
         nY = 0
 
-    return {"params": (nR, nT, nY), "odd_wires": odd_n}
+    # If there is Cz†cz gate
+    if cz_gate_factor > 0:
+        nCz += 2 * cz_gate_factor
+
+    return {"params": (nR, nT, nY, nCz), "odd_wires": odd_n}

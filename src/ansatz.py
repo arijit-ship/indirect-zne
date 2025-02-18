@@ -1,7 +1,9 @@
+from typing import List
+
 from qulacs import Observable, QuantumCircuit
-from qulacs.gate import *
+from qulacs.gate import CZ, RX, RY, RZ, Identity, Y, merge
+
 from .time_evolution_gate import create_time_evo_unitary
-from typing import List, Dict, Union
 
 
 def he_ansatz_circuit(n_qubit, depth, theta_list):
@@ -83,7 +85,7 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
             time_evo_gate = create_time_evo_unitary(ugateH, ti, tf)
             circuit.add_gate(time_evo_gate)
 
-        flag += 4 * gateset # Each layer has 4 * gateset angle-params.
+        flag += 4 * gateset  # Each layer has 4 * gateset angle-params.
 
     return circuit
 
@@ -106,7 +108,9 @@ def create_noisy_ansatz(
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
-        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is 1, only one set of identities are introduced.
+        noise_factor (List[]), noise factor for rotational gates, time evolution unitary gate and Y gate.
+        Based on this redundant noisy identites are constructed.
+        For example, if value is 1, only one set of identities are introduced.
         param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -137,7 +141,10 @@ def create_redundant(
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
-        noise_factor (List[]): Noise factor/identity for rotational gates, time evolution unitary gate and Y gate. Based on this redundant noisy identites are constructed. For example, if value is [1, 1, 1] only one set of identities are introduced for rotational, unitary and Y gates.
+        noise_factor (List[]): Noise factor/identity for rotational gates, time evolution unitary gate and Y gate.
+        Based on this redundant noisy identites are constructed.
+        For example, if value is [1, 1, 1] only one set of
+        identities are introduced for rotational, unitary and Y gates.
         param (ndarray): Initial params for rotation gates, time evolution gate: [
         t1, t2, ... td, theta1, ..., theatd * 4]
 
@@ -159,7 +166,7 @@ def create_redundant(
     r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
     u_gate_factor = noise_factor[1]  # Identity scaling factor for time-evolution gates
     y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
-    #cz_gate_factor = noise_factor[3]
+    cz_gate_factor = noise_factor[3]
 
     for layer in range(layers):
 
@@ -184,7 +191,6 @@ def create_redundant(
         circuit.add_noise_gate(RY(1, param[flag + 3]), "Depolarizing", noise_r_prob)
 
         # Add identities with Ry and make redudant circuit
-
         for _ in range(r_gate_factor):
             # First qubit
             circuit.add_noise_gate(RY(0, param[flag + 2]).get_inverse(), "Depolarizing", noise_r_prob)  # Ry_dagger
@@ -196,6 +202,11 @@ def create_redundant(
 
         # Add CZ gate
         circuit.add_noise_gate(CZ(0, 1), "Depolarizing", noise_cz_prob)
+
+        # Add identites with CZ gates
+        for _ in range(cz_gate_factor):
+            circuit.add_noise_gate(CZ(0, 1).get_inverse(), "Depolarizing", noise_cz_prob)
+            circuit.add_noise_gate(CZ(0, 1), "Depolarizing", noise_cz_prob)
 
         # Add multi-qubit U gate
         if layer == 0:

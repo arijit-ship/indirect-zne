@@ -1,101 +1,116 @@
-# Indirect-ZNE
-----
+# Indirect-Control VQE and ZNE Error Mitigation
 
-Quantum error mitigation with Zero Noise Extrapolation (ZNE) approach for indirect controlled system.
+## Installation
 
-## Configuration File
+- **Python Version:** `3.11`  
+- To install dependencies, run:  
+  ```bash
+  pip install -r requirements.txt
+  ```
 
-| Parameters | Explanation |
-|------------|--------------|
-| `run` | type: `str`, what should be run: `vqe`, `zne` |
-| `nqubits` | type: `int`, number of qubits |
-| `state` | type: `str`, Density matrix or state vector formalism, acceptable values: `dmatrix`, `statevector` |
-| `observable.def` | type: `str`, the Hamiltonian model to be used, acceptable values: `ising` |
-| `observable.coefficients.cn` | type: `list[float]`, coefficients for the `cn` term |
-| `observable.coefficients.bn` | type: `list[float]`, coefficients for the `bn` term |
-| `observable.coefficients.r` | type: `float`, coefficient for the `r` term |
-| `output.file_name_prefix` | type: `str`, prefix for the output file names |
-| `output.fig_dpi` | type: `int`, DPI for output figures |
-| `vqe.optimization.status` | type: `bool`, minimizes the cost function with respect to parameters |
-| `vqe.optimization.algorithm` | type: `str`, minimization algorithm used by `scipy.optimize.minimize()`, acceptable values: `SLSQP`, `BFGS`, etc. See the SciPy official documentation for more details |
-| `vqe.optimization.iteration` | type: `int`, how many times the optimization is performed |
-| `vqe.optimization.constraint` | type: `bool`, applies time constraint to parameters, supported only by the `SLSQP` algorithm |
-| `vqe.ansatz.draw` | type: `bool`, draws the circuit figure |
-| `vqe.ansatz.type` | type: `str`, the ansatz type to be used, acceptable values: `xy`, `ising`, `hardware` |
-| `vqe.ansatz.layer` | type: `int`, number of layers in the ansatz |
-| `vqe.ansatz.gateset` | type: `int`, type of gateset used |
-| `vqe.ansatz.ugate.coefficients.cn` | type: `list[float]`, coefficients for the `cn` term of the unitary gate |
-| `vqe.ansatz.ugate.coefficients.bn` | type: `list[float]`, coefficients for the `bn` term of the unitary gate |
-| `vqe.ansatz.ugate.coefficients.r` | type: `float`, coefficient for the `r` term of the unitary gate |
-| `vqe.ansatz.ugate.time.min` | type: `float`, minimum time for the unitary gate |
-| `vqe.ansatz.ugate.time.max` | type: `float`, maximum time for the unitary gate |
-| `vqe.ansatz.noise.status` | type: `bool`, turn on/off the noise |
-| `vqe.ansatz.noise.value` | type: `list[float]`, noise probabilities for different gates `[r, cz, u, y]` |
-| `zne.extrapolation.method` | type: `str`, extrapolation method to use, acceptable value: `Richardson` |
-| `zne.extrapolation.degrees` | type: `list[int]`, degrees of the extrapolation method |
-| `zne.extrapolation.sampling` | type: `str`, sampling method, acceptable value: `default` |
-| `zne.redundant_ansatz.identity_factors` | type: `list[list[int]]`, identity factors for the redundant ansatz |
-| `param` | type: `list[float]` or `str` (`random`), initial parameters for the ansatz |
+## Usage
 
-## Example
+To run the program, use:  
+  ```bash
+  python3 main.py <config.yml>
+  ```
 
-```yaml
-run: "zne"
-# System
-nqubits: 7
-state: "dmatrix"
-# Target Hamiltonian
-observable:
-  def: "ising"
-  coefficients:
-    cn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    bn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    r: 0
-# Output
-output:
-  file_name_prefix: "vqe_vals_q7_l30_n2"
-  fig_dpi: 100
-# Variational quantum eigensolver config
-vqe:
-  # Optimization
-  optimization:
-    status: True
-    algorithm: "SLSQP"
-    iteration: 5
-    constraint: False
-  # Circuit config
-  ansatz:
-    draw: True # Draw the circuit
-    type: "xy"
-    layer: 30
-    gateset: 1
-    ugate: 
-      coefficients:
-        cn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-        bn: [0, 0, 0, 0, 0, 0, 0]
-        r: 0
-      time:
-        min: 0.0
-        max: 10.0
-    noise:
-      status: True
-      value: [0.0001, 0.0001, 0.0001, 0.0001] # Noise probabilities for [r, cz, u, y] gates.
-# Zero noise extrapolation config
-zne:
-  extrapolation:
-    method: "Richardson"
-    degrees: [1, 2, 3, 4, 5]
-    sampling: "default"
-  redundant_ansatz:
-    # Identity factors for the redundant ansatz
-    identity_factors: [
-    [0, 0, 0], [1, 0, 0], [1, 1, 0], [1, 1, 1], [2, 0, 0], [2, 1, 0], [2, 1, 1], [2, 2, 0], [2, 2, 1], [2, 2, 2], 
-    [3, 0, 0], [3, 1, 0], [3, 1, 1], [3, 2, 0], [3, 2, 1], [3, 2, 2], [3, 3, 0], [3, 3, 1], [3, 3, 2], 
-    [3, 3, 3], [4, 0, 0], [4, 1, 0], [4, 1, 1], [4, 2, 0], [4, 2, 1], [4, 2, 2], [4, 3, 0], [4, 3, 1], 
-    [4, 3, 2], [4, 3, 3], [4, 4, 0], [4, 4, 1], [4, 4, 2], [4, 4, 3], [4, 4, 4], [5, 0, 0], [5, 1, 0], 
-    [5, 1, 1], [5, 2, 0], [5, 2, 1], [5, 2, 2], [5, 3, 0], [5, 3, 1], [5, 3, 2], [5, 3, 3], [5, 4, 0], 
-    [5, 4, 1], [5, 4, 2], [5, 4, 3], [5, 4, 4], [5, 5, 0], [5, 5, 1], [5, 5, 2], [5, 5, 3], [5, 5, 4], 
-    [5, 5, 5]
-]
- # Initial parameters for the ansatz
-param:  "random"
+## Configuration Details
+
+The program uses a YAML configuration file to define its parameters. Below is a detailed description of the configuration categories and their parameters:
+
+| **Section**                        | **Key**                           | **Type**                             | **Description**                                                                                                                                                                                                                     |
+|-------------------------------------|-----------------------------------|--------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Run Configuration**               | `run`                             | String                               | Defines the algorithm to run. Options: `'vqe'`, `'redundant'`, `'zne'`.                                                                                                                                                            |
+| **System Configuration**            | `nqubits`                         | Integer                              | Specifies the number of qubits in the quantum system.                                                                                                                                                                             |
+|                                     | `state`                           | String                               | Defines the state representation. Options: `'dmatrix'` (density matrix) or `'statevector'`.                                                                                                                                      |
+| **Observable (Target Hamiltonian)** | `def`                             | String                               | Defines the type of Hamiltonian. Options: `'custom'`, `'ising'`, `'heisenberg'`. **Warning**: Coefficients are overwritten based on the selected type. For `'ising'`, `cn` values are set to `[0.5]`, `bn` values are set to `[1]`, and `r` is set to `1`. For `'heisenberg'`, only `cn` is used. |
+|                                     | `coefficients`                    | Object                               | Contains coefficients for the Hamiltonian terms:                                                                                                                                                                                                 |
+|                                     |                                   | `cn`                               | List of Floats                        | Defines the coefficients for the interaction term. Example: `[0.5, 0.5, 0.5]`.                                                                                                                                                       |
+|                                     |                                   | `bn`                               | List of Floats                        | Defines the coefficients for the coupling terms. Example: `[1.0, 1.0, 1.0, 1.0]`.                                                                                                                                                   |
+|                                     |                                   | `r`                                | Float                                | Defines the coefficient for the scaling term. Example: `1`.                                                                                                                                                                          |
+| **Output Configuration**            | `file_name_prefix`                | String                               | Specifies the prefix for the output file name.                                                                                                                                                                                      |
+|                                     | `draw`                            | Object                               | Configures drawing options for output files:                                                                                                                                                                                                 |
+|                                     |                                   | `status`                           | Boolean                              | If `True`, enables figure drawing. Example: `False`.                                                                                                                                                                                   |
+|                                     |                                   | `fig_dpi`                          | Integer                              | Specifies the resolution of the output figure. Example: `100`.                                                                                                                                                                        |
+|                                     |                                   | `type`                             | String                               | Specifies the type of output file. Example: `"png"`.                                                                                                                                                                                 |
+| **VQE Configuration**               | `iteration`                       | Integer                              | Specifies the number of iterations for the VQE algorithm.                                                                                                                                                                         |
+|                                     | `optimization`                    | Object                               | Configures optimization settings:                                                                                                                                                                                                      |
+|                                     |                                   | `status`                           | Boolean                              | If `True`, enables optimization. Example: `True`.                                                                                                                                                                                       |
+|                                     |                                   | `algorithm`                        | String                               | Specifies the optimization algorithm. Options: `"SLSQP"`.                                                                                                                                                                           |
+|                                     |                                   | `constraint`                       | Boolean                              | If `True`, enables constraint optimization. Example: `False`.                                                                                                                                                                         |
+|                                     | `ansatz`                          | Object                               | Configures the ansatz circuit:                                                                                                                                                                                                         |
+|                                     |                                   | `type`                             | String                               | Defines the type of the ansatz. Options: `'custom'`, `'xy-iss'`, `'ising'`, `'heisenberg'`. **Warning**: Must be `'xy-iss'` for ZNE redundant circuits.                                                                                                                                      |
+|                                     |                                   | `layer`                            | Integer                              | Specifies the number of layers for the ansatz. Example: `10`.                                                                                                                                                                         |
+|                                     |                                   | `gateset`                          | Integer                              | Specifies the gate set used. Example: `1`.                                                                                                                                                                                             |
+|                                     |                                   | `ugate`                            | Object                               | Defines the U gate settings:                                                                                                                                                                                                         |
+|                                     |                                   |                                   | `coefficients`                      | Object                               | Contains coefficients for the U gate:                                                                                                                                                                                                   |
+|                                     |                                   |                                   | `cn`                               | List of Floats                        | Defines the coefficients for the interaction terms in the U gate. Example: `[0.5, 0.5, 0.5]`.                                                                                                                                      |
+|                                     |                                   |                                   | `bn`                               | List of Floats                        | Defines the coefficients for the coupling terms in the U gate. Example: `[0, 0, 0, 0]`.                                                                                                                                           |
+|                                     |                                   |                                   | `r`                                | Float                                | Defines the coefficient for the scaling term in the U gate. Example: `0`.                                                                                                                                                            |
+|                                     |                                   |                                   | `time`                             | Object                               | Defines the time range for the gate:                                                                                                                                                                                                 |
+|                                     |                                   |                                   | `min`                              | Float                                | Minimum time. Example: `0.0`.                                                                                                                                                                                                           |
+|                                     |                                   |                                   | `max`                              | Float                                | Maximum time. Example: `10.0`.                                                                                                                                                                                                         |
+|                                     |                                   | `noise`                            | Object                               | Defines noise parameters:                                                                                                                                                                                                               |
+|                                     |                                   |                                   | `status`                           | Boolean                              | If `True`, enables noise. Example: `True`.                                                                                                                                                                                              |
+|                                     |                                   |                                   | `value`                            | List of Floats                        | Specifies noise probabilities for different gate types in the order `[r, cz, u, y]`. Example: `[0.001, 0.01, 0.001, 0.01]`.                                                                                                       |
+|                                     | `init_param`                      | String                               | Defines the initialization method for parameters. Options: `'random'`, etc. Example: `"random"`.                                                                                                               |
+| **Redundant Circuit Configuration** | `identity_factors`                | List of Lists                        | Specifies the identity scaling factors for gates. Example: `[[1, 0, 0, 1], [2, 3, 2, 1], ...]`.                                                                                                                                       |
+|                                     | **Warning**                       | String                               | **Warning**: Identity scaling for the U gate is supported only if the ansatz type is `'xy-iss'`. For other types, the identity scaling factor for the U gate must be set to `0`.                                        |
+| **Zero Noise Extrapolation (ZNE)**  | `method`                          | String                               | Defines the method for zero-noise extrapolation. Options: `'linear'`, `'polynomial'`, `'richardson'`, `'richardson-mul'`.                                                                                                       |
+|                                     | `degree`                          | Integer                              | Sets the degree for polynomial or Richardson methods. Used for regression.                                                                                                                                                         |
+|                                     | `sampling`                        | String                               | Specifies the sampling method for extrapolation. Options: `'default'`, `'default-N'`, `'random-N'`, where `N` is an integer.                                                                                                                                 |
+|                                     | `data_points`                     | List of Lists                        | Provides the data points for extrapolation. Each entry contains several values, such as time and noise levels. Example: `[[12, 1, 0, 3, -3.3480294367352315], [20, 7, 10, 3, -0.05316450776222178], ...]`.                                   |
+
+
+## Warnings and Important Notes
+
+1. **Observable (Target Hamiltonian) Coefficients Overwritten**:
+   - For the `ising` Hamiltonian (`observable.def: "ising"`), the coefficients are automatically overwritten as follows:
+     - `cn`: `[0.5]`
+     - `bn`: `[1.0]`
+     - `r`: `1`
+   - For the `heisenberg` Hamiltonian (`observable.def: "heisenberg"`), only the `cn` coefficient is used, and `bn` and `r` are ignored.
+
+2. **Ansatz Type for Zero Noise Extrapolation (ZNE)**:
+   - When using Zero Noise Extrapolation (ZNE) with redundant circuits, the ansatz type must be set to `'xy-iss'` (`vqe.ansatz.type: "xy-iss"`). This is required for identity-scaling the circuit gates (U, Y, and CZ).
+   - **Warning**: The identity-scaling for the U gate is only supported if the ansatz type is `'xy_model-xz-z'`. For other ansatz types, the identity scaling for the U gate must be set to `0`.
+
+3. **VQE Ansatz Coefficients Overwritten**:
+   - When using the VQE algorithm with certain ansatz types (`'xy-iss'`), the coefficients are automatically overwritten as follows:
+     - `cn`: `[0.5]`
+     - `bn`: `[0]`
+     - `r`: `0`
+   - For ansatz types such as `'ising'` or `'heisenberg'`, the coefficients are predefined according to the selected type.
+
+4. **Initialization of Parameters**:
+   - The initial parameters for the ansatz are set to `random` by default (`vqe.ansatz.init_param: "random"`). If you need to modify the initialization method, ensure to update this value accordingly.
+
+5. **Sampling Method for Zero Noise Extrapolation**:
+   - The `sampling` method should be selected appropriately:
+     - `'default'` - All points are sampled.
+     - `'default-N'` - The first `N` points are sampled.
+     - `'random-N'` - `N` points are sampled randomly.
+   - Ensure that the method aligns with the desired sampling strategy for extrapolation.
+
+
+## Testing
+
+For testing, use `pytest`.  
+To run the tests, execute:  
+  ```bash
+  pytest test/.
+  ```
+
+## Linting and Formatting
+
+- Use `flake8` for linting.  
+- Use `black` and `isort` for formatting the code.  
+  ```bash
+  # Run linting
+  flake8 .
+
+  # Run formatting
+  black .
+  isort .
+  ```
