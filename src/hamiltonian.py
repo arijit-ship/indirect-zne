@@ -11,7 +11,8 @@ from qulacs.observable import create_observable_from_openfermion_text
 
 def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: float) -> Observable:
     """
-    Creates a one-dimensional custom Hamiltonian (this is NOT any standard familier XY model)that has
+    😎 Fancy XY-model Hamiltonian.
+    Creates a one-dimensional custom Hamiltonian (this is NOT any standard familier XY-model, lets call it 'Fancy XY-model Hamiltonian')that has
     the following mathematical form:
 
     Mathematical form:
