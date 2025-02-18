@@ -9,7 +9,7 @@ state: "dmatrix"
 # Target Hamiltonian configuration
 observable:
   # Definition options: 'custom', 'ising', or 'heisenberg'.
-  # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model).
+  # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model, we call it 'Fancy XY-model Hamiltonian').
   def: "ising"
   # WARNING: Coefficients can be overwritten:
   # 'custom': Not overwritten.
@@ -41,7 +41,7 @@ vqe:
   # Circuit configuration
   ansatz:
     # Type options: 'custom', 'xy-iss', 'ising', and 'heisenberg'.
-    # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model).
+    # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model, we call it 'Fancy XY-model Hamiltonian').
     # WARNING: For ZNE redundant circuit, the ansatz type must be 'xy-iss' (stands for XY identity-scaling-supported).
     type: "xy-iss"
     layer: 1
