@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Das"
+  given-names: "Arijit"
+  orcid: ""
+- family-names: "Owari"
+  given-names: "Masaki"
+  orcid: ""
+title: "Indirect-control VQE and ZNE"
+version: 
+doi: 
+date-released: 2023
+url: "https://github.com/arijit-ship/indirect-zne"
