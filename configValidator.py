@@ -100,7 +100,7 @@ def validate_yml_config(config: Dict) -> bool:
     # Check if init_param is either a list or a string
     if "init_param" not in config["vqe"]["ansatz"]:
         raise ValueError("Missing 'init_param' in 'ansatz'.")
-    init_param = config["vqe"]["ansatz"]["init_param"]
+    init_param = config["vqe"]["ansatz"]["init_param"]["value"]
     if not (isinstance(init_param, list) or isinstance(init_param, str)):
         raise ValueError("Invalid 'init_param' in 'ansatz'. It should be either a list or a string.")
 

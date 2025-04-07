@@ -30,7 +30,7 @@ class IndirectVQE:
         optimization: Dict,
         ansatz: Dict,
         identity_factor: List[int],
-        init_param: Union[List[float], str],
+        init_param: list[float] | str,
     ) -> None:
 
         self.nqubits = nqubits

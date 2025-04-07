@@ -63,8 +63,14 @@ vqe:
       status: True
       value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
 
-    # Initial parameters for the ansatz: "random" or "List[float]"
-    init_param: "random"
+    # Initial parameters for the ansatz.
+    init_param:
+      noise:
+      # Adds random noise to parameter value.
+        status: False
+        value: 0.01
+      # Parameter value: "random" or "List[floats]".
+      value: "random"
 
 
 # (2) Redundant circuit configuration

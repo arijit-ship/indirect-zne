@@ -337,7 +337,9 @@ if __name__ == "__main__":
         zne_degrees: List[int] = zne["degree"]
         zne_sampling: str = zne["sampling"]
 
-        initialparam: Union[str, List[float]] = ansatz["init_param"]
+        init_param_noise_status: bool = ansatz["init_param"]["noise"]["status"]
+        init_param_noise_value: float = ansatz["init_param"]["noise"]["value"]
+        initialparam: list[float] | str = ansatz["init_param"]["value"]
 
         # Create the target observable
         target_observable = constructObservable(
