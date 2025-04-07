@@ -8,18 +8,18 @@ Experimental findings can be found in this directory.
 
 |Description|Link  |
 |--|--|
-| Noise-free XY-ansatz experiment: Richardson (2-point linear) & exponential ZNE |[Jupyter notebook](experiment08/experimentBook.xyansatz.ipynb), [Raw data (JSON)](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/experiments/experiment08/experimental%20data/data/noisefree_time_evo_xy_noisefree) |
-|Noise-free Ising-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](https://github.com/arijit-ship/ResearchWorks/blob/main/works/indirect-control-zne/experiments/experiment08/experimentBook.isingansatz.ipynb), [Raw data (JSON)](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/experiments/experiment08/experimental%20data/data/noisefree_time_evo_ising_noisefree)|
-|Noise-free Hysenberg-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](https://github.com/arijit-ship/ResearchWorks/blob/main/works/indirect-control-zne/experiments/experiment08/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/experiments/experiment08/experimental%20data/data/noisefree_time_evo_heisenberg_noisefree)|
-|Noisy XY-ansatz experiment: Richardson (2-point linear)|[Jupyter notebook](https://github.com/arijit-ship/ResearchWorks/blob/main/works/indirect-control-zne/experiments/experiment07/experimentBook.noisyxy.ipynb), [Raw data (JSON)](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/experiments/experiment07/experimental%20data/data)|
-|Further studies- Heisenberg multivariate Richardson ZNE, 3-point nonlinear Richardson ZNE |[Jupyter notebook](https://github.com/arijit-ship/ResearchWorks/blob/main/works/indirect-control-zne/experiments/experiment09/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/experiments/experiment09/experimental%20data/data)|
-|Code to reproduce experimental data|[indirect-zne](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/code)|
+| Noise-free XY-ansatz experiment: Richardson (2-point linear) & exponential ZNE |[Jupyter notebook](experiment08/experimentBook.xyansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_xy_noisefree) |
+|Noise-free Ising-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](experiment08/experimentBook.isingansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_ising_noisefree)|
+|Noise-free Hysenberg-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](experiment08/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_heisenberg_noisefree)|
+|Noisy XY-ansatz experiment: Richardson (2-point linear)|[Jupyter notebook](experiment07/experimentBook.noisyxy.ipynb), [Raw data (JSON)](experiment07/experimental%20data/data)|
+|Further studies- Heisenberg multivariate Richardson ZNE, 3-point nonlinear Richardson ZNE |[Jupyter notebook](experiment09/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](experiment09/experimental%20data/data)|
+|Code to reproduce experimental data (v0)|[indirect-zne](https://github.com/arijit-ship/indirect-zne/releases/tag/v0)|
 
 
 
 # 2. Indirect-Control VQE and ZNE Error Mitigation: How to use the code
 
-The original code written for this experiment can be found at [indirect-zne v0](https://github.com/arijit-ship/indirect-zne/releases/tag/v0). We also have attached this release in [this folder](https://github.com/arijit-ship/ResearchWorks/tree/main/works/indirect-control-zne/code) as well. To reproduce the experimental data, follow the guidelines below:
+Download the code from v0 release.
 
 ## 🛠️ Installation
 
