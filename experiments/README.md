@@ -2,9 +2,9 @@
 
 Experimental findings can be found in this directory.
 
-# 1. Table of contents
+# Link-table
 
-Experimental findings can be found in this directory.
+The relevant links for different experiments are compiled in the table below.
 
 |Description|Link  |
 |--|--|
@@ -17,7 +17,7 @@ Experimental findings can be found in this directory.
 
 
 
-# 2. Indirect-Control VQE and ZNE Error Mitigation: How to use the code
+# Indirect-Control VQE and ZNE Error Mitigation: How to use the code
 
 Download the code from [v0 release](https://github.com/arijit-ship/indirect-zne/releases/tag/v0).
 

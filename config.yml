@@ -61,6 +61,7 @@ vqe:
         max: 10.0
     noise:
       status: True
+      type: "depol"
       value: [0, 0, 0, 0] # Noise probabilities for [r, cz, u, y] gates.
 
     # Initial parameters for the ansatz.
