@@ -27,32 +27,37 @@ class IndirectVQE:
         nqubits: int,
         state: str,
         observable: Observable,
-        optimization: Dict,
-        ansatz: Dict,
-        identity_factor: List[int],
+        vqe_profile: Dict,
+        ansatz_profile: Dict,
+        noise_profile: Dict,
+        redundent_profile: Dict,
         init_param: list[float] | str,
     ) -> None:
 
         self.nqubits = nqubits
         self.state = state
 
+
+
         # Optimization variables
-        self.optimization_status: bool = optimization["status"]
-        self.optimizer: str = optimization["algorithm"]
-        self.constraint: bool = optimization["constraint"]
+        self.optimization_status: bool = vqe_profile["optimization"]["status"]
+        self.optimizer: str = vqe_profile["optimization"]["algorithm"]
+        self.constraint: bool = vqe_profile["optimization"]["constraint"]
 
         # Ansatz variables
-        self.ansatz_type: str = ansatz["type"]
-        self.ansatz_layer: int = ansatz["layer"]
-        self.ansatz_gateset: int = ansatz["gateset"]
-        self.ansatz_ti: float = ansatz["ugate"]["time"]["min"]
-        self.ansatz_tf: float = ansatz["ugate"]["time"]["max"]
-        self.ansatz_coeffi_cn: List = ansatz["ugate"]["coefficients"]["cn"]
-        self.ansatz_coeffi_bn: List = ansatz["ugate"]["coefficients"]["bn"]
-        self.ansatz_coeffi_r: float = ansatz["ugate"]["coefficients"]["r"]
-        self.ansatz_noise_status: bool = ansatz["noise"]["status"]
-        self.ansatz_noise_value: float = ansatz["noise"]["value"]
-        self.ansatz_identity_factor: List[int] = identity_factor
+        self.ansatz_type: str = ansatz_profile["type"]
+        self.ansatz_layer: int = ansatz_profile["layer"]
+        self.ansatz_gateset: int = ansatz_profile["gateset"]
+        self.ansatz_ti: float = ansatz_profile["ugate"]["time"]["min"]
+        self.ansatz_tf: float = ansatz_profile["ugate"]["time"]["max"]
+        self.ansatz_coeffi_cn: List = ansatz_profile["ugate"]["coefficients"]["cn"]
+        self.ansatz_coeffi_bn: List = ansatz_profile["ugate"]["coefficients"]["bn"]
+        self.ansatz_coeffi_r: float = ansatz_profile["ugate"]["coefficients"]["r"]
+        self.ansatz_noise_status: bool = noise_profile["status"]
+        self.ansatz_noise_type: str = noise_profile["type"]
+        self.ansatz_noise_value: float = noise_profile["value"]
+        self.ansatz_noise_on_init_param: bool = noise_profile["noise_on_init_param"]["status"]
+        self.ansatz_identity_factor: List[int] = redundent_profile["identity_factor"]
         self.init_param = init_param
 
         # Ansatz
