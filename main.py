@@ -53,10 +53,7 @@ def initialize_vqe() -> None:
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            optimization=optimization,
-            ansatz=ansatz,
-            identity_factor=[0, 0, 0, 0],
-            init_param=initialparam,
+            vqe_profile=,
         )
         vqe_output = vqe_instance.run_vqe()
         each_end_time = time.time()
@@ -315,9 +312,26 @@ if __name__ == "__main__":
         nqubits: int = config["nqubits"]
         state: str = config["state"]
 
+        # Output file profile
+        file_name_prefix: str = config["output"]["file_name_prefix"]
+        circuit_draw_status: bool = config["output"]["draw"]["status"]
+        fig_dpi: int = config["output"]["draw"]["fig_dpi"]
+        fig_filetype: str = config["output"]["draw"]["type"]
+
+        # Observable
         observable: Dict = config["observable"]
         observable_def: Dict = config["observable"]["def"]
         observable_coefficients: Dict = config["observable"]["coefficients"]
+
+        # Ansatz
+        ansatz: Dict = config["ansatz"]
+
+        # Noise profile
+        noise_profile: Dict = config["noise_profile"]
+
+        # VQE
+        vqe_iteration: int = config["vqe"]["iteration"]
+        optimization: Dict = config["vqe"]["optimization"]
 
         # observable_hami_coeffi_cn: List[float] = observable["coefficients"]["cn"]
         # observable_hami_coeffi_bn: List[float] = observable["coefficients"]["bn"]
@@ -328,18 +342,17 @@ if __name__ == "__main__":
         fig_dpi: int = config["output"]["draw"]["fig_dpi"]
         fig_filetype: str = config["output"]["draw"]["type"]
 
-        vqe_iteration: int = config["vqe"]["iteration"]
-        optimization: Dict = config["vqe"]["optimization"]
-        ansatz: Dict = config["vqe"]["ansatz"]
+        
+        ansatz: Dict = config["ansatz"]
+        noise_profile: Dict = config["noise_profile"]
 
         zne: Dict = config["zne"]
         zne_method: str = zne["method"]
         zne_degrees: List[int] = zne["degree"]
         zne_sampling: str = zne["sampling"]
 
-        init_param_noise_status: bool = ansatz["init_param"]["noise"]["status"]
-        init_param_noise_value: float = ansatz["init_param"]["noise"]["value"]
-        initialparam: list[float] | str = ansatz["init_param"]["value"]
+        # Initial parameters
+        initialparam: List[float] = config["init_param"]
 
         # Create the target observable
         target_observable = constructObservable(
