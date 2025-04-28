@@ -13,15 +13,23 @@ state: str = "dmatrix"
 # r1 = 1
 target_observable = create_ising_hamiltonian(nqubits=nqubits)
 
-opt_dtls = {"status": False, "algorithm": "SLSQP", "constraint": False}
+opt_dtls = {
+    "iteration": 1,
+    "optimization": {
+        "status": False,
+        "algorithm": "SLSQP",
+        "constraint": False
+    }
+}
+
 
 ansatz_dtls = {
-    "type": "xy-iss",
     "layer": 10,
     "gateset": 1,
-    "ugate": {"coefficients": {"cn": [0.5, 0.5, 0.5], "bn": [0, 0, 0, 0], "r": 0}, "time": {"min": 0.0, "max": 10.0}},
-    "noise": {"status": True, "value": [0, 0, 0, 0]},
+    "ugate": {"type": "xy-iss","coefficients": {"cn": [0.5, 0.5, 0.5], "bn": [0, 0, 0, 0], "r": 0}, "time": {"min": 0.0, "max": 10.0}},
 }
+
+noise_dtls = {"status": True, "type": "Depolarizing", "noise_prob": [0, 0, 0, 0], "noise_on_init_param": {"status": False, "value": 0.1}}
 
 factors = [
     [0, 0, 0, 0],
@@ -91,15 +99,25 @@ expected_value = -4.758769842654501
 tolerance = 1e-7
 
 for factor in factors:
+    # vqe_instance = IndirectVQE(
+    #     nqubits=nqubits,
+    #     state=state,
+    #     observable=target_observable,
+    #     optimization=opt_dtls,
+    #     ansatz=ansatz_dtls,
+    #     identity_factor=factor,
+    #     init_param=optimized_initial_param,
+    # )
     vqe_instance = IndirectVQE(
-        nqubits=nqubits,
-        state=state,
-        observable=target_observable,
-        optimization=opt_dtls,
-        ansatz=ansatz_dtls,
-        identity_factor=factor,
-        init_param=optimized_initial_param,
-    )
+            nqubits=nqubits,
+            state=state,
+            observable=target_observable,
+            vqe_profile= opt_dtls,
+            ansatz_profile= ansatz_dtls,
+            noise_profile= noise_dtls,
+            identity_factors= factor,
+            init_param=optimized_initial_param,
+        )
     result = vqe_instance.run_vqe()
     estimation = result["initial_cost"]
     assert math.isclose(

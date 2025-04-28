@@ -5,6 +5,8 @@ def validate_yml_config(config: Dict) -> bool:
     if "run" not in config or not isinstance(config["run"], str):
         raise ValueError("Missing or invalid 'run' key. It should be a string.")
 
+    run_type = config["run"]
+    
     if "nqubits" not in config or not isinstance(config["nqubits"], int):
         raise ValueError("Missing or invalid 'nqubits'. It should be an integer.")
 
@@ -52,7 +54,7 @@ def validate_yml_config(config: Dict) -> bool:
         raise ValueError("Missing or invalid 'ansatz' section.")
 
     ansatz = config["ansatz"]
-    if "type" not in ansatz or not isinstance(ansatz["type"], str):
+    if "type" not in ansatz["ugate"] or not isinstance(ansatz["ugate"]["type"], str):
         raise ValueError("Missing or invalid 'type' in 'ansatz'.")
     if "layer" not in ansatz or not isinstance(ansatz["layer"], int):
         raise ValueError("Missing or invalid 'layer' in 'ansatz'.")
@@ -82,7 +84,7 @@ def validate_yml_config(config: Dict) -> bool:
             raise ValueError("Missing or invalid 'status' in 'noise_profile'.")
         if "type" not in noise or not isinstance(noise["type"], str):
             raise ValueError("Missing or invalid 'type' in 'noise_profile'.")
-        if "value" not in noise or not isinstance(noise["value"], list):
+        if "noise_prob" not in noise or not isinstance(noise["noise_prob"], list):
             raise ValueError("Missing or invalid 'value' in 'noise_profile'.")
         init_param_noise = noise.get("noise_on_init_param", {})
         if "status" in init_param_noise and not isinstance(init_param_noise["status"], bool):
@@ -122,18 +124,18 @@ def validate_yml_config(config: Dict) -> bool:
         if "identity_factors" in redundant and not isinstance(redundant["identity_factors"], list):
             raise ValueError("'identity_factors' must be a list.")
 
-    # ZNE section
-    if "zne" not in config or not isinstance(config["zne"], dict):
-        raise ValueError("Missing or invalid 'zne' section.")
-
-    zne = config["zne"]
-    if "method" not in zne or not isinstance(zne["method"], str):
-        raise ValueError("Missing or invalid 'method' in 'zne'.")
-    if "degree" not in zne or not isinstance(zne["degree"], int):
-        raise ValueError("Missing or invalid 'degree' in 'zne'.")
-    if "sampling" not in zne or not isinstance(zne["sampling"], str):
-        raise ValueError("Missing or invalid 'sampling' in 'zne'.")
-    if "data_points" in zne and not isinstance(zne["data_points"], list):
-        raise ValueError("'data_points' in 'zne' should be a list.")
+    # ZNE section (validate only if "run" == "zne")
+    if run_type == "zne":
+        if "zne" not in config or not isinstance(config["zne"], dict):
+            raise ValueError("Missing or invalid 'zne' section.")
+        zne = config["zne"]
+        if "method" not in zne or not isinstance(zne["method"], str):
+            raise ValueError("Missing or invalid 'method' in 'zne'.")
+        if "degree" not in zne or not isinstance(zne["degree"], int):
+            raise ValueError("Missing or invalid 'degree' in 'zne'.")
+        if "sampling" not in zne or not isinstance(zne["sampling"], str):
+            raise ValueError("Missing or invalid 'sampling' in 'zne'.")
+        if "data_points" in zne and not isinstance(zne["data_points"], list):
+            raise ValueError("'data_points' in 'zne' should be a list.")
 
     return True

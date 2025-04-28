@@ -17,7 +17,7 @@ from src.hamiltonian import (
     create_xy_hamiltonian,
     create_xy_iss_hamiltonian,
 )
-from src.modules import noise_level
+from src.modules import calculate_noise_levels
 
 
 class IndirectVQE:
@@ -30,7 +30,7 @@ class IndirectVQE:
         vqe_profile: Dict,
         ansatz_profile: Dict,
         noise_profile: Dict,
-        redundent_profile: Dict,
+        identity_factors: List[int],
         init_param: list[float] | str,
     ) -> None:
 
@@ -45,7 +45,7 @@ class IndirectVQE:
         self.constraint: bool = vqe_profile["optimization"]["constraint"]
 
         # Ansatz variables
-        self.ansatz_type: str = ansatz_profile["type"]
+        self.ansatz_type: str = ansatz_profile["ugate"]["type"]
         self.ansatz_layer: int = ansatz_profile["layer"]
         self.ansatz_gateset: int = ansatz_profile["gateset"]
         self.ansatz_ti: float = ansatz_profile["ugate"]["time"]["min"]
@@ -53,11 +53,13 @@ class IndirectVQE:
         self.ansatz_coeffi_cn: List = ansatz_profile["ugate"]["coefficients"]["cn"]
         self.ansatz_coeffi_bn: List = ansatz_profile["ugate"]["coefficients"]["bn"]
         self.ansatz_coeffi_r: float = ansatz_profile["ugate"]["coefficients"]["r"]
+        # Noise profile
+        self.noise_profile: dict = noise_profile
         self.ansatz_noise_status: bool = noise_profile["status"]
         self.ansatz_noise_type: str = noise_profile["type"]
-        self.ansatz_noise_value: float = noise_profile["value"]
+        self.ansatz_noise_value: float = noise_profile["noise_prob"]
         self.ansatz_noise_on_init_param: bool = noise_profile["noise_on_init_param"]["status"]
-        self.ansatz_identity_factor: List[int] = redundent_profile["identity_factor"]
+        self.ansatz_identity_factors: List[int] = identity_factors
         self.init_param = init_param
 
         # Ansatz
@@ -66,8 +68,8 @@ class IndirectVQE:
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
         """
-        noise_value_len = len(ansatz["noise"]["value"])
-        identity_factor_len = len(self.ansatz_identity_factor)
+        noise_value_len = len(noise_profile["noise_prob"])
+        identity_factor_len = len(self.ansatz_identity_factors)
         ugate_cn_len = len(self.ansatz_coeffi_cn)
         ugate_bn_len = len(self.ansatz_coeffi_bn)
 
@@ -134,12 +136,14 @@ class IndirectVQE:
         if self.ansatz_noise_status:
             self.ansatz_circuit = create_noisy_ansatz(
                 nqubits=self.nqubits,
-                layer=self.ansatz_layer,
+                layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
                 ugateH=self.ugate_hami,
-                noise_prob=self.ansatz_noise_value,
-                noise_factor=self.ansatz_identity_factor,
+                ansatz_noise_type=self.ansatz_noise_type,
+                ansatz_noise_prob=self.ansatz_noise_value,
                 param=param,
+                identity_factors=self.ansatz_identity_factors,
+
             )
         else:
             self.ansatz_circuit = noiseless_ansatz(
@@ -295,13 +299,11 @@ class IndirectVQE:
         """
         Returns the noise levels.
         """
-        if self.ansatz_noise_status:
-            nR, nT, nY, nCz = noise_level(nqubits=self.nqubits, identity_factor=self.ansatz_identity_factor)["params"]
-        else:
-            nR, nT, nY, nCz = None, None, None, None
-
-        return nR, nT, nY, nCz
-
+        
+        noise_details = calculate_noise_levels(nqubits=self.nqubits, identity_factors=self.ansatz_identity_factors, noise_profile=self.noise_profile)
+        
+        return noise_details
+    
     def get_ugate_hamiltonain(self) -> Observable:
         """
         Returns time-evolution gate Hamiltonian.

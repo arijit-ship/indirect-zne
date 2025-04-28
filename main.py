@@ -53,7 +53,11 @@ def initialize_vqe() -> None:
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            vqe_profile=,
+            vqe_profile= vaqe_profile,
+            ansatz_profile= ansatz,
+            noise_profile= noise_profile,
+            identity_factors= [0, 0, 0, 0],
+            init_param=initialparam,
         )
         vqe_output = vqe_instance.run_vqe()
         each_end_time = time.time()
@@ -78,8 +82,8 @@ def initialize_vqe() -> None:
     end_time = time.time()
     total_run_time = end_time - start_time
 
-    nR, nT, nY, nCz = vqe_instance.get_noise_level()
-    noise_level_list = [nR, nT, nY, nCz]
+    noisy_gate_related_details = vqe_instance.get_noise_level()
+    #noise_level_list = [nR, nT, nY, nCz]
 
     print("=" * symbol_count + "Output" + "=" * symbol_count)
 
@@ -87,7 +91,7 @@ def initialize_vqe() -> None:
     print(f"Initial costs: {initial_costs_history}")
     print(f"Optimized minimum costs: {min_cost_history}")
     print(f"Optimized parameters: {all_optimized_param}")
-    print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
+    print(f"Noisy gate related details: {noisy_gate_related_details} ")
     print(f"Run time: {total_run_time} sec")
 
     # Generate timestamp for unique file name
@@ -106,7 +110,7 @@ def initialize_vqe() -> None:
             "initial_cost_history": initial_costs_history,
             "optimized_minimum_cost": min_cost_history,
             "optimized_parameters": all_optimized_param,
-            "noise_level": noise_level_list,
+            "noisey_gate_related_details": noisy_gate_related_details,
             "run_time_sec": total_run_time,
         },
         "others": {
@@ -132,9 +136,9 @@ def run_redundant() -> None:
     data_points = []
     vqe_instances = []
     time_evolution_hamiltonian_string = []
-
-    identity_factors: Union[List[int], List[List[int]]] = config["identity_factors"]
-    ansatz_type: str = ansatz["type"]
+    noisy_gate_related_details = []
+    identity_factors: Union[List[int], List[List[int]]] = config["redundant"]["identity_factors"]
+    ansatz_type: str = ansatz["ugate"]["type"]
 
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
@@ -169,9 +173,10 @@ def run_redundant() -> None:
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            optimization=optimization,
-            ansatz=ansatz,
-            identity_factor=factor,
+            vqe_profile= vaqe_profile,
+            ansatz_profile= ansatz,
+            noise_profile= noise_profile,
+            identity_factors= factor,
             init_param=initialparam,
         )
         vqe_output = vqe_instance.run_vqe()
@@ -184,10 +189,11 @@ def run_redundant() -> None:
         min_cost = vqe_output["min_cost"]
         optimized_param = vqe_output["optimized_param"]
 
-        nR, nT, nY, nCz = vqe_instance.get_noise_level()
-        noise_level_list = [nR, nT, nY, nCz]
-        data_points.append([nR, nT, nY, nCz, initial_cost])
-
+        noise_details = vqe_instance.get_noise_level()
+        noise_level_list = [*noise_details["noise_level"]]
+        noisy_gate_count = [*noise_details["gates_num"]]
+        data_points.append([ *noise_level_list, initial_cost])
+        noisy_gate_related_details.append(noise_details)
         vqe_instances.append(vqe_instance)
 
         print(f"#{i}")
@@ -196,6 +202,7 @@ def run_redundant() -> None:
         print(f"Optimized minimum cost: {min_cost}")
         print(f"Optimized parameters: {optimized_param}")
         print(f"Identity factor: {factor}")
+        print(f"Noisy gate related details: {noise_details}")
         print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
         print(f"Time taken: {each_run_time} sec")
 
@@ -228,6 +235,7 @@ def run_redundant() -> None:
         "config": config,
         "output": {
             "data_points": data_points,
+            "noisy_gated_related_details": noisy_gate_related_details,
             "run_time_sec": runtime,
         },
         "others": {
@@ -330,8 +338,13 @@ if __name__ == "__main__":
         noise_profile: Dict = config["noise_profile"]
 
         # VQE
+        vaqe_profile: Dict = config["vqe"]
         vqe_iteration: int = config["vqe"]["iteration"]
         optimization: Dict = config["vqe"]["optimization"]
+
+        # Initial parameters
+        initialparam: List[float] = config["init_param"]["value"]
+
 
         # observable_hami_coeffi_cn: List[float] = observable["coefficients"]["cn"]
         # observable_hami_coeffi_bn: List[float] = observable["coefficients"]["bn"]
@@ -350,9 +363,6 @@ if __name__ == "__main__":
         zne_method: str = zne["method"]
         zne_degrees: List[int] = zne["degree"]
         zne_sampling: str = zne["sampling"]
-
-        # Initial parameters
-        initialparam: List[float] = config["init_param"]
 
         # Create the target observable
         target_observable = constructObservable(
