@@ -20,8 +20,7 @@ def get_eigen_min(hamiltonian: Observable) -> float:
     min_eigenvalue = np.min(eigenvalues)
     return min_eigenvalue
 
-
-def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int]:
+def calculate_noise_levels(nqubits: int, identity_factors: list[int], noise_profile: dict) -> dict:
     """
     Finds nR, nT, and nY for a given noise factor.
 
@@ -34,11 +33,11 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
         For example, `nR = 1` adds one noisy identity (Rx_daggar*Rx) for Rx gate
         and one noisy identity (Ry_daggar * Ry) for Ry gate in the ciruit.
 
-        layer: `int`, depth of the quantum circuit.
+        noise_prob: `list[float]`, represents the probability of noise for each gate. If the probability is 0, then there is no noise.
 
     Returns:
 
-        nR, nT, nY: `int`, each value is proportional to the number of corresponding noisy gates in the circuit.
+        `dict`, a dictionary containing the noisy gated related details.
     """
 
     nY = 0
@@ -46,10 +45,24 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
     nT = 1
     nCz = 1
 
-    r_gate_factor = identity_factor[0]  # For rotational gate
-    u_gate_factor = identity_factor[1]  # For time evolution gate
-    y_gate_factor = identity_factor[2]  # For Y gate
-    cz_gate_factor = identity_factor[3]  # For CZ gate
+    r_gate_factor = identity_factors[0]  # For rotational gate
+    u_gate_factor = identity_factors[1]  # For time evolution gate
+    y_gate_factor = identity_factors[2]  # For Y gate
+    cz_gate_factor = identity_factors[3]  # For CZ gate
+
+    ansatz_noise_status = noise_profile["status"]
+    noise_prob = noise_profile["noise_prob"]
+
+    r_gate_prob = noise_prob[0]  # For rotational gate
+    cz_gate_prob = noise_prob[1]  # For cz gate
+    u_gate_prob = noise_prob[2]  # For U gate
+    y_gate_prob = noise_prob[3]  # For Y gate
+
+    # Noise level initialization
+    noise_rot = 0
+    noise_CZ = 0
+    noise_T = 0
+    noise_y = 0
 
     # Count the number of odd qubits
     odd_n = (nqubits // 2) + 1 if nqubits % 2 != 0 else nqubits // 2
@@ -72,4 +85,13 @@ def noise_level(nqubits: int, identity_factor: list[int]) -> tuple[int, int, int
     if cz_gate_factor > 0:
         nCz += 2 * cz_gate_factor
 
-    return {"params": (nR, nT, nY, nCz), "odd_wires": odd_n}
+    if ansatz_noise_status:
+        noise_rot = nR if r_gate_prob != 0 else 0
+        noise_CZ = 2 * nCz if cz_gate_prob != 0 else 0
+        noise_T = nqubits * nT if u_gate_prob != 0 else 0
+        noise_y = nY if y_gate_prob != 0 else 0
+            
+    return {"identity_factors": identity_factors,
+            "noise_level": [noise_rot, noise_T, noise_y, noise_CZ],
+            "gates_num": [nR, nT, nY, nCz],
+            "odd_wires": odd_n}

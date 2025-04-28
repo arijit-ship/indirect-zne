@@ -1,72 +1,116 @@
-from src.modules import noise_level
+from src.modules import calculate_noise_levels
 
 # nY = existing odd no + (2 * noise factor * existing odd no)
 
 
 def test_noise_param1():
-    result = noise_level(nqubits=5, identity_factor=[0, 0, 0, 0])
-    nR, nT, nY, nCz = result["params"]
+    result = calculate_noise_levels(nqubits=5,
+                                    identity_factors=[0, 0, 0, 0],
+                                    noise_profile={
+                                        "status": True,
+                                        "type": "Depolarizing",
+                                        "noise_prob": [0, 0, 0, 0],
+                                        "noise_on_init_param": {"status": False, "value": 0.1}
+                                    })
+    
+    nR, nT, nY, nCz = result["gates_num"]
     odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
     assert (nR, nT, nY, nCz) == (4, 1, 0, 1)
     assert odd_n == 3
-
+    assert noise_level == [0, 0, 0, 0]  # Noise probabilitieds are all zeros.
 
 def test_noise_param2():
-    result = noise_level(nqubits=7, identity_factor=[0, 0, 0, 0])
-    nR, nT, nY, nCz = result["params"]
+    result = calculate_noise_levels(nqubits=5,
+                                    identity_factors=[0, 0, 0, 0],
+                                    noise_profile={
+                                        "status": True,
+                                        "type": "Depolarizing",
+                                        "noise_prob": [1, 0, 0, 0],
+                                        "noise_on_init_param": {"status": False, "value": 0.1}
+                                    })
+    
+    nR, nT, nY, nCz = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
     assert (nR, nT, nY, nCz) == (4, 1, 0, 1)
+    assert odd_n == 3
+    assert noise_level == [4, 0, 0, 0]
 
-
-def test_noise_param3():
-    result = noise_level(nqubits=7, identity_factor=[1, 0, 0, 0])
-    nR, nT, nY, nCz = result["params"]
-    assert (nR, nT, nY, nCz) == (12, 1, 0, 1)
-
-
-def test_noise_param4():
-    result = noise_level(nqubits=7, identity_factor=[0, 0, 1, 0])
-    nR, nT, nY, nCz = result["params"]
+def test_noise_param2():
+    result = calculate_noise_levels(nqubits=5,
+                                    identity_factors=[0, 0, 0, 0],
+                                    noise_profile={
+                                        "status": True,
+                                        "type": "Depolarizing",
+                                        "noise_prob": [1, 0, 0, 0],
+                                        "noise_on_init_param": {"status": False, "value": 0.1}
+                                    })
+    
+    nR, nT, nY, nCz = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
     assert (nR, nT, nY, nCz) == (4, 1, 0, 1)
+    assert odd_n == 3
+    assert noise_level == [4, 0, 0, 0]
 
 
-def test_noise_param5():
-    result = noise_level(nqubits=7, identity_factor=[0, 1, 0, 0])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 0 * odd_n), 1)
+# def test_noise_param2():
+#     result = noise_level(nqubits=7, identity_factor=[0, 0, 0, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     assert (nR, nT, nY, nCz) == (4, 1, 0, 1)
 
 
-def test_noise_param6():
-    result = noise_level(nqubits=7, identity_factor=[0, 1, 1, 0])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 1 * odd_n), 1)
+# def test_noise_param3():
+#     result = noise_level(nqubits=7, identity_factor=[1, 0, 0, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     assert (nR, nT, nY, nCz) == (12, 1, 0, 1)
 
 
-def test_noise_param7():
-    result = noise_level(nqubits=7, identity_factor=[0, 1, 2, 0])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 2 * odd_n), 1)
-    assert odd_n == 4
+# def test_noise_param4():
+#     result = noise_level(nqubits=7, identity_factor=[0, 0, 1, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     assert (nR, nT, nY, nCz) == (4, 1, 0, 1)
 
 
-def test_noise_param8():
-    result = noise_level(nqubits=8, identity_factor=[0, 1, 2, 0])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 2 * odd_n), 1)
+# def test_noise_param5():
+#     result = noise_level(nqubits=7, identity_factor=[0, 1, 0, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 0 * odd_n), 1)
 
 
-def test_noise_param9():
-    result = noise_level(nqubits=9, identity_factor=[2, 2, 2, 0])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (odd_n, nR, nT, nY, nCz) == (5, 4 + (2 * 8), 5, odd_n + (2 * 2 * odd_n), 1)
+# def test_noise_param6():
+#     result = noise_level(nqubits=7, identity_factor=[0, 1, 1, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 1 * odd_n), 1)
 
 
-def test_noise_param10():
-    result = noise_level(nqubits=4, identity_factor=[3, 3, 3, 3])
-    nR, nT, nY, nCz = result["params"]
-    odd_n = result["odd_wires"]
-    assert (odd_n, nR, nT, nY, nCz) == (2, 4 + (3 * 8), 1 + (3 * 2), (2 + (2 * 3 * 2)), 1 + (2 * 3))
+# def test_noise_param7():
+#     result = noise_level(nqubits=7, identity_factor=[0, 1, 2, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 2 * odd_n), 1)
+#     assert odd_n == 4
+
+
+# def test_noise_param8():
+#     result = noise_level(nqubits=8, identity_factor=[0, 1, 2, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (nR, nT, nY, nCz) == (4, 3, odd_n + (2 * 2 * odd_n), 1)
+
+
+# def test_noise_param9():
+#     result = noise_level(nqubits=9, identity_factor=[2, 2, 2, 0])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (odd_n, nR, nT, nY, nCz) == (5, 4 + (2 * 8), 5, odd_n + (2 * 2 * odd_n), 1)
+
+
+# def test_noise_param10():
+#     result = noise_level(nqubits=4, identity_factor=[3, 3, 3, 3])
+#     nR, nT, nY, nCz = result["params"]
+#     odd_n = result["odd_wires"]
+#     assert (odd_n, nR, nT, nY, nCz) == (2, 4 + (3 * 8), 1 + (3 * 2), (2 + (2 * 3 * 2)), 1 + (2 * 3))

@@ -92,12 +92,13 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
 
 def create_noisy_ansatz(
     nqubits: int,
-    layer: int,
+    layers: int,
     gateset: int,
     ugateH: Observable,
-    noise_prob: List[float],
-    noise_factor: List[int],
+    ansatz_noise_type: str,
+    ansatz_noise_prob: List[float],
     param: List[float],
+    identity_factors: List[int]
 ) -> QuantumCircuit:
     """
     Creates noisy redundant ansatz.
@@ -118,8 +119,23 @@ def create_noisy_ansatz(
         QuantumCircuit
     """
 
+    # Noise types validation
+    if ansatz_noise_type.lower() not in ["depolarizing", "bitflip", "dephasing", "xznoise"]:
+        raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.")
+    else:
+        if ansatz_noise_type.lower() == "depolarizing":
+            ansatz_noise_type = "Depolarizing"
+    
+
     # Creates redundant circuit
-    circuit = create_redundant(nqubits, layer, noise_prob, noise_factor, ugateH, param)
+    circuit = create_redundant(nqubits= nqubits,
+                               layers= layers,
+                               noise_type= ansatz_noise_type,
+                               noise_prob= ansatz_noise_prob,
+                               gateset= gateset,
+                               hamiltonian= ugateH,
+                               param= param,
+                               identity_factors= identity_factors)
 
     return circuit
 
@@ -127,10 +143,12 @@ def create_noisy_ansatz(
 def create_redundant(
     nqubits: int,
     layers: int,
-    noise_profile: dict,
+    noise_type: str,
+    noise_prob: List[float],
     gateset: int,
     hamiltonian: Observable,
     param: List[float],
+    identity_factors: List[int]
 ) -> QuantumCircuit:
     """
     Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
@@ -156,22 +174,6 @@ def create_redundant(
     circuit = QuantumCircuit(nqubits)
 
     flag = layers  # Tracking angles in param ndarrsy
-    # Noise profile
-    noise_type: str = noise_profile["noise_type"]
-    noise_prob: List[float] = noise_profile["noise_prob"]
-    noise_factor: List[int] = noise_profile["noise_factor"]
-
-    # Noise types
-    if noise_type.lower() == "depolarizing":
-        noise_type = "Depolarizing"
-    elif noise_type.lower() == "bitflip":
-        noise_type = "BitFlipNoise"
-    elif noise_type.lower() == "dephasing":
-        noise_type = "DephasingNoise"
-    elif noise_type.lower() == "xznoise":
-        noise_type = "IndependentXZNoise"
-    else:
-        raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.")
     
     # Noise propabilities
     noise_r_prob = noise_prob[0]
@@ -180,10 +182,10 @@ def create_redundant(
     noise_y_prob = noise_prob[3]
 
     # Noisy identy factors
-    r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
-    u_gate_factor = noise_factor[1]  # Identity scaling factor for time-evolution gates
-    y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
-    cz_gate_factor = noise_factor[3]
+    r_gate_factor = identity_factors[0]  # Identity sacaling factor for rotational gates
+    u_gate_factor = identity_factors[1]  # Identity scaling factor for time-evolution gates
+    y_gate_factor = identity_factors[2]  # Identity scaling factor for Y gate
+    cz_gate_factor = identity_factors[3]
 
     for layer in range(layers):
 
