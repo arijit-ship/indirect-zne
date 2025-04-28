@@ -45,10 +45,11 @@ def calculate_noise_levels(nqubits: int, identity_factors: list[int], noise_prof
     nT = 1
     nCz = 1
 
-    r_gate_factor = identity_factors[0]  # For rotational gate
-    u_gate_factor = identity_factors[1]  # For time evolution gate
-    y_gate_factor = identity_factors[2]  # For Y gate
-    cz_gate_factor = identity_factors[3]  # For CZ gate
+    # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
+    r_gate_factor = identity_factors[0]   # Identity sacaling factor for rotational gates
+    cz_gate_factor = identity_factors[1]  # Identity scaling factor for CZ gate
+    u_gate_factor = identity_factors[2]  # Identity scaling factor for time-evolution gates
+    y_gate_factor = identity_factors[3]  # Identity scaling factor for Y gate
 
     ansatz_noise_status = noise_profile["status"]
     noise_prob = noise_profile["noise_prob"]
@@ -92,6 +93,6 @@ def calculate_noise_levels(nqubits: int, identity_factors: list[int], noise_prof
         noise_y = nY if y_gate_prob != 0 else 0
             
     return {"identity_factors": identity_factors,
-            "noise_level": [noise_rot, noise_T, noise_y, noise_CZ],
-            "gates_num": [nR, nT, nY, nCz],
+            "noise_level": [noise_rot, noise_CZ, noise_T, noise_y],
+            "gates_num": [nR, nCz, nT, nY],
             "odd_wires": odd_n}
