@@ -175,17 +175,18 @@ def create_redundant(
 
     flag = layers  # Tracking angles in param ndarrsy
     
-    # Noise propabilities
+    # Noise propabilities: [R-gates, CZ-gate, U-gate, Y-gate]
     noise_r_prob = noise_prob[0]
     noise_cz_prob = noise_prob[1]
     noise_u_prob = noise_prob[2]
     noise_y_prob = noise_prob[3]
 
-    # Noisy identy factors
-    r_gate_factor = identity_factors[0]  # Identity sacaling factor for rotational gates
-    u_gate_factor = identity_factors[1]  # Identity scaling factor for time-evolution gates
-    y_gate_factor = identity_factors[2]  # Identity scaling factor for Y gate
-    cz_gate_factor = identity_factors[3]
+    # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
+    r_gate_factor = identity_factors[0]   # Identity sacaling factor for rotational gates
+    cz_gate_factor = identity_factors[1]  # Identity scaling factor for CZ gate
+    u_gate_factor = identity_factors[2]  # Identity scaling factor for time-evolution gates
+    y_gate_factor = identity_factors[3]  # Identity scaling factor for Y gate
+    
 
     for layer in range(layers):
 
