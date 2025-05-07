@@ -95,4 +95,5 @@ def calculate_noise_levels(nqubits: int, identity_factors: list[int], noise_prof
     return {"identity_factors": identity_factors,
             "noise_level": [noise_rot, noise_CZ, noise_T, noise_y],
             "gates_num": [nR, nCz, nT, nY],
+            "noise_profile": noise_profile,
             "odd_wires": odd_n}

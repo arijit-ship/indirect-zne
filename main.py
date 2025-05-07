@@ -91,7 +91,7 @@ def initialize_vqe() -> None:
     print(f"Initial costs: {initial_costs_history}")
     print(f"Optimized minimum costs: {min_cost_history}")
     print(f"Optimized parameters: {all_optimized_param}")
-    print(f"Noisy gate related details: {noisy_gate_related_details} ")
+    print(f"Noise details: {noisy_gate_related_details} ")
     print(f"Run time: {total_run_time} sec")
 
     # Generate timestamp for unique file name
@@ -110,7 +110,7 @@ def initialize_vqe() -> None:
             "initial_cost_history": initial_costs_history,
             "optimized_minimum_cost": min_cost_history,
             "optimized_parameters": all_optimized_param,
-            "noisey_gate_related_details": noisy_gate_related_details,
+            "noise_details": noisy_gate_related_details,
             "run_time_sec": total_run_time,
         },
         "others": {
@@ -202,7 +202,7 @@ def run_redundant() -> None:
         print(f"Optimized minimum cost: {min_cost}")
         print(f"Optimized parameters: {optimized_param}")
         print(f"Identity factor: {factor}")
-        print(f"Noisy gate related details: {noise_details}")
+        print(f"Noise details: {noise_details}")
         print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
         print(f"Time taken: {each_run_time} sec")
 
@@ -235,7 +235,7 @@ def run_redundant() -> None:
         "config": config,
         "output": {
             "data_points": data_points,
-            "noisy_gated_related_details": noisy_gate_related_details,
+            "noise_details": noisy_gate_related_details,
             "run_time_sec": runtime,
         },
         "others": {
