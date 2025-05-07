@@ -13,23 +13,25 @@ state: str = "dmatrix"
 # r1 = 1
 target_observable = create_ising_hamiltonian(nqubits=nqubits)
 
-opt_dtls = {
-    "iteration": 1,
-    "optimization": {
-        "status": False,
-        "algorithm": "SLSQP",
-        "constraint": False
-    }
-}
+opt_dtls = {"iteration": 1, "optimization": {"status": False, "algorithm": "SLSQP", "constraint": False}}
 
 
 ansatz_dtls = {
     "layer": 10,
     "gateset": 1,
-    "ugate": {"type": "xy-iss","coefficients": {"cn": [0.5, 0.5, 0.5], "bn": [0, 0, 0, 0], "r": 0}, "time": {"min": 0.0, "max": 10.0}},
+    "ugate": {
+        "type": "xy-iss",
+        "coefficients": {"cn": [0.5, 0.5, 0.5], "bn": [0, 0, 0, 0], "r": 0},
+        "time": {"min": 0.0, "max": 10.0},
+    },
 }
 
-noise_dtls = {"status": True, "type": "Depolarizing", "noise_prob": [0, 0, 0, 0], "noise_on_init_param": {"status": False, "value": 0.1}}
+noise_dtls = {
+    "status": True,
+    "type": "Depolarizing",
+    "noise_prob": [0, 0, 0, 0],
+    "noise_on_init_param": {"status": False, "value": 0.1},
+}
 
 factors = [
     [0, 0, 0, 0],
@@ -98,28 +100,146 @@ optimized_initial_param = [
 expected_value = -4.758769842654501
 tolerance = 1e-7
 
-for factor in factors:
-    # vqe_instance = IndirectVQE(
-    #     nqubits=nqubits,
-    #     state=state,
-    #     observable=target_observable,
-    #     optimization=opt_dtls,
-    #     ansatz=ansatz_dtls,
-    #     identity_factor=factor,
-    #     init_param=optimized_initial_param,
-    # )
-    vqe_instance = IndirectVQE(
+
+def test_vqe_estimation():
+    """
+    Testing the VQE estimation with different identity factors.
+    The expected value is -4.758769842654501 with a tolerance of 1e-7.
+    """
+    for factor in factors:
+        # vqe_instance = IndirectVQE(
+        #     nqubits=nqubits,
+        #     state=state,
+        #     observable=target_observable,
+        #     optimization=opt_dtls,
+        #     ansatz=ansatz_dtls,
+        #     identity_factor=factor,
+        #     init_param=optimized_initial_param,
+        # )
+        vqe_instance = IndirectVQE(
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            vqe_profile= opt_dtls,
-            ansatz_profile= ansatz_dtls,
-            noise_profile= noise_dtls,
-            identity_factors= factor,
+            vqe_profile=opt_dtls,
+            ansatz_profile=ansatz_dtls,
+            noise_profile=noise_dtls,
+            identity_factors=factor,
             init_param=optimized_initial_param,
         )
-    result = vqe_instance.run_vqe()
-    estimation = result["initial_cost"]
-    assert math.isclose(
-        estimation, expected_value, rel_tol=tolerance, abs_tol=tolerance
-    ), f"Result {estimation} is not close to {expected_value}"
+        result = vqe_instance.run_vqe()
+        estimation = result["initial_cost"]
+        assert math.isclose(
+            estimation, expected_value, rel_tol=tolerance, abs_tol=tolerance
+        ), f"Result {estimation} is not close to {expected_value}"
+
+
+def test_gate_numbers1():
+    """
+    Testing the gate numbers for different identity factors.
+    """
+    folding_factors = [0, 0, 0, 0]
+    vqe_instance = IndirectVQE(
+        nqubits=nqubits,
+        state=state,
+        observable=target_observable,
+        vqe_profile=opt_dtls,
+        ansatz_profile=ansatz_dtls,
+        noise_profile=noise_dtls,
+        identity_factors=folding_factors,
+        init_param=optimized_initial_param,
+    )
+    result = vqe_instance.get_noise_level()
+
+    nR, nCz, nT, nY = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
+    assert (nR, nCz, nT, nY) == (4, 1, 1, 0)
+    assert odd_n == 2  # 4-qubit system with 2 odd wires
+    assert noise_level == [0, 0, 0, 0]  # Noise probability are all zeros.
+
+
+def test_gate_numbers2():
+    """
+    Testing the gate numbers for different identity factors.
+    """
+    folding_factors = [1, 1, 1, 0]
+    vqe_instance = IndirectVQE(
+        nqubits=nqubits,
+        state=state,
+        observable=target_observable,
+        vqe_profile=opt_dtls,
+        ansatz_profile=ansatz_dtls,
+        noise_profile=noise_dtls,
+        identity_factors=folding_factors,
+        init_param=optimized_initial_param,
+    )
+    result = vqe_instance.get_noise_level()
+
+    nR, nCz, nT, nY = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
+    assert (nR, nCz, nT, nY) == (12, 3, 3, 4)
+    assert odd_n == 2  # 4-qubit system with 2 odd wires
+    assert noise_level == [0, 0, 0, 0]  # Noise probability are all zeros.
+
+
+def test_gate_numbers3():
+    """
+    Testing the gate numbers for different identity factors.
+    Identity factor for U gate is zero, but for Y gate is 1; so no folding for Y gate.
+    """
+    folding_factors = [0, 0, 0, 1]
+    vqe_instance = IndirectVQE(
+        nqubits=nqubits,
+        state=state,
+        observable=target_observable,
+        vqe_profile=opt_dtls,
+        ansatz_profile=ansatz_dtls,
+        noise_profile=noise_dtls,
+        identity_factors=folding_factors,
+        init_param=optimized_initial_param,
+    )
+    result = vqe_instance.get_noise_level()
+
+    nR, nCz, nT, nY = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
+    assert (nR, nCz, nT, nY) == (4, 1, 1, 0)
+    assert odd_n == 2  # 4-qubit system with 2 odd wires
+    assert noise_level == [0, 0, 0, 0]  # Noise probability are all zeros.
+
+
+def test_gate_numbers4():
+    r"""
+    Testing the gate numbers for different identity factors.
+    Folding for U gate is 2, for Y gate is 1.
+
+    ---U--U†U--U†U--
+
+    So total number of U gates is 5. Now for a 4-qbubit system, we have 2 odd wires.
+    In each odd wire,
+    U† has the following Y gates:
+
+    --Y--Y†Y--U--Y†Y--Y--
+
+    That is total 6 Y gates. So total number of Y gates for all 2 odd wires is 6 * 2 = 12 which makes only one U† gate.
+    Now for all 2 U† gates, we have 2 * 12 = 24 Y gate in total.
+    """
+    folding_factors = [1, 1, 2, 1]
+    vqe_instance = IndirectVQE(
+        nqubits=nqubits,
+        state=state,
+        observable=target_observable,
+        vqe_profile=opt_dtls,
+        ansatz_profile=ansatz_dtls,
+        noise_profile=noise_dtls,
+        identity_factors=folding_factors,
+        init_param=optimized_initial_param,
+    )
+    result = vqe_instance.get_noise_level()
+    nR, nCz, nT, nY = result["gates_num"]
+    odd_n = result["odd_wires"]
+    noise_level = result["noise_level"]
+    assert (nR, nCz, nT, nY) == (12, 3, 5, 24)
+    assert odd_n == 2  # 4-qubit system with 2 odd wires
+    assert noise_level == [0, 0, 0, 0]  # Noise probability are all zeros.

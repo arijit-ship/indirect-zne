@@ -98,7 +98,7 @@ def create_noisy_ansatz(
     ansatz_noise_type: str,
     ansatz_noise_prob: List[float],
     param: List[float],
-    identity_factors: List[int]
+    identity_factors: List[int],
 ) -> QuantumCircuit:
     """
     Creates noisy redundant ansatz.
@@ -125,17 +125,18 @@ def create_noisy_ansatz(
     else:
         if ansatz_noise_type.lower() == "depolarizing":
             ansatz_noise_type = "Depolarizing"
-    
 
     # Creates redundant circuit
-    circuit = create_redundant(nqubits= nqubits,
-                               layers= layers,
-                               noise_type= ansatz_noise_type,
-                               noise_prob= ansatz_noise_prob,
-                               gateset= gateset,
-                               hamiltonian= ugateH,
-                               param= param,
-                               identity_factors= identity_factors)
+    circuit = create_redundant(
+        nqubits=nqubits,
+        layers=layers,
+        noise_type=ansatz_noise_type,
+        noise_prob=ansatz_noise_prob,
+        gateset=gateset,
+        hamiltonian=ugateH,
+        param=param,
+        identity_factors=identity_factors,
+    )
 
     return circuit
 
@@ -148,7 +149,7 @@ def create_redundant(
     gateset: int,
     hamiltonian: Observable,
     param: List[float],
-    identity_factors: List[int]
+    identity_factors: List[int],
 ) -> QuantumCircuit:
     """
     Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
@@ -174,7 +175,7 @@ def create_redundant(
     circuit = QuantumCircuit(nqubits)
 
     flag = layers  # Tracking angles in param ndarrsy
-    
+
     # Noise propabilities: [R-gates, CZ-gate, U-gate, Y-gate]
     noise_r_prob = noise_prob[0]
     noise_cz_prob = noise_prob[1]
@@ -182,11 +183,10 @@ def create_redundant(
     noise_y_prob = noise_prob[3]
 
     # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
-    r_gate_factor = identity_factors[0]   # Identity sacaling factor for rotational gates
+    r_gate_factor = identity_factors[0]  # Identity sacaling factor for rotational gates
     cz_gate_factor = identity_factors[1]  # Identity scaling factor for CZ gate
     u_gate_factor = identity_factors[2]  # Identity scaling factor for time-evolution gates
     y_gate_factor = identity_factors[3]  # Identity scaling factor for Y gate
-    
 
     for layer in range(layers):
 
@@ -317,6 +317,5 @@ def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: i
                 circuit.add_noise_gate(Y(i), "Depolarizing", noise_y_prob)
     return circuit
 
-def create_ansatz_circuit():
 
-    ...
+def create_ansatz_circuit(): ...
