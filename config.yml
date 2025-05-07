@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
-run: "vqe"
+run: "redundant"
 
 # System configuration
 nqubits: 4
@@ -10,7 +10,7 @@ state: "dmatrix"
 output:
   file_name_prefix: "test_experiment"
   draw:
-    status: False
+    status: True
     fig_dpi: 100
     type: "png"
 
@@ -31,7 +31,7 @@ observable:
 
 # Circuit configuration
 ansatz:
-  layer: 10
+  layer: 1
   gateset: 1
   ugate:
     # Type options: 'custom', 'xy-iss', 'ising', and 'heisenberg'.
@@ -80,7 +80,7 @@ noise_profile:
 redundant:
   # Identity factors for R-gates, CZ-gate, U-gate, and Y-gate.
   # WARNING: Identity scaling for the U gate is only possible if vqe.ansatz.type is 'xy-iss'. For other types, the identity factor for the U gate must be set to 0.
-  identity_factors: [[1, 0, 0, 0], [1, 1, 0, 0], [1, 2, 0, 0]]
+  identity_factors: [[1, 0, 0, 0], [1, 1, 0, 0], [0, 0, 2, 1]]
 
 # Zero noise extrapolation (ZNE) configuration
 zne:

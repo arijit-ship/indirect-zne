@@ -37,8 +37,6 @@ class IndirectVQE:
         self.nqubits = nqubits
         self.state = state
 
-
-
         # Optimization variables
         self.optimization_status: bool = vqe_profile["optimization"]["status"]
         self.optimizer: str = vqe_profile["optimization"]["algorithm"]
@@ -143,7 +141,6 @@ class IndirectVQE:
                 ansatz_noise_prob=self.ansatz_noise_value,
                 param=param,
                 identity_factors=self.ansatz_identity_factors,
-
             )
         else:
             self.ansatz_circuit = noiseless_ansatz(
@@ -299,11 +296,13 @@ class IndirectVQE:
         """
         Returns the noise levels.
         """
-        
-        noise_details = calculate_noise_levels(nqubits=self.nqubits, identity_factors=self.ansatz_identity_factors, noise_profile=self.noise_profile)
-        
+
+        noise_details = calculate_noise_levels(
+            nqubits=self.nqubits, identity_factors=self.ansatz_identity_factors, noise_profile=self.noise_profile
+        )
+
         return noise_details
-    
+
     def get_ugate_hamiltonain(self) -> Observable:
         """
         Returns time-evolution gate Hamiltonian.

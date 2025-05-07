@@ -10,16 +10,17 @@ from qulacs.observable import create_observable_from_openfermion_text
 
 
 def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: float) -> Observable:
-    """
+    r"""
     😎 Fancy XY-model Hamiltonian.
-    Creates a one-dimensional custom Hamiltonian (this is NOT any standard familier XY-model, lets call it 'Fancy XY-model Hamiltonian')that has
+    Creates a one-dimensional custom Hamiltonian (this is NOT any standard familier XY-model,lets call it
+    'Fancy XY-model Hamiltonian')that has
     the following mathematical form:
 
     Mathematical form:
 
         .. math::
-        H_\text{custom} = \sum_{k=1}^{N-1}c_{k}[(1+\gamma)X_{k}X_{k+1}+(1-\gamma)Z_{k}Z_{k+1}] + \sum_{k=1}^{N}b_{k}Z_{k}
-
+        H_\text{custom} = \sum_{k=1}^{N-1}c_{k}[(1+\gamma)X_{k}X_{k+1}+(1-\gamma)Z_{k}Z_{k+1}]
+        + \sum_{k=1}^{N}b_{k}Z_{k}
     Note: For cn = 0.5, bn = 1, and r = 1 it reduces to transverse-field Ising Hamiltonian.
 
     Args:
@@ -44,7 +45,7 @@ def create_xy_hamiltonian(nqubits: int, cn: List[float], bn: List[float], r: flo
 
 
 def create_ising_hamiltonian(nqubits: int) -> Observable:
-    """
+    r"""
     Creates an Ising Hamiltonian which is a specific instance of
     custom Hamiltonian (this is NOT any standard familier XY model) with coefficients cn = [0.5], bn = [1], and r = 1.
 
@@ -67,7 +68,7 @@ def create_ising_hamiltonian(nqubits: int) -> Observable:
 
 
 def create_xy_iss_hamiltonian(nqubits: int) -> Observable:
-    """
+    r"""
     Creates an xy-iss Hamiltonian which is a specific instance of
     custom Hamiltonian with coefficients cn = [0.5], bn = [0], and r = 0.
 
@@ -92,7 +93,7 @@ def create_xy_iss_hamiltonian(nqubits: int) -> Observable:
 
 
 def create_heisenberg_hamiltonian(nqubits: int, cn: List[float]) -> Observable:
-    """
+    r"""
     Creates a one-dimensional Heisenberg-Hamiltonian.
 
     Mathematical Form:

@@ -53,10 +53,10 @@ def initialize_vqe() -> None:
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            vqe_profile= vaqe_profile,
-            ansatz_profile= ansatz,
-            noise_profile= noise_profile,
-            identity_factors= [0, 0, 0, 0],
+            vqe_profile=vaqe_profile,
+            ansatz_profile=ansatz,
+            noise_profile=noise_profile,
+            identity_factors=[0, 0, 0, 0],
             init_param=initialparam,
         )
         vqe_output = vqe_instance.run_vqe()
@@ -83,7 +83,7 @@ def initialize_vqe() -> None:
     total_run_time = end_time - start_time
 
     noisy_gate_related_details = vqe_instance.get_noise_level()
-    #noise_level_list = [nR, nT, nY, nCz]
+    # noise_level_list = [nR, nT, nY, nCz]
 
     print("=" * symbol_count + "Output" + "=" * symbol_count)
 
@@ -173,10 +173,10 @@ def run_redundant() -> None:
             nqubits=nqubits,
             state=state,
             observable=target_observable,
-            vqe_profile= vaqe_profile,
-            ansatz_profile= ansatz,
-            noise_profile= noise_profile,
-            identity_factors= factor,
+            vqe_profile=vaqe_profile,
+            ansatz_profile=ansatz,
+            noise_profile=noise_profile,
+            identity_factors=factor,
             init_param=initialparam,
         )
         vqe_output = vqe_instance.run_vqe()
@@ -191,8 +191,8 @@ def run_redundant() -> None:
 
         noise_details = vqe_instance.get_noise_level()
         noise_level_list = [*noise_details["noise_level"]]
-        noisy_gate_count = [*noise_details["gates_num"]]
-        data_points.append([ *noise_level_list, initial_cost])
+        # noisy_gate_count = [*noise_details["gates_num"]]
+        data_points.append([*noise_level_list, initial_cost])
         noisy_gate_related_details.append(noise_details)
         vqe_instances.append(vqe_instance)
 
@@ -345,7 +345,6 @@ if __name__ == "__main__":
         # Initial parameters
         initialparam: List[float] = config["init_param"]["value"]
 
-
         # observable_hami_coeffi_cn: List[float] = observable["coefficients"]["cn"]
         # observable_hami_coeffi_bn: List[float] = observable["coefficients"]["bn"]
         # observable_hami_coeffi_r: float = observable["coefficients"]["r"]
@@ -355,7 +354,6 @@ if __name__ == "__main__":
         fig_dpi: int = config["output"]["draw"]["fig_dpi"]
         fig_filetype: str = config["output"]["draw"]["type"]
 
-        
         ansatz: Dict = config["ansatz"]
         noise_profile: Dict = config["noise_profile"]
 
