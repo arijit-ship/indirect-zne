@@ -1,4 +1,5 @@
-from typing import Dict, Union
+from typing import Dict
+
 
 def validate_yml_config(config: Dict) -> bool:
     # Run section
@@ -6,7 +7,6 @@ def validate_yml_config(config: Dict) -> bool:
         raise ValueError("Missing or invalid 'run' key. It should be a string.")
 
     run_type = config["run"]
-    
     if "nqubits" not in config or not isinstance(config["nqubits"], int):
         raise ValueError("Missing or invalid 'nqubits'. It should be an integer.")
 

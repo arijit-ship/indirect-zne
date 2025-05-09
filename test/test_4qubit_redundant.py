@@ -1,10 +1,12 @@
 import math
 
+import pytest
+
 from src.hamiltonian import create_ising_hamiltonian
 from src.vqe import IndirectVQE
 
-nqubits = 4
-layer = 10
+nqubits: int = 4
+layer: int = 10
 
 state: str = "dmatrix"
 
@@ -13,11 +15,11 @@ state: str = "dmatrix"
 # r1 = 1
 target_observable = create_ising_hamiltonian(nqubits=nqubits)
 
-opt_dtls = {"iteration": 1, "optimization": {"status": False, "algorithm": "SLSQP", "constraint": False}}
+opt_dtls: dict = {"iteration": 1, "optimization": {"status": False, "algorithm": "SLSQP", "constraint": False}}
 
 
-ansatz_dtls = {
-    "layer": 10,
+ansatz_dtls: dict = {
+    "layer": layer,
     "gateset": 1,
     "ugate": {
         "type": "xy-iss",
@@ -26,7 +28,7 @@ ansatz_dtls = {
     },
 }
 
-noise_dtls = {
+noise_dtls: dict = {
     "status": True,
     "type": "Depolarizing",
     "noise_prob": [0, 0, 0, 0],
@@ -99,6 +101,17 @@ optimized_initial_param = [
 
 expected_value = -4.758769842654501
 tolerance = 1e-7
+
+
+@pytest.fixture(autouse=True)
+def reset_global_diag_cache():
+    r"""
+    To run tests with different qubit counts in a single test session, global variables must be reset between tests.
+    """
+    import src.time_evolution_gate  # wherever diag, eigen_vecs are defined
+
+    src.time_evolution_gate.diag = None
+    src.time_evolution_gate.eigen_vecs = None
 
 
 def test_vqe_estimation():
