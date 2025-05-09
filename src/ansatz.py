@@ -120,11 +120,26 @@ def create_noisy_ansatz(
     """
 
     # Noise types validation
-    if ansatz_noise_type.lower() not in ["depolarizing", "bitflip", "dephasing", "xznoise"]:
+    """
+    Single qubit noise types:
+    https://docs.qulacs.org/en/latest/guide/2.0_python_advanced.html
+    """
+    valid_noise_types = {
+        "depolarizing": "Depolarizing",
+        "bitflip": "BitFlip",
+        "dephasing": "Dephasing",
+        "xznoise": "IndependentXZ",
+    }
+
+    noise_key = ansatz_noise_type.lower()
+
+    if noise_key not in valid_noise_types:
         raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.")
+    elif noise_key != "depolarizing":
+        raise NotImplementedError(f"Noise type '{ansatz_noise_type}' is not implemented yet.")
     else:
-        if ansatz_noise_type.lower() == "depolarizing":
-            ansatz_noise_type = "Depolarizing"
+        ansatz_noise_type = valid_noise_types[noise_key]
+
 
     # Creates redundant circuit
     circuit = create_redundant(

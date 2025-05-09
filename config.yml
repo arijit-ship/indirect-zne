@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
-run: "vqe"
+run: "zne"
 
 # System configuration
 nqubits: 7
@@ -10,7 +10,7 @@ state: "dmatrix"
 output:
   file_name_prefix: "test_experiment"
   draw:
-    status: True
+    status: False
     fig_dpi: 100
     type: "png"
 
@@ -68,7 +68,7 @@ init_param:
 
 # Noise configuration
 noise_profile:
-  status: False
+  status: True
   type: "depolarizing" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
   noise_prob: [0.01, 0.01, 0, 0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
@@ -80,7 +80,7 @@ noise_profile:
 redundant:
   # Identity factors for R-gates, CZ-gate, U-gate, and Y-gate.
   # WARNING: Identity scaling for the U gate is only possible if vqe.ansatz.type is 'xy-iss'. For other types, the identity factor for the U gate must be set to 0.
-  identity_factors: [[1, 0, 0, 0], [1, 1, 0, 0], [0, 0, 2, 1]]
+  identity_factors: [[0, 0, 0, 0], [1, 1, 0, 0]]
 
 # Zero noise extrapolation (ZNE) configuration
 zne:
@@ -98,5 +98,5 @@ zne:
   sampling: "default"
 
   # Data points for extrapolation
-  data_points:  
+  data_points:  [[4, 2, 0, 0, -2.9319050312734434], [12, 6, 0, 0, -0.4710001641549658]]
     
