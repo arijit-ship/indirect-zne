@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
-run: "zne"
+run: "vqe"
 
 # System configuration
 nqubits: 7
@@ -8,7 +8,7 @@ state: "dmatrix"
 
 # Output configuration
 output:
-  file_name_prefix: "test_experiment"
+  file_name_prefix: "xy_ansatz_noise_off"
   draw:
     status: False
     fig_dpi: 100
@@ -54,10 +54,10 @@ ansatz:
 
 # Variational Quantum Eigensolver (VQE) configuration
 vqe:
-  iteration: 2
+  iteration: 1
   # Optimization configuration
   optimization:
-    status: False
+    status: True
     algorithm: "SLSQP"
     constraint: False
 
@@ -65,11 +65,12 @@ vqe:
 init_param:
   # Parameter value: "random" or "List[floats]".
   value: "random"
+
 # Noise configuration
 noise_profile:
   status: True
   type: "depolarizing" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
-  noise_prob: [0.01, 0.01, 0, 0] # Noise probabilities for [R, CZ, U, Y] gates.
+  noise_prob: [0.001, 0.001, 0, 0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
     # Adds noise to the initial parameters.
     status: False
@@ -97,5 +98,4 @@ zne:
   sampling: "default"
 
   # Data points for extrapolation
-  data_points:  
-    
+  data_points: 
