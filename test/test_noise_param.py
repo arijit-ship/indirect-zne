@@ -1,5 +1,6 @@
-from src.modules import calculate_noise_levels
 import numpy as np
+
+from src.modules import calculate_noise_levels
 
 # nY = existing odd no + (2 * noise factor * existing odd no)
 
