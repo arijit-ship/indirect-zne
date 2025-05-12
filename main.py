@@ -162,7 +162,7 @@ def run_redundant() -> None:
         # Validiting identity factor for a given ansatz-type.
         # U and Y gate factor must be zero for any ansatz type other than 'xy-iss'
         # factor[1] = U gate factor and factor[2] = Y gate factor
-        if ansatz_type.lower() != "xy-iss" and any(map(abs, factor[1:3])):
+        if ansatz_type.lower() != "xy-iss" and any(map(abs, factor[2:4])):
             raise ValueError(
                 f"Redundant circuit run failed. Non-zero identity scaling factors "
                 f"of U and Y gates found for ansatz type: {ansatz_type}."
