@@ -1,6 +1,6 @@
 {
   "sys_des": {
-    "__comment": "This JSON file was created manually. The optimization step in the experiment takes significant computation time. During refactoring for better efficiency and readability, some older config and output files became incompatible. However, the optimization results are still valid. To save time, I manually extracted key parameter values from previous runs that can be reused. Since this config is from an older version, be careful when copying values into a newer configuration.",
+   "__comment": "This JSON file was manually created. The optimization step in the experiment is computationally intensive. During code refactoring for efficiency and readability, some older config and output files became incompatible. However, these changes do not invalidate the underlying optimization results. Key parameter values were manually extracted from previous runs for reuse to save time. This config represents an older version—exercise caution when integrating different parameter values into newer configuration files.",
 
     "old_config": {
       "run": "vqe",
