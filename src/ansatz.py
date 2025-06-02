@@ -92,12 +92,13 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
 
 def create_noisy_ansatz(
     nqubits: int,
-    layer: int,
+    layers: int,
     gateset: int,
     ugateH: Observable,
-    noise_prob: List[float],
-    noise_factor: List[int],
+    ansatz_noise_type: str,
+    ansatz_noise_prob: List[float],
     param: List[float],
+    identity_factors: List[int],
 ) -> QuantumCircuit:
     """
     Creates noisy redundant ansatz.
@@ -118,8 +119,39 @@ def create_noisy_ansatz(
         QuantumCircuit
     """
 
+    # Noise types validation
+    """
+    Single qubit noise types:
+    https://docs.qulacs.org/en/latest/guide/2.0_python_advanced.html
+    """
+    valid_noise_types = {
+        "depolarizing": "Depolarizing",
+        "bitflip": "BitFlip",
+        "dephasing": "Dephasing",
+        "xznoise": "IndependentXZ",
+    }
+
+    noise_key = ansatz_noise_type.lower()
+
+    if noise_key not in valid_noise_types:
+        raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.")
+    elif noise_key != "depolarizing":
+        raise NotImplementedError(f"Noise type '{ansatz_noise_type}' is not implemented yet.")
+    else:
+        ansatz_noise_type = valid_noise_types[noise_key]
+
+
     # Creates redundant circuit
-    circuit = create_redundant(nqubits, layer, noise_prob, noise_factor, ugateH, param)
+    circuit = create_redundant(
+        nqubits=nqubits,
+        layers=layers,
+        noise_type=ansatz_noise_type,
+        noise_prob=ansatz_noise_prob,
+        gateset=gateset,
+        hamiltonian=ugateH,
+        param=param,
+        identity_factors=identity_factors,
+    )
 
     return circuit
 
@@ -127,10 +159,12 @@ def create_noisy_ansatz(
 def create_redundant(
     nqubits: int,
     layers: int,
+    noise_type: str,
     noise_prob: List[float],
-    noise_factor: List[int],
-    hamiltonian,
+    gateset: int,
+    hamiltonian: Observable,
     param: List[float],
+    identity_factors: List[int],
 ) -> QuantumCircuit:
     """
     Creates a noisy circuit with redundant noisy indentities based on a given noise factor.
@@ -138,6 +172,7 @@ def create_redundant(
     Args:
         nqubits (int): Number of qubit.
         layer (int): Depth of the quantum circuit.
+        noise_profile (dict): Dictionary containing noise profile.
         gateset (int): Number of rotatation gate set. Each set contains fours gates which are Rx1, Ry1, Rx2, Ry2.
         ugateH (Onservable): Hamiltonian used in time evolution gate i.e. exp(-iHt).
         noise_prob (List[float]): Probability of applying depolarizing noise. Value is between 0-1.
@@ -156,57 +191,57 @@ def create_redundant(
 
     flag = layers  # Tracking angles in param ndarrsy
 
-    # Noise propabilities
+    # Noise propabilities: [R-gates, CZ-gate, U-gate, Y-gate]
     noise_r_prob = noise_prob[0]
     noise_cz_prob = noise_prob[1]
     noise_u_prob = noise_prob[2]
     noise_y_prob = noise_prob[3]
 
-    # Noisy identy factors
-    r_gate_factor = noise_factor[0]  # Identity sacaling factor for rotational gates
-    u_gate_factor = noise_factor[1]  # Identity scaling factor for time-evolution gates
-    y_gate_factor = noise_factor[2]  # Identity scaling factor for Y gate
-    cz_gate_factor = noise_factor[3]
+    # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
+    r_gate_factor = identity_factors[0]  # Identity sacaling factor for rotational gates
+    cz_gate_factor = identity_factors[1]  # Identity scaling factor for CZ gate
+    u_gate_factor = identity_factors[2]  # Identity scaling factor for time-evolution gates
+    y_gate_factor = identity_factors[3]  # Identity scaling factor for Y gate
 
     for layer in range(layers):
 
         # Add Rx to first and second qubits
-        circuit.add_noise_gate(RX(0, param[flag]), "Depolarizing", noise_r_prob)
-        circuit.add_noise_gate(RX(1, param[flag + 1]), "Depolarizing", noise_r_prob)
+        circuit.add_noise_gate(RX(0, param[flag]), noise_type, noise_r_prob)
+        circuit.add_noise_gate(RX(1, param[flag + 1]), noise_type, noise_r_prob)
 
         # Add identities with Rx and make redudant circuit
 
         for _ in range(r_gate_factor):
 
             # First qubit
-            circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), "Depolarizing", noise_r_prob)  # Rx_dagger
-            circuit.add_noise_gate(RX(0, param[flag]), "Depolarizing", noise_r_prob)
+            circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), noise_type, noise_r_prob)  # Rx_dagger
+            circuit.add_noise_gate(RX(0, param[flag]), noise_type, noise_r_prob)
 
             # Second qubit
-            circuit.add_noise_gate(RX(1, param[flag + 1]).get_inverse(), "Depolarizing", noise_r_prob)  # Rx_dagger
-            circuit.add_noise_gate(RX(1, param[flag + 1]), "Depolarizing", noise_r_prob)
+            circuit.add_noise_gate(RX(1, param[flag + 1]).get_inverse(), noise_type, noise_r_prob)  # Rx_dagger
+            circuit.add_noise_gate(RX(1, param[flag + 1]), noise_type, noise_r_prob)
 
         # Add Ry to first and second qubits
-        circuit.add_noise_gate(RY(0, param[flag + 2]), "Depolarizing", noise_r_prob)
-        circuit.add_noise_gate(RY(1, param[flag + 3]), "Depolarizing", noise_r_prob)
+        circuit.add_noise_gate(RY(0, param[flag + 2]), noise_type, noise_r_prob)
+        circuit.add_noise_gate(RY(1, param[flag + 3]), noise_type, noise_r_prob)
 
         # Add identities with Ry and make redudant circuit
         for _ in range(r_gate_factor):
             # First qubit
-            circuit.add_noise_gate(RY(0, param[flag + 2]).get_inverse(), "Depolarizing", noise_r_prob)  # Ry_dagger
-            circuit.add_noise_gate(RY(0, param[flag + 2]), "Depolarizing", noise_r_prob)
+            circuit.add_noise_gate(RY(0, param[flag + 2]).get_inverse(), noise_type, noise_r_prob)  # Ry_dagger
+            circuit.add_noise_gate(RY(0, param[flag + 2]), noise_type, noise_r_prob)
 
             # Second qubit
-            circuit.add_noise_gate(RY(1, param[flag + 3]).get_inverse(), "Depolarizing", noise_r_prob)  # Ry_dagger
-            circuit.add_noise_gate(RY(1, param[flag + 3]), "Depolarizing", noise_r_prob)
+            circuit.add_noise_gate(RY(1, param[flag + 3]).get_inverse(), noise_type, noise_r_prob)  # Ry_dagger
+            circuit.add_noise_gate(RY(1, param[flag + 3]), noise_type, noise_r_prob)
 
         # Add CZ gate
-        circuit.add_noise_gate(CZ(0, 1), "Depolarizing", noise_cz_prob)
+        circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
 
         # Add identites with CZ gates
         for _ in range(cz_gate_factor):
-            circuit.add_noise_gate(CZ(0, 1).get_inverse(), "Depolarizing", noise_cz_prob)
-            circuit.add_noise_gate(CZ(0, 1), "Depolarizing", noise_cz_prob)
+            circuit.add_noise_gate(CZ(0, 1).get_inverse(), noise_type, noise_cz_prob)
+            circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
 
         # Add multi-qubit U gate
         if layer == 0:
@@ -223,7 +258,7 @@ def create_redundant(
 
         # Add depolarizing noise to time evolution gate.
         for i in range(nqubits):
-            circuit.add_noise_gate(Identity(i), "Depolarizing", noise_u_prob)
+            circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
         # XY spin chain identity
 
@@ -246,7 +281,7 @@ def create_redundant(
 
             # Add depolarizing noise
             for i in range(nqubits):
-                circuit.add_noise_gate(Identity(i), "Depolarizing", noise_u_prob)
+                circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
             # Add Y gates to all odd qubits
             circuit = add_ygate_odd(circuit, noise_y_prob, y_gate_factor)
@@ -266,7 +301,7 @@ def create_redundant(
 
             # Add depolarizing noise
             for i in range(nqubits):
-                circuit.add_noise_gate(Identity(i), "Depolarizing", noise_u_prob)
+                circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
         flag += 4  # Each layer has four angle-params
 
@@ -296,3 +331,6 @@ def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: i
                 circuit.add_noise_gate(Y(i).get_inverse(), "Depolarizing", noise_y_prob)
                 circuit.add_noise_gate(Y(i), "Depolarizing", noise_y_prob)
     return circuit
+
+
+def create_ansatz_circuit(): ...
