@@ -236,7 +236,7 @@ class IndirectVQE:
 
             # (3) Checking constraint before optimization
             if self.constraint and self.optimizer == "SLSQP":
-                vqe_constraint = create_time_constraints(self.layer, len(random_initial_param))
+                vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
 
             elif self.optimizer != "SLSQP" and self.constraint:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")

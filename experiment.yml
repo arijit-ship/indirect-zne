@@ -57,9 +57,9 @@ vqe:
   iteration: 2
   # Optimization configuration
   optimization:
-    status: False
+    status: True
     algorithm: "SLSQP"
-    constraint: False
+    constraint: True
 
 # Initial parameters for the ansatz.
 init_param:
