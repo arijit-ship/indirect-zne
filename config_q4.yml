@@ -1,0 +1,102 @@
+# Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
+run: "vqe"
+
+# System configuration
+nqubits: 4
+# State options: 'dmatrix' and 'statevector'
+state: "dmatrix"
+
+# Output configuration
+output:
+  file_name_prefix: "test_experiment"
+  draw:
+    status: False
+    fig_dpi: 100
+    type: "png"
+
+# Target Hamiltonian configuration
+observable:
+  # Definition options: 'custom', 'ising', or 'heisenberg'.
+  # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model, we call it 'Fancy XY-model Hamiltonian').
+  def: "ising"
+
+  # WARNING: Coefficients can be overwritten:
+  # 'custom': Not overwritten.
+  # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
+  # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+  coefficients:
+    cn: [0.5, 0.5, 0.5]
+    bn: [1.0, 1.0, 1.0, 1.0]
+    r: 1
+
+# Circuit configuration
+ansatz:
+  layer: 30
+  gateset: 1
+  ugate:
+    # Type options: 'custom', 'xy-iss', 'ising', and 'heisenberg'.
+    # 'custom' and 'ising' are created using a Hamiltonian with terms XZ-Z (this is NOT any standard familier XY model, we call it 'Fancy XY-model Hamiltonian').
+    type: "xy-iss"
+    # WARNING: For ZNE redundant circuit, the ansatz type must be 'xy-iss' (stands for XY identity-scaling-supported).
+    
+    coefficients:
+    # WARNING: Coefficients can be overwritten:
+    # 'custom': Not overwritten.
+    # 'xy-iss': cn, bn, r are overwritten to [0.5], [0], 0.
+    # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
+    # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+      cn: [0.5, 0.5, 0.5]
+      bn: [0, 0, 0, 0]
+      r: 0
+    time:
+      min: 0.0
+      max: 10.0
+
+# Variational Quantum Eigensolver (VQE) configuration
+vqe:
+  iteration: 1
+  # Optimization configuration
+  optimization:
+    status: True
+    algorithm: "SLSQP"
+    constraint: True
+
+# Initial parameters for the ansatz.
+init_param:
+  # Parameter value: "random" or "List[floats]".
+  value: "random"
+
+# Noise configuration
+noise_profile:
+  status: True
+  type: "depolarizing" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
+  noise_prob: [0.01, 0.01, 0, 0] # Noise probabilities for [R, CZ, U, Y] gates.
+  noise_on_init_param:
+    # Adds noise to the initial parameters.
+    status: False
+    value: 0.01
+
+# Redundant circuit configuration
+redundant:
+  # Identity factors for R-gates, CZ-gate, U-gate, and Y-gate.
+  # WARNING: Identity scaling for the U gate is only possible if vqe.ansatz.type is 'xy-iss'. For other types, the identity factor for the U gate must be set to 0.
+  identity_factors: [[0, 0, 0, 0], [1, 1, 0, 0]]
+
+# Zero noise extrapolation (ZNE) configuration
+zne:
+  # Method options: 'linear', 'polynomial', 'richardson', or 'richardson-mul'.
+  # 'linear' and 'polynomial' use scikit-learn for regression.
+  method: "richardson"
+
+  # Degree is only applicable for 'polynomial' and 'richardson-mul'. For 'richardson', degree is computed based on the number of data points.
+  degree: 1
+
+  # Sampling method options: 'default', 'default-N', or 'random-N', where N is an integer.
+  # 'default' - samples all points.
+  # 'default-N' - samples the first N points.
+  # 'random-N' - samples N points randomly.
+  sampling: "default"
+
+  # Data points for extrapolation
+  data_points:  [[4, 2, 0, 0, -2.9319050312734434], [12, 6, 0, 0, -0.4710001641549658]]
+    
