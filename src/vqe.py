@@ -61,7 +61,8 @@ class IndirectVQE:
         self.init_param = init_param
 
         # Ansatz
-        self.ansatz_circuit = None
+        self.ansatz: dict = None
+        self.ansatz_circuit: QuantumCircuit = None
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
@@ -132,7 +133,7 @@ class IndirectVQE:
         """
 
         if self.ansatz_noise_status:
-            self.ansatz_circuit = create_noisy_ansatz(
+            self.ansatz = create_noisy_ansatz(
                 nqubits=self.nqubits,
                 layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
@@ -143,13 +144,14 @@ class IndirectVQE:
                 identity_factors=self.ansatz_identity_factors,
             )
         else:
-            self.ansatz_circuit = noiseless_ansatz(
+            self.ansatz = noiseless_ansatz(
                 nqubits=self.nqubits,
                 layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
                 ugateH=self.ugate_hami,
                 param=param,
             )
+        self.ansatz_circuit = self.ansatz["circuit"]
         return self.ansatz_circuit
 
     def cost_function(self, param: List[float]) -> float:
@@ -286,11 +288,12 @@ class IndirectVQE:
         else:
             raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
 
-        circuit_drawer(self.ansatz_circuit, "mpl")  # type: ignore
+        circuit_drawer(self.ansatz["chunks"][0], "mpl")  # type: ignore
         plt.savefig(output_file, dpi=dpi)
         plt.close()
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
+        print(f"COUNTs: {self.ansatz['noisy_gate_counts']}")
 
     def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
         """

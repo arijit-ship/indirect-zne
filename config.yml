@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
-run: "zne"
+run: "redundant"
 
 # System configuration
 nqubits: 7
@@ -10,7 +10,7 @@ state: "dmatrix"
 output:
   file_name_prefix: "xy_ansatz_noisy_evo_sample#10" #heisenberg_ansatz_ric3_sample#1 
   draw:
-    status: False
+    status: True
     fig_dpi: 100
     type: "png"
 
