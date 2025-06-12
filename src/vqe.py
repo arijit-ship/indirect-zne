@@ -293,7 +293,6 @@ class IndirectVQE:
         plt.close()
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
-        print(f"COUNTs: {self.ansatz['noisy_gate_counts']}")
 
     def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
         """

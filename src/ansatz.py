@@ -1,7 +1,7 @@
 from typing import List
 
 from qulacs import Observable, QuantumCircuit
-from qulacs.gate import CZ, RX, RY, RZ, Identity, merge
+from qulacs.gate import CZ, RX, RY, RZ, Identity, Y, merge
 
 from .time_evolution_gate import create_time_evo_unitary
 
@@ -135,8 +135,8 @@ def create_noisy_ansatz(
 
     if noise_key not in valid_noise_types:
         raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.")
-    elif noise_key != "depolarizing":
-        raise NotImplementedError(f"Noise type '{ansatz_noise_type}' is not implemented yet.")
+    # elif noise_key != "depolarizing":
+    #     raise NotImplementedError(f"Noise type '{ansatz_noise_type}' is not implemented yet.")
     else:
         ansatz_noise_type = valid_noise_types[noise_key]
 
@@ -182,7 +182,10 @@ def create_redundant(
         t1, t2, ... td, theta1, ..., theatd * 4]
 
     Returns:
-        QuantumCircuit
+        dict: {
+            "chunks": List of QuantumCircuit objects for each layer,
+            "circuit": Final QuantumCircuit object with all gates applied.
+        }
     """
 
     
@@ -236,12 +239,25 @@ def create_redundant(
             circuit.add_noise_gate(RY(1, param[flag + 3]), noise_type, noise_r_prob)
 
         # Add CZ gate
-        circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
+
+        # Old implementation
+        # circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob) 
+
+        # New implementation
+        circuit.add_CZ_gate(0, 1)
+        circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+        circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)  # Add depolarizing noise
 
         # Add identites with CZ gates
         for _ in range(cz_gate_factor):
-            circuit.add_noise_gate(CZ(0, 1).get_inverse(), noise_type, noise_cz_prob)
-            circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
+            # circuit.add_noise_gate(CZ(0, 1).get_inverse(), noise_type, noise_cz_prob)
+            # circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
+            circuit.add_gate(CZ(0, 1).get_inverse())
+            circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+            circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)
+            circuit.add_CZ_gate(0, 1)
+            circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+            circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)
 
         # Add multi-qubit U gate
         if layer == 0:
@@ -304,8 +320,13 @@ def create_redundant(
                 circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
         flag += 4  # Each layer has four angle-params
+        chunks.append(circuit.copy())  # Store the circuit for each layer
+    output: dict = {
+        "chunks": chunks,
+        "circuit": circuit,
+    }
 
-    return circuit
+    return output
 
 def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: int) -> QuantumCircuit:
     """
