@@ -1,5 +1,5 @@
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
-run: "redundant"
+run: "vqe"
 
 # System configuration
 nqubits: 4
