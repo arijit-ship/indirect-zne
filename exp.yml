@@ -2,9 +2,9 @@ run: redundant
 nqubits: 7
 state: dmatrix
 output:
-  file_name_prefix: xy_noisefree_time_evo_sample#1_sample#10
+  file_name_prefix: xy_noisefree_time_evo_sample#10
   draw:
-    status: true
+    status: false
     fig_dpi: 100
     type: png
 observable:
@@ -52,11 +52,11 @@ ansatz:
       min: 0.0
       max: 10.0
 vqe:
-  iteration: 1
+  iteration: 10
   optimization:
     status: false
     algorithm: SLSQP
-    constraint: false
+    constraint: true
 init_param:
   value:
   - 0.01970245038838479
@@ -214,9 +214,9 @@ noise_profile:
   type: depolarizing
   noise_prob:
   - 0.001
-  - 0.01
   - 0.001
-  - 0.001
+  - 0
+  - 0
   noise_on_init_param:
     status: false
     value: 0
@@ -228,7 +228,7 @@ redundant:
     - 0
   - - 1
     - 1
-    - 1
+    - 0
     - 0
 zne:
   method: richardson
@@ -237,11 +237,11 @@ zne:
   data_points:
   - - 4
     - 2
-    - 7
     - 0
-    - -5.352042097497822
+    - 0
+    - -7.130214875567141
   - - 12
     - 6
-    - 21
-    - 8
-    - -2.189092627261036
+    - 0
+    - 0
+    - -5.622281179564726
