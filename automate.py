@@ -605,6 +605,7 @@ def main():
             config = yaml.safe_load(f)
 
         config["run"] = "zne"
+        config["zne"]["data_points"] = data_points
         set_output_prefix(config, i)  # same prefix
         set_init_param(config, optimized_param)
 
