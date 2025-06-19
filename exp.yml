@@ -2,7 +2,7 @@ run: zne
 nqubits: 7
 state: dmatrix
 output:
-  file_name_prefix: xy_noisefree_time_evo_sample#10
+  file_name_prefix: AUTOMATE_xy_noisefree_time_evo_sample#10
   draw:
     status: false
     fig_dpi: 100
@@ -239,9 +239,9 @@ zne:
     - 2
     - 0
     - 0
-    - -7.130214875567141
+    - -7.512595875373561
   - - 12
     - 6
     - 0
     - 0
-    - -5.622281179564726
+    - -6.004303631668367
