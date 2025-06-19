@@ -1,3 +1,7 @@
+"""
+Automation for redundant and ZNE runs.
+"""
+
 import os
 import yaml
 import json
@@ -583,6 +587,7 @@ def main():
         config["run"] = "redundant"
         prefix = set_output_prefix(config, i)
         set_init_param(config, OPTIMIZED_PARAM[i])
+        config["zne"]["data_points"] = None
 
         with open(CONFIG_PATH, "w") as f:
             yaml.dump(config, f, sort_keys=False)
