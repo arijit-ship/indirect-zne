@@ -1,11 +1,12 @@
-import subprocess
+import os
 import yaml
+import json
+import subprocess
 
+# === CONFIGURATION ===
 CONFIG_PATH = "exp.yml"
-STATIC_PREFIX = "xy_noisefree_time_evo"
-NUM_RUNS = 10
-
-# Your list of optimized parameters (example with dummy data)
+STATIC_PREFIX = "AUTOMATE_xy_noisefree_time_evo"  # Output file prefix
+NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 OPTIMIZED_PARAM = [
       [
         0.5482907189468895, 0.6413620809492503, 0.6422482149552934,
@@ -529,32 +530,89 @@ OPTIMIZED_PARAM = [
       ]
     ]
 
+# === HELPER FUNCTIONS ===
 
-def set_output_prefix(config, run_index):
-    prefix = f"{STATIC_PREFIX}_sample#{run_index + 1}"
-    config["output"]["file_name_prefix"] = prefix
-    return prefix
+def set_output_prefix(config, index):
+    """Set output filename prefix in the config for the given run index."""
+    sample_tag = f"{STATIC_PREFIX}_sample#{index + 1}"
+    config["output"]["file_name_prefix"] = sample_tag
+    return sample_tag  # return it so we can use it to load output
 
-def set_init_param(config, params):
-    config["init_param"]["value"] = params
-    return config
+def set_init_param(config, param):
+    """Set the init_param value in the config."""
+    config["init_param"]["value"] = param
 
 def run_main():
-    subprocess.run(["python", "main.py", CONFIG_PATH])
+    """Run the main.py script with the given config."""
+    subprocess.run(["python", "main.py", CONFIG_PATH], check=True)
 
-for i in range(NUM_RUNS):
-    print(f"\n=== Running redundant iteration {i + 1}/{NUM_RUNS} ===")
-    with open(CONFIG_PATH, "r") as f:
-        config = yaml.safe_load(f)
+def load_output_json_by_prefix(prefix):
+    """Load a single JSON output file by matching its filename prefix."""
+    base_path = "output"
+    if not os.path.isdir(base_path):
+        print(f"[!] Directory '{base_path}' not found.")
+        return None
 
-    config["run"] = "redundant"
-    set_output_prefix(config, i)
+    for root, _, files in os.walk(base_path):
+        for file in files:
+            if file.endswith(".json") and prefix in file:
+                file_path = os.path.join(root, file)
+                try:
+                    with open(file_path, "r") as f:
+                        data = json.load(f)
+                        print(f"[+] Loaded {file_path}")
+                        return data
+                except Exception as e:
+                    print(f"[!] Failed to load {file_path}: {e}")
+                    return None
 
-    # Set the init_param value to the optimized parameter list for this run
-    set_init_param(config, OPTIMIZED_PARAM[i])
+    print(f"[!] No output file found for prefix: {prefix}")
+    return None
 
-    with open(CONFIG_PATH, "w") as f:
-        yaml.dump(config, f, sort_keys=False)
 
-    run_main()
-    
+# === MAIN AUTOMATION LOOP ===
+
+def main():
+    for i in range(NUM_RUNS):
+        print(f"\n=== Running redundant + zne iteration {i + 1}/{NUM_RUNS} ===")
+
+        # REDUNDANT RUN
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        config["run"] = "redundant"
+        prefix = set_output_prefix(config, i)
+        set_init_param(config, OPTIMIZED_PARAM[i])
+
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, sort_keys=False)
+
+        run_main()
+
+        # LOAD OUTPUT JSON
+        data = load_output_json_by_prefix(prefix)
+        if data is None:
+            print(f"[!] Skipping zne for sample#{i + 1} due to missing redundant output.")
+            continue
+
+        # ZNE RUN
+        optimized_param = data["config"]["init_param"]["value"]
+        data_points = data["output"].get("data_points", None)
+
+        print(f"Data points from output sample#{i+1}: {data_points}")
+
+        with open(CONFIG_PATH, "r") as f:
+            config = yaml.safe_load(f)
+
+        config["run"] = "zne"
+        set_output_prefix(config, i)  # same prefix
+        set_init_param(config, optimized_param)
+
+        with open(CONFIG_PATH, "w") as f:
+            yaml.dump(config, f, sort_keys=False)
+
+        run_main()
+
+
+if __name__ == "__main__":
+    main()

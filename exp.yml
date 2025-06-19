@@ -1,4 +1,4 @@
-run: redundant
+run: zne
 nqubits: 7
 state: dmatrix
 output:
