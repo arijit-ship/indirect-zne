@@ -56,6 +56,8 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
     Returns:
         QuantumCircuit
     """
+
+    chunks: List = []  # Store the circuit for each layer
     circuit = QuantumCircuit(nqubits)
 
     flag = layers  # Tracking angles in param ndarray
@@ -86,8 +88,15 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
             circuit.add_gate(time_evo_gate)
 
         flag += 4 * gateset  # Each layer has 4 * gateset angle-params.
+    
+        chunks.append(circuit.copy())  # Store the circuit for each layer
+    
+    output: dict = {
+        "chunks": chunks,
+        "circuit": circuit,
+    }   
 
-    return circuit
+    return output
 
 
 def create_noisy_ansatz(
