@@ -8,9 +8,6 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-CONFIG_PATH = "exp.yml"
-STATIC_PREFIX = "AUTOMATE_xy_noisefree_time_evo"  # Output file prefix
-NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 OPTIMIZED_PARAM = [
       [
         0.5482907189468895, 0.6413620809492503, 0.6422482149552934,
@@ -533,6 +530,11 @@ OPTIMIZED_PARAM = [
         1.5646886079478448, 0.08968487420602586, -1.6120268318409705
       ]
     ]
+
+CONFIG_PATH = "exp.yml"
+STATIC_PREFIX = "AUTOMATE_xy_noisefree_time_evo"  # Output file prefix
+NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
+
 
 # === HELPER FUNCTIONS ===
 
