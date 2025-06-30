@@ -532,7 +532,7 @@ OPTIMIZED_PARAM = [
     ]
 
 CONFIG_PATH = "exp.auto.yml"
-STATIC_PREFIX = "AUTOMATE_heisenberg_noisefree_time_evo_further"  # Output file prefix
+STATIC_PREFIX = "AUTOMATE_heisenberg_noisefree_time_evo_ricmul"  # Output file prefix
 NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 RIC_MUL = True
 

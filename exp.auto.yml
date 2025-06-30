@@ -2,7 +2,7 @@ run: zne
 nqubits: 7
 state: dmatrix
 output:
-  file_name_prefix: AUTOMATE_heisenberg_noisefree_time_evo_further_sample#10
+  file_name_prefix: AUTOMATE_heisenberg_noisefree_time_evo_ricmul_sample#10
   draw:
     status: false
     fig_dpi: 100
@@ -244,7 +244,7 @@ zne:
     - -6.2813019572269795
   - - 12
     - 6
-    - -4.778373581659956
+    - -4.778373581659957
   - - 20
     - 6
-    - -3.9777335357511916
+    - -3.977733535751191
