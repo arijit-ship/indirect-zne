@@ -294,7 +294,6 @@ class IndirectVQE:
         # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
 
-
     def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
         """
         Returns the noise levels.
