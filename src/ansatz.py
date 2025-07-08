@@ -88,13 +88,13 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
             circuit.add_gate(time_evo_gate)
 
         flag += 4 * gateset  # Each layer has 4 * gateset angle-params.
-    
+
         chunks.append(circuit.copy())  # Store the circuit for each layer
-    
+
     output: dict = {
         "chunks": chunks,
         "circuit": circuit,
-    }   
+    }
 
     return output
 
@@ -163,6 +163,7 @@ def create_noisy_ansatz(
 
     return circuit
 
+
 def create_redundant(
     nqubits: int,
     layers: int,
@@ -197,21 +198,20 @@ def create_redundant(
         }
     """
 
-    
-    chunks: List= []  # Store the circuit for each layer
-    flag: int= layers  # Tracking angles in param ndarrsy
+    chunks: List = []  # Store the circuit for each layer
+    flag: int = layers  # Tracking angles in param ndarrsy
 
     # Noise propabilities: [R-gates, CZ-gate, U-gate, Y-gate]
-    noise_r_prob: float= noise_prob[0]
-    noise_cz_prob: float= noise_prob[1]
-    noise_u_prob: float= noise_prob[2]
-    noise_y_prob: float= noise_prob[3]
+    noise_r_prob: float = noise_prob[0]
+    noise_cz_prob: float = noise_prob[1]
+    noise_u_prob: float = noise_prob[2]
+    noise_y_prob: float = noise_prob[3]
 
     # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
-    r_gate_factor: int= identity_factors[0]  # Identity sacaling factor for rotational gates
-    cz_gate_factor: int= identity_factors[1]  # Identity scaling factor for CZ gate
-    u_gate_factor: int= identity_factors[2]  # Identity scaling factor for time-evolution gates
-    y_gate_factor: int= identity_factors[3]  # Identity scaling factor for Y gate
+    r_gate_factor: int = identity_factors[0]  # Identity sacaling factor for rotational gates
+    cz_gate_factor: int = identity_factors[1]  # Identity scaling factor for CZ gate
+    u_gate_factor: int = identity_factors[2]  # Identity scaling factor for time-evolution gates
+    y_gate_factor: int = identity_factors[3]  # Identity scaling factor for Y gate
 
     circuit: QuantumCircuit = QuantumCircuit(nqubits)
 
@@ -250,7 +250,7 @@ def create_redundant(
         # Add CZ gate
 
         # Old implementation
-        # circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob) 
+        # circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
 
         # New implementation
         circuit.add_CZ_gate(0, 1)
@@ -336,6 +336,7 @@ def create_redundant(
     }
 
     return output
+
 
 def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: int) -> QuantumCircuit:
     """
