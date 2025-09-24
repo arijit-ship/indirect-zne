@@ -245,7 +245,8 @@ class IndirectVQE:
 
             # (4) Run optimization
             min_cost, sol_optimized_param = self.run_optimization(
-                parameters=random_initial_param, constraint=vqe_constraint
+                parameters = random_initial_param,
+                constraint = vqe_constraint
             )  # type: ignore
 
             # for i in range(self.iteration):
