@@ -139,7 +139,7 @@ zne:
   # 'linear' and 'polynomial' use scikit-learn for regression.
   method: "richardson"
 
-  # Degree is only applicable for 'polynomial' and 'richardson-mul'. For 'richardson', degree is computed based on the number of data points.
+  # Degree is only applicable for 'polynomial' and 'richardson-mul'. The 'richardson' method does not accept degree as a parameter.
   degree: 1
 
   # Sampling method options: 'default', 'default-N', or 'random-N', where N is an integer.
