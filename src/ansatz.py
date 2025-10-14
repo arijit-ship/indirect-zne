@@ -215,6 +215,9 @@ def create_redundant(
 
     circuit: QuantumCircuit = QuantumCircuit(nqubits)
 
+    if gateset != 1:
+        raise RuntimeError("Not tested, could be issues. 'gateset' must be 1.")
+
     for layer in range(layers):
 
         # Add Rx to first and second qubits
