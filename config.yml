@@ -74,7 +74,7 @@ noise_profile:
   noise_prob: [0.001, 0.001, 0.0, 0.0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
     # NOT IMPLEMENTED! Adds noise to the initial parameters.
-    status: True
+    status: False
     value: 0
 
 # Redundant circuit configuration
