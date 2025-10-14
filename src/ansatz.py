@@ -289,7 +289,7 @@ def create_redundant(
 
         for _ in range(u_gate_factor):
             # Add Y gates to all odd qubits
-            circuit = add_ygate_odd(circuit, noise_y_prob, y_gate_factor)
+            circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
 
             # Again add multi-qubit U gate
             if layer == 0:
@@ -309,7 +309,7 @@ def create_redundant(
                 circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
             # Add Y gates to all odd qubits
-            circuit = add_ygate_odd(circuit, noise_y_prob, y_gate_factor)
+            circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
 
             # Again add multi-qubit U gate
             if layer == 0:
@@ -328,7 +328,7 @@ def create_redundant(
             for i in range(nqubits):
                 circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob)
 
-        flag += 4  # Each layer has four angle-params
+        flag += 4*gateset  # Each layer has four angle-params
         chunks.append(circuit.copy())  # Store the circuit for each layer
     output: dict = {
         "chunks": chunks,
@@ -338,12 +338,13 @@ def create_redundant(
     return output
 
 
-def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: int) -> QuantumCircuit:
+def add_ygate_odd(circuit: QuantumCircuit, noise_type: str, noise_y_prob: float, y_gate_factor: int) -> QuantumCircuit:
     """
     Adds Y gates to odd qubit wires.
 
     Args:
         circuit: `QuantumCircuit`
+        noise_type: `str`, Type of noise.
         noise_y_prob: `float`,  noise probability for Y gate
         y_gate_factor: `int`, Number of Y_daggar*Y identity gates
 
@@ -354,10 +355,10 @@ def add_ygate_odd(circuit: QuantumCircuit, noise_y_prob: float, y_gate_factor: i
 
     for i in range(qubit_count):
         if (i + 1) % 2 != 0:
-            circuit.add_noise_gate(Y(i), "Depolarizing", noise_y_prob)
+            circuit.add_noise_gate(Y(i), noise_type, noise_y_prob)
 
             # Add redundant Y gate identities
             for _ in range(y_gate_factor):
-                circuit.add_noise_gate(Y(i).get_inverse(), "Depolarizing", noise_y_prob)
-                circuit.add_noise_gate(Y(i), "Depolarizing", noise_y_prob)
+                circuit.add_noise_gate(Y(i).get_inverse(), noise_type, noise_y_prob)
+                circuit.add_noise_gate(Y(i), noise_type, noise_y_prob)
     return circuit
