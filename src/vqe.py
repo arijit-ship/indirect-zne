@@ -126,6 +126,9 @@ class IndirectVQE:
 
         self.observable_hami = observable
 
+        if self.ansatz_noise_on_init_param:
+            raise NotImplementedError("Adding noise to the initial parameters is not implemented yet.")
+
     def create_ansatz(self, param: List[float]) -> QuantumCircuit:
         """
         Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit.
