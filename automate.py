@@ -2101,10 +2101,14 @@ ALL_OPTIMIZED_PARAMS = {
 # === CONFIGURATION ===
 OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS["xy-depolarizing-noisy-time-evo"]
 ANSATZ_TYPE = "xy-iss"
-STATIC_PREFIX = "AUTOMATE_xy_noisy_time_evo_ric2"  # Output file prefix
+STATIC_PREFIX = "AUTOMATE_xy_noisy_time_evo_ric6"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
   [1, 1, 1, 0],
+  [2, 2, 2, 0],
+  [3, 3, 3, 0],
+  [4, 4, 4, 0],
+  [5, 5, 5, 0]
 ]
 ##-----------------**--------------------##
 NOISE_TYPE = "depolarizing"

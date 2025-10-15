@@ -2,7 +2,7 @@ run: zne
 nqubits: 7
 state: dmatrix
 output:
-  file_name_prefix: AUTOMATE_xy_noisy_time_evo_ric2_sample#10
+  file_name_prefix: AUTOMATE_xy_noisy_time_evo_ric6_sample#10
   draw:
     status: false
     fig_dpi: 100
@@ -230,6 +230,22 @@ redundant:
     - 1
     - 1
     - 0
+  - - 2
+    - 2
+    - 2
+    - 0
+  - - 3
+    - 3
+    - 3
+    - 0
+  - - 4
+    - 4
+    - 4
+    - 0
+  - - 5
+    - 5
+    - 5
+    - 0
 zne:
   method: richardson
   degree: 0
@@ -244,4 +260,24 @@ zne:
     - 6
     - 21
     - 8
-    - -3.5131084000754242
+    - -3.513108400075424
+  - - 20
+    - 10
+    - 35
+    - 16
+    - -1.9256894730075684
+  - - 28
+    - 14
+    - 49
+    - 24
+    - -1.0648100061563792
+  - - 36
+    - 18
+    - 63
+    - 32
+    - -0.5886022016151555
+  - - 44
+    - 22
+    - 77
+    - 40
+    - -0.3212779442729232
