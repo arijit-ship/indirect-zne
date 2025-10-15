@@ -1,0 +1,41 @@
+Description,Simulation,Mean ± Std
+xy-ric2,vqe,-6.43550 ± 0.07145
+xy-ric2,redundant (noise=13),-6.43550 ± 0.07145
+xy-ric2,redundant (noise=47),-3.29514 ± 0.10699
+xy-ric2,zne,-7.63623 ± 0.07321
+xy-ric2,noiseoff,-8.36934 ± 0.15125
+,,
+xy-ric3,vqe,-6.43550 ± 0.07145
+xy-ric3,redundant (noise=13),-6.43550 ± 0.07145
+xy-ric3,redundant (noise=47),-3.29514 ± 0.10699
+xy-ric3,redundant (noise=81),-1.72787 ± 0.09369
+xy-ric3,zne,-8.05195 ± 0.07442
+xy-ric3,noiseoff,-8.36934 ± 0.15125
+,,
+xy-ric4,vqe,-6.43550 ± 0.07145
+xy-ric4,redundant (noise=13),-6.43550 ± 0.07145
+xy-ric4,redundant (noise=47),-3.29514 ± 0.10699
+xy-ric4,redundant (noise=81),-1.72787 ± 0.09369
+xy-ric4,redundant (noise=115),-0.92017 ± 0.07099
+xy-ric4,zne,-8.22268 ± 0.07642
+xy-ric4,noiseoff,-8.36934 ± 0.15125
+,,
+xy-ric5,vqe,-6.43550 ± 0.07145
+xy-ric5,redundant (noise=13),-6.43550 ± 0.07145
+xy-ric5,redundant (noise=47),-3.29514 ± 0.10699
+xy-ric5,redundant (noise=81),-1.72787 ± 0.09369
+xy-ric5,redundant (noise=115),-0.92017 ± 0.07099
+xy-ric5,redundant (noise=149),-0.49237 ± 0.05256
+xy-ric5,zne,-8.29966 ± 0.07818
+xy-ric5,noiseoff,-8.36934 ± 0.15125
+,,
+xy-ric6,vqe,-6.43550 ± 0.07145
+xy-ric6,redundant (noise=13),-6.43550 ± 0.07145
+xy-ric6,redundant (noise=47),-3.29514 ± 0.10699
+xy-ric6,redundant (noise=81),-1.72787 ± 0.09369
+xy-ric6,redundant (noise=115),-0.92017 ± 0.07099
+xy-ric6,redundant (noise=149),-0.49237 ± 0.05256
+xy-ric6,redundant (noise=183),-0.26091 ± 0.03978
+xy-ric6,zne,-8.33662 ± 0.07942
+xy-ric6,noiseoff,-8.36934 ± 0.15125
+,,
