@@ -1,16 +1,15 @@
 def compile_zne_subplots(
     data:Dict[str, Any],
-    models,
-    plot_titles,
-    plot_colors,
-    exact_solution,
-    extrapol_target,
-    timestamp,
-    output_dir=f"reports/{timestamp}/plots",
-    filename_prefix="compiled_zne",
-    ncols=3,
-    figsize=(9, 6),
-    show=True,
+    models: List[str],
+    plot_titles: List[str],
+    plot_colors: List[str],
+    exact_solution: float,
+    extrapol_target: Union[float, List[float]] ,
+    output_dir: str,
+    filename_prefix: str="compiled_zne",
+    ncols: int=3,
+    figsize: Tuple[float, float]=(9, 6),
+    show: bool=True,
 ):
     """
     Create a compiled subplot figure.
