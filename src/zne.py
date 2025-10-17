@@ -413,7 +413,7 @@ class ZeroNoiseExtrapolation:
 
         else:
             raise ValueError(
-                f"Invalid method: {self.method}. Valid methods are: richardson-m, richardson, linear, and polynomial."
+                f"Invalid method: {self.method}. Valid methods are: richardson-mul, richardson, linear, and polynomial."
             )
 
         return zne_val

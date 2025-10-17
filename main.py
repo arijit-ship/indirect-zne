@@ -229,7 +229,7 @@ def run_redundant() -> None:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(current_dir, "output")
     os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_redundant.json")
+    output_file = os.path.join(output_dir, f"{file_name_prefix}_{timestamp}_REDUNDANT.json")
 
     output_data = {
         "config": config,

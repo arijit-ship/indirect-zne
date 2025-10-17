@@ -61,7 +61,8 @@ class IndirectVQE:
         self.init_param = init_param
 
         # Ansatz
-        self.ansatz_circuit = None
+        self.ansatz: dict = None
+        self.ansatz_circuit: QuantumCircuit = None
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
@@ -125,6 +126,9 @@ class IndirectVQE:
 
         self.observable_hami = observable
 
+        if self.ansatz_noise_on_init_param:
+            raise NotImplementedError("Adding noise to the initial parameters is not implemented yet.")
+
     def create_ansatz(self, param: List[float]) -> QuantumCircuit:
         """
         Construct the ansatz circuit. There are two possibilities: noise less circuit and noisy circuit.
@@ -132,7 +136,7 @@ class IndirectVQE:
         """
 
         if self.ansatz_noise_status:
-            self.ansatz_circuit = create_noisy_ansatz(
+            self.ansatz = create_noisy_ansatz(
                 nqubits=self.nqubits,
                 layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
@@ -143,13 +147,14 @@ class IndirectVQE:
                 identity_factors=self.ansatz_identity_factors,
             )
         else:
-            self.ansatz_circuit = noiseless_ansatz(
+            self.ansatz = noiseless_ansatz(
                 nqubits=self.nqubits,
                 layers=self.ansatz_layer,
                 gateset=self.ansatz_gateset,
                 ugateH=self.ugate_hami,
                 param=param,
             )
+        self.ansatz_circuit = self.ansatz["circuit"]
         return self.ansatz_circuit
 
     def cost_function(self, param: List[float]) -> float:
@@ -236,14 +241,15 @@ class IndirectVQE:
 
             # (3) Checking constraint before optimization
             if self.constraint and self.optimizer == "SLSQP":
-                vqe_constraint = create_time_constraints(self.layer, len(random_initial_param))
+                vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
 
             elif self.optimizer != "SLSQP" and self.constraint:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             # (4) Run optimization
             min_cost, sol_optimized_param = self.run_optimization(
-                parameters=random_initial_param, constraint=vqe_constraint
+                parameters = random_initial_param,
+                constraint = vqe_constraint
             )  # type: ignore
 
             # for i in range(self.iteration):
@@ -286,7 +292,7 @@ class IndirectVQE:
         else:
             raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
 
-        circuit_drawer(self.ansatz_circuit, "mpl")  # type: ignore
+        circuit_drawer(self.ansatz["chunks"][0], "mpl")  # type: ignore
         plt.savefig(output_file, dpi=dpi)
         plt.close()
         # Print the path of the output file
