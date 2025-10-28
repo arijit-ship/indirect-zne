@@ -1,0 +1,69 @@
+\begin{tabular}{lll}
+\toprule
+Description & Simulation & Mean ± Std \\
+\midrule
+xy-ric2 & vqe & -7.56107 ± 0.06520 \\
+xy-ric2 & redundant (noise=13) & -6.42081 ± 0.06093 \\
+xy-ric2 & redundant (noise=25) & -5.23054 ± 0.09492 \\
+xy-ric2 & zne & -7.71027 ± 0.06494 \\
+xy-ric2 & noiseoff & -8.38929 ± 0.10862 \\
+ &  &  \\
+ising-ric2 & vqe & -6.51507 ± 0.46899 \\
+ising-ric2 & redundant (noise=13) & -5.88316 ± 0.41569 \\
+ising-ric2 & redundant (noise=25) & -4.92123 ± 0.34205 \\
+ising-ric2 & zne & -6.92525 ± 0.50107 \\
+ising-ric2 & noiseoff & -7.16465 ± 0.25530 \\
+ &  &  \\
+heisenberg-ric2 & vqe & -6.26219 ± 0.17777 \\
+heisenberg-ric2 & redundant (noise=13) & -5.54950 ± 0.19542 \\
+heisenberg-ric2 & redundant (noise=25) & -4.35429 ± 0.22865 \\
+heisenberg-ric2 & zne & -6.84432 ± 0.18240 \\
+heisenberg-ric2 & noiseoff & -6.72634 ± 0.32239 \\
+ &  &  \\
+xy-ric3-uniform-scaling & vqe & -7.56107 ± 0.06520 \\
+xy-ric3-uniform-scaling & redundant (noise=13) & -6.42081 ± 0.06093 \\
+xy-ric3-uniform-scaling & redundant (noise=25) & -5.23054 ± 0.09492 \\
+xy-ric3-uniform-scaling & redundant (noise=37) & -4.29102 ± 0.12477 \\
+xy-ric3-uniform-scaling & zne & -7.99323 ± 0.07628 \\
+xy-ric3-uniform-scaling & noiseoff & -8.38929 ± 0.10862 \\
+ &  &  \\
+ising-ric3-uniform-scaling & vqe & -6.51507 ± 0.46899 \\
+ising-ric3-uniform-scaling & redundant (noise=13) & -5.88316 ± 0.41569 \\
+ising-ric3-uniform-scaling & redundant (noise=25) & -4.92123 ± 0.34205 \\
+ising-ric3-uniform-scaling & redundant (noise=37) & -4.12086 ± 0.29278 \\
+ising-ric3-uniform-scaling & zne & -7.10756 ± 0.52590 \\
+ising-ric3-uniform-scaling & noiseoff & -7.16465 ± 0.25530 \\
+ &  &  \\
+heisenberg-ric3-uniform-scaling & vqe & -6.26219 ± 0.17777 \\
+heisenberg-ric3-uniform-scaling & redundant (noise=13) & -5.54950 ± 0.19542 \\
+heisenberg-ric3-uniform-scaling & redundant (noise=25) & -4.35429 ± 0.22865 \\
+heisenberg-ric3-uniform-scaling & redundant (noise=37) & -3.40588 ± 0.25160 \\
+heisenberg-ric3-uniform-scaling & zne & -7.12284 ± 0.17771 \\
+heisenberg-ric3-uniform-scaling & noiseoff & -6.72634 ± 0.32239 \\
+ &  &  \\
+xy-ric4-uniform-scaling & vqe & -7.56107 ± 0.06520 \\
+xy-ric4-uniform-scaling & redundant (noise=13) & -6.42081 ± 0.06093 \\
+xy-ric4-uniform-scaling & redundant (noise=25) & -5.23054 ± 0.09492 \\
+xy-ric4-uniform-scaling & redundant (noise=37) & -4.29102 ± 0.12477 \\
+xy-ric4-uniform-scaling & redundant (noise=49) & -3.54359 ± 0.14586 \\
+xy-ric4-uniform-scaling & zne & -8.06125 ± 0.08022 \\
+xy-ric4-uniform-scaling & noiseoff & -8.38929 ± 0.10862 \\
+ &  &  \\
+ising-ric4-uniform-scaling & vqe & -6.51507 ± 0.46899 \\
+ising-ric4-uniform-scaling & redundant (noise=13) & -5.88316 ± 0.41569 \\
+ising-ric4-uniform-scaling & redundant (noise=25) & -4.92123 ± 0.34205 \\
+ising-ric4-uniform-scaling & redundant (noise=37) & -4.12086 ± 0.29278 \\
+ising-ric4-uniform-scaling & redundant (noise=49) & -3.45033 ± 0.26011 \\
+ising-ric4-uniform-scaling & zne & -7.14435 ± 0.53243 \\
+ising-ric4-uniform-scaling & noiseoff & -7.16465 ± 0.25530 \\
+ &  &  \\
+heisenberg-ric4-uniform-scaling & vqe & -6.26219 ± 0.17777 \\
+heisenberg-ric4-uniform-scaling & redundant (noise=13) & -5.54950 ± 0.19542 \\
+heisenberg-ric4-uniform-scaling & redundant (noise=25) & -4.35429 ± 0.22865 \\
+heisenberg-ric4-uniform-scaling & redundant (noise=37) & -3.40588 ± 0.25160 \\
+heisenberg-ric4-uniform-scaling & redundant (noise=49) & -2.64631 ± 0.26341 \\
+heisenberg-ric4-uniform-scaling & zne & -7.19007 ± 0.17634 \\
+heisenberg-ric4-uniform-scaling & noiseoff & -6.72634 ± 0.32239 \\
+ &  &  \\
+\bottomrule
+\end{tabular}
