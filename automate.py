@@ -25,6 +25,7 @@ I_FACTOR = [
 ]
 ##-----------------**--------------------##
 NOISE_TYPE = "dephasing"
+NOISE_VALUE = [0.001, 0.001, 0.000, 0.000]
 CONFIG_PATH = "exp.auto.yml"
 NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 RIC_MUL = False  # Whether to remove RIC columns from data points
@@ -52,6 +53,10 @@ def set_noise_type(config, noise_type):
 def set_i_factor(config, i_factor):
     """Set the i_factor in the config."""
     config["redundant"]["identity_factors"] = i_factor
+
+def set_noise_value(config, noise_value):
+    """Set the noise value in the config."""
+    config["noise_profile"]["noise_prob"] = noise_value
 
 def run_main():
     """Run the main.py script with the given config."""
@@ -96,6 +101,7 @@ def main():
         set_init_param(config, OPTIMIZED_PARAM[i])
         set_ansatz_type(config, ANSATZ_TYPE)
         set_noise_type(config, NOISE_TYPE)
+        set_noise_value(config, NOISE_VALUE)
         set_i_factor(config, I_FACTOR)
         config["zne"]["data_points"] = None
 
