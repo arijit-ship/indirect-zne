@@ -1,0 +1,64 @@
+Description,Simulation,Mean ± Std
+xy-ric2,vqe,-7.37909 ± 0.14052
+xy-ric2,redundant (noise=6),-7.37909 ± 0.14052
+xy-ric2,redundant (noise=18),-5.82492 ± 0.14775
+xy-ric2,zne,-8.15618 ± 0.14317
+xy-ric2,noiseoff,-8.36934 ± 0.15125
+,,
+ising-ric2,vqe,-6.58315 ± 0.18915
+ising-ric2,redundant (noise=6),-6.58315 ± 0.18915
+ising-ric2,redundant (noise=18),-5.38044 ± 0.21133
+ising-ric2,zne,-7.18451 ± 0.18074
+ising-ric2,noiseoff,-7.28002 ± 0.24691
+,,
+heisenberg-ric2,vqe,-6.05646 ± 0.18070
+heisenberg-ric2,redundant (noise=6),-6.05646 ± 0.18070
+heisenberg-ric2,redundant (noise=18),-4.59153 ± 0.17228
+heisenberg-ric2,zne,-6.78892 ± 0.19421
+heisenberg-ric2,noiseoff,-6.92055 ± 0.19767
+,,
+xy-ric3-uniform-scaling,vqe,-7.37909 ± 0.14052
+xy-ric3-uniform-scaling,redundant (noise=6),-7.37909 ± 0.14052
+xy-ric3-uniform-scaling,redundant (noise=18),-5.82492 ± 0.14775
+xy-ric3-uniform-scaling,redundant (noise=30),-4.62559 ± 0.15660
+xy-ric3-uniform-scaling,zne,-8.28925 ± 0.14534
+xy-ric3-uniform-scaling,noiseoff,-8.36934 ± 0.15125
+,,
+ising-ric3-uniform-scaling,vqe,-6.58315 ± 0.18915
+ising-ric3-uniform-scaling,redundant (noise=6),-6.58315 ± 0.18915
+ising-ric3-uniform-scaling,redundant (noise=18),-5.38044 ± 0.21133
+ising-ric3-uniform-scaling,redundant (noise=30),-4.39924 ± 0.22365
+ising-ric3-uniform-scaling,zne,-7.26757 ± 0.17710
+ising-ric3-uniform-scaling,noiseoff,-7.28002 ± 0.24691
+,,
+heisenberg-ric3-uniform-scaling,vqe,-6.05646 ± 0.18070
+heisenberg-ric3-uniform-scaling,redundant (noise=6),-6.05646 ± 0.18070
+heisenberg-ric3-uniform-scaling,redundant (noise=18),-4.59153 ± 0.17228
+heisenberg-ric3-uniform-scaling,redundant (noise=30),-3.46107 ± 0.17562
+heisenberg-ric3-uniform-scaling,zne,-6.91435 ± 0.19705
+heisenberg-ric3-uniform-scaling,noiseoff,-6.92055 ± 0.19767
+,,
+xy-ric4-uniform-scaling,vqe,-7.37909 ± 0.14052
+xy-ric4-uniform-scaling,redundant (noise=6),-7.37909 ± 0.14052
+xy-ric4-uniform-scaling,redundant (noise=18),-5.82492 ± 0.14775
+xy-ric4-uniform-scaling,redundant (noise=30),-4.62559 ± 0.15660
+xy-ric4-uniform-scaling,redundant (noise=42),-3.69251 ± 0.16044
+xy-ric4-uniform-scaling,zne,-8.31693 ± 0.14624
+xy-ric4-uniform-scaling,noiseoff,-8.36934 ± 0.15125
+,,
+ising-ric4-uniform-scaling,vqe,-6.58315 ± 0.18915
+ising-ric4-uniform-scaling,redundant (noise=6),-6.58315 ± 0.18915
+ising-ric4-uniform-scaling,redundant (noise=18),-5.38044 ± 0.21133
+ising-ric4-uniform-scaling,redundant (noise=30),-4.39924 ± 0.22365
+ising-ric4-uniform-scaling,redundant (noise=42),-3.59276 ± 0.22745
+ising-ric4-uniform-scaling,zne,-7.28218 ± 0.17606
+ising-ric4-uniform-scaling,noiseoff,-7.28002 ± 0.24691
+,,
+heisenberg-ric4-uniform-scaling,vqe,-6.05646 ± 0.18070
+heisenberg-ric4-uniform-scaling,redundant (noise=6),-6.05646 ± 0.18070
+heisenberg-ric4-uniform-scaling,redundant (noise=18),-4.59153 ± 0.17228
+heisenberg-ric4-uniform-scaling,redundant (noise=30),-3.46107 ± 0.17562
+heisenberg-ric4-uniform-scaling,redundant (noise=42),-2.58067 ± 0.17819
+heisenberg-ric4-uniform-scaling,zne,-6.94072 ± 0.19769
+heisenberg-ric4-uniform-scaling,noiseoff,-6.92055 ± 0.19767
+,,

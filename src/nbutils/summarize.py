@@ -97,6 +97,12 @@ def summarize_zne_results(
                     f.write(df.to_latex(index=False))
             elif fmt.lower() in ["eps", "png"]:
                 continue
+
+            elif fmt.lower() == "txt":
+                # dump ALL_PROCESSED_DATA as human readable plain text
+                from pprint import pformat
+                with open(path, "w") as f:
+                    f.write(pformat(ALL_PROCESSED_DATA, sort_dicts=False))
             else:
                 raise ValueError(f"Unsupported format: {fmt}")
 
@@ -137,13 +143,24 @@ def summarize_zne_results(
             for j in range(len(df.columns)):
                 table[(i + 1, j)].set_facecolor(color)
 
-    # --- Save figure ---
+    # --- Save CSV / LaTeX / TXT ---
     if save_name:
         for fmt in save_formats:
-            if fmt.lower() in ["eps", "png"]:
-                path = f"{output_dir}/{save_name}.{fmt}"
-                plt.savefig(path, format=fmt.lower(), bbox_inches='tight')
-                print(f"✅ Saved figure: {path}")
+            path = f"{output_dir}/{save_name}.{fmt}"
+            if fmt.lower() == "csv":
+                df.to_csv(path, index=False)
+            elif fmt.lower() == "latex":
+                with open(path, "w") as f:
+                    f.write(df.to_latex(index=False))
+            elif fmt.lower() == "txt":
+                from pprint import pformat
+                with open(path, "w") as f:
+                    f.write(pformat(ALL_PROCESSED_DATA, sort_dicts=False))
+            elif fmt.lower() in ["eps", "png"]:
+                continue
+            else:
+                raise ValueError(f"Unsupported format: {fmt}")
+
 
     plt.show()
     return df, fig

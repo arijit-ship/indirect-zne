@@ -15,6 +15,7 @@ def plot_zne_result(
     xlabel: str = r"Noise level ($\alpha_k\lambda$)",
     ylabel: str = "Expectation value",
     legend_loc: str = "upper left",
+    leg_noise_type: str = None,
     legend_fontsize: int = 14,
     label_fontsize: int = 16,
     grid_style: Optional[Dict[str, Any]] = None,
@@ -89,7 +90,7 @@ def plot_zne_result(
         fmt="o",
         ecolor=plot_colors[0],
         capsize=capsize,
-        label="Noisy estimation",
+        label = f"{leg_noise_type} estimation" if leg_noise_type else "Noisy estimation",
         color=plot_colors[0],
         markersize=5
     )

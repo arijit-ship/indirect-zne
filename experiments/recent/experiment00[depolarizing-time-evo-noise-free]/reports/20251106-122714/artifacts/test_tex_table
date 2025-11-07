@@ -1,0 +1,14 @@
+\begin{table}[h]
+\caption{Result summary for the plots in Figure \ref{graph-noisefree-timevo}.}
+\begin{tabular}{@{}llll@{}}
+\toprule
+  & Xy-ansatz  &  Ising-ansatz  &  Heisenberg-ansatz\\
+\midrule
+Noise-free estimation & $nan \pm nan$ & $nan \pm nan$ & $nan \pm nan$ \\
+\midrule
+\midrule
+Richardson ZNE value & $nan \pm nan$ & $nan \pm nan$ & $nan \pm nan$ \\
+\bottomrule
+\end{tabular}
+\label{table-noisefree-timeevo-richardson}
+\end{table}
