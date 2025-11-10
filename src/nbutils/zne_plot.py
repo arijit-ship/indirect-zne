@@ -103,7 +103,7 @@ def plot_zne_result(
         fmt="D",
         ecolor=plot_colors[2],
         capsize=capsize,
-        label="Ric. ZNE value",
+        label="Richardson ZNE",
         color=plot_colors[2],
         markersize=5
     )

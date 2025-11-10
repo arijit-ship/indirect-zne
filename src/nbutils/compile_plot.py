@@ -53,7 +53,7 @@ def compile_zne_subplots(
             fmt="o",
             ecolor=plot_colors[min(2, len(plot_colors)-1)],
             capsize=4,
-            label="Ric. ZNE value",
+            label="Richardson ZNE",
             color=plot_colors[min(2, len(plot_colors)-1)],
             markersize=5
         )
