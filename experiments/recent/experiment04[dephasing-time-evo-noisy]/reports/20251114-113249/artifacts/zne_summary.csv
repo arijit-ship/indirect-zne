@@ -1,0 +1,52 @@
+Description,Simulation,Mean ± Std
+xy-ric2,vqe,-6.56244 ± 0.12473
+xy-ric2,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric2,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric2,zne,-7.70109 ± 0.09699
+xy-ric2,noiseoff,-8.34781 ± 0.13592
+,,
+xy-ric3,vqe,-6.56244 ± 0.12473
+xy-ric3,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric3,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric3,redundant (noise=81),-1.99485 ± 0.21861
+xy-ric3,zne,-8.06801 ± 0.08545
+xy-ric3,noiseoff,-8.34781 ± 0.13592
+,,
+xy-ric4,vqe,-6.56244 ± 0.12473
+xy-ric4,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric4,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric4,redundant (noise=81),-1.99485 ± 0.21861
+xy-ric4,redundant (noise=115),-1.11967 ± 0.17327
+xy-ric4,zne,-8.20946 ± 0.08547
+xy-ric4,noiseoff,-8.34781 ± 0.13592
+,,
+xy-ric5,vqe,-6.56244 ± 0.12473
+xy-ric5,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric5,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric5,redundant (noise=81),-1.99485 ± 0.21861
+xy-ric5,redundant (noise=115),-1.11967 ± 0.17327
+xy-ric5,redundant (noise=149),-0.62475 ± 0.12913
+xy-ric5,zne,-8.26977 ± 0.08814
+xy-ric5,noiseoff,-8.34781 ± 0.13592
+,,
+xy-ric6,vqe,-6.56244 ± 0.12473
+xy-ric6,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric6,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric6,redundant (noise=81),-1.99485 ± 0.21861
+xy-ric6,redundant (noise=115),-1.11967 ± 0.17327
+xy-ric6,redundant (noise=149),-0.62475 ± 0.12913
+xy-ric6,redundant (noise=183),-0.33869 ± 0.09412
+xy-ric6,zne,-8.29733 ± 0.09052
+xy-ric6,noiseoff,-8.34781 ± 0.13592
+,,
+xy-ric7,vqe,-6.56244 ± 0.12473
+xy-ric7,redundant (noise=13),-6.56244 ± 0.12473
+xy-ric7,redundant (noise=47),-3.58443 ± 0.23317
+xy-ric7,redundant (noise=81),-1.99485 ± 0.21861
+xy-ric7,redundant (noise=115),-1.11967 ± 0.17327
+xy-ric7,redundant (noise=149),-0.62475 ± 0.12913
+xy-ric7,redundant (noise=183),-0.33869 ± 0.09412
+xy-ric7,redundant (noise=217),-0.17063 ± 0.06851
+xy-ric7,zne,-8.31058 ± 0.09215
+xy-ric7,noiseoff,-8.34781 ± 0.13592
+,,

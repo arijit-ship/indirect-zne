@@ -16,7 +16,7 @@ with open("optparam.json", "r", encoding="utf-8") as f:
 model: str = "xy-iss"
 OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"xy-dephasing-noisy-time-evo"]
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_dephasing_ric6"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_dephasing_ric7"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
   [1, 1, 1, 0],
@@ -24,6 +24,7 @@ I_FACTOR = [
   [3, 3, 3, 0],
   [4, 4, 4, 0],
   [5, 5, 5, 0],
+  [6, 6, 6, 0],
 ]
 ##-----------------**--------------------##
 NOISE_TYPE = "dephasing"
