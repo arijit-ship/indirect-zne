@@ -2,13 +2,13 @@
 run: "vqe"
 
 # System configuration
-nqubits: 7
+nqubits: 4
 # State options: 'dmatrix' and 'statevector'
 state: "dmatrix"
 
 # Output configuration
 output:
-  file_name_prefix: "xy_noisefree_time_evo_dephasing" #heisenberg_ansatz_ric3_sample#1 
+  file_name_prefix: "test-samll-sys" #heisenberg_ansatz_ric3_sample#1 
   draw:
     status: False
     fig_dpi: 100
@@ -25,13 +25,12 @@ observable:
   # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
   # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
   coefficients:
-    cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-    bn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    cn: [0.5, 0.5, 0.5]
+    bn: [1.0, 1.0, 1.0, 1.0]
     r: 1
-
 # Circuit configuration
 ansatz:
-  layer: 30
+  layer: 1
   # Not tested. Keep gateset=1, there could be bugs.
   gateset: 1
   ugate:
@@ -46,16 +45,16 @@ ansatz:
     # 'xy-iss': cn, bn, r are overwritten to [0.5], [0], 0.
     # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
     # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
-      cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
-      bn: [0, 0, 0, 0, 0, 0, 0]
-      r: 0
+      cn: [0.5, 0.5, 0.5]
+      bn: [1.0, 1.0, 1.0, 1.0]
+      r: 1
     time:
       min: 0.0
       max: 10.0
 
 # Variational Quantum Eigensolver (VQE) configuration
 vqe:
-  iteration: 1
+  iteration: 2
   # Optimization configuration
   optimization:
     status: True

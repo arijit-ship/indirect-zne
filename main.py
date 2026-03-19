@@ -39,7 +39,8 @@ def initialize_vqe() -> None:
     min_cost_history = []
     all_optimized_param = []
     time_evolution_hamiltonian_string = []
-
+    #Final staes
+    final_states = []
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
     print("=" * symbol_count + "VQE running" + "=" * symbol_count)
@@ -70,11 +71,12 @@ def initialize_vqe() -> None:
         initial_cost = vqe_output["initial_cost"]
         min_cost = vqe_output["min_cost"]
         optimized_param = vqe_output["optimized_param"]
-
+        # Final state
+        final_density_matrix = vqe_output["final_density_matrix"]
         initial_costs_history.append(initial_cost)
         min_cost_history.append(min_cost)
         all_optimized_param.append(optimized_param)
-
+        final_states.append(final_density_matrix)
     # Hamiltonian in time-evolution gate does NOT change in each iteration,
     # so append the Hamiltonian string outside the lopp.
     time_evolution_hamiltonian_string.append(str(vqe_instance.get_ugate_hamiltonain()))
@@ -116,6 +118,7 @@ def initialize_vqe() -> None:
         "others": {
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
+            "final_states": final_states
         },
     }
 

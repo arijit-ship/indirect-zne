@@ -18,6 +18,7 @@ def zne_grid(
     show: bool = True,
     sharex: bool = False,
     sharey: bool = True,
+    legend: bool = True,
     global_legend: bool = False,
     legend_loc: str = "lower center",
     # --- Font control ---
@@ -129,7 +130,7 @@ def zne_grid(
         ax.grid(linestyle="--", alpha=0.6)
         ax.tick_params(width=1, length=4, direction='inout')
 
-        if not global_legend:
+        if legend and not global_legend:
             ax.legend(loc="best", fontsize=legend_fontsize, frameon=False)
 
     # Hide unused axes
@@ -140,16 +141,17 @@ def zne_grid(
     plt.subplots_adjust(top=0.9, bottom=0.15 if global_legend else 0.1)
 
     # --- Global legend ---
-    if global_legend and handles and labels:
-        fig.legend(
-            handles, labels,
-            loc=legend_loc,
-            ncol=4,
-            frameon=False,
-            fontsize=legend_fontsize,
-            handletextpad=0.5,
-            columnspacing=1.2,
-        )
+    if legend:
+        if global_legend and handles and labels:
+            fig.legend(
+                handles, labels,
+                loc=legend_loc,
+                ncol=4,
+                frameon=False,
+                fontsize=legend_fontsize,
+                handletextpad=0.5,
+                columnspacing=1.2,
+            )
 
     # --- Save compiled figure ---
     os.makedirs(output_dir, exist_ok=True)

@@ -270,11 +270,26 @@ class IndirectVQE:
             #     optimized_param.append(sol_optimized_param)
 
             #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
+        # --- ADD THIS LOGIC HERE ---
+        final_density_matrix = None
+        if sol_optimized_param is not None:
+            # Initialize a fresh DensityMatrix object
+            state = DensityMatrix(self.nqubits)
+            
+            # Re-create the ansatz circuit with the best parameters found
+            final_circuit = self.create_ansatz(param=sol_optimized_param)
+            
+            # Apply the circuit to the state
+            final_circuit.update_quantum_state(state)
+            
+            # Get the actual numerical matrix (numpy array)
+            final_density_matrix = state.to_json()
 
         vqe_result: Dict = {
             "initial_cost": initial_cost,
             "min_cost": min_cost,
             "optimized_param": sol_optimized_param,
+            "final_density_matrix": final_density_matrix
         }
 
         return vqe_result
