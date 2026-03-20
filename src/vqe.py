@@ -203,6 +203,11 @@ class IndirectVQE:
         min_cost: float | None = None
         sol_optimized_param = None
 
+        # Storing density matrices
+        initial_density_matrix_json = None
+        final_density_matrix_json = None
+        store_init_param_created = None
+
         # Decide the initial param type: random or provided. If provided, validate the length.
         if isinstance(self.init_param, str) and self.init_param.lower() == "random":
             isRandom = True
@@ -236,6 +241,7 @@ class IndirectVQE:
             # (1) Create random initial param
             random_initial_param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
 
+            store_init_param_created = random_initial_param
             # (2) Calculate the initial cost with random initial param
             initial_cost = self.cost_function(param=random_initial_param)
 
@@ -271,7 +277,8 @@ class IndirectVQE:
 
             #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
         # --- ADD THIS LOGIC HERE ---
-        final_density_matrix = None
+
+        
         if sol_optimized_param is not None:
             # Initialize a fresh DensityMatrix object
             state = DensityMatrix(self.nqubits)
@@ -283,13 +290,26 @@ class IndirectVQE:
             final_circuit.update_quantum_state(state)
             
             # Get the actual numerical matrix (numpy array)
-            final_density_matrix = state.to_json()
+            final_density_matrix_json = state.to_json()
+
+            # esetting
+            state = 0
+            state = DensityMatrix(self.nqubits)
+            # Re-create the ansatz circuit with the best parameters found
+            initial_circuit = self.create_ansatz(param=store_init_param_created)
+            # Apply the circuit to the state
+            initial_circuit.update_quantum_state(state)
+            # Get the actual numerical matrix (numpy array)
+            initial_density_matrix_json = state.to_json()
+
 
         vqe_result: Dict = {
             "initial_cost": initial_cost,
             "min_cost": min_cost,
+            "init_random_param": store_init_param_created,
             "optimized_param": sol_optimized_param,
-            "final_density_matrix": final_density_matrix
+            "initial_density_matrix": initial_density_matrix_json,
+            "final_density_matrix": final_density_matrix_json
         }
 
         return vqe_result
