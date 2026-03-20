@@ -14,21 +14,21 @@ with open("optparam.json", "r", encoding="utf-8") as f:
 
 # === CONFIGURATION ===
 model: str = "xy-iss"
-OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"xy-dephasing-noisy-time-evo"]
+OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"xy-time-depol-noisy-time-evo"]
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_dephasing_ric7"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_ric7"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
-  [1, 1, 1, 0],
-  [2, 2, 2, 0],
-  [3, 3, 3, 0],
-  [4, 4, 4, 0],
-  [5, 5, 5, 0],
-  [6, 6, 6, 0],
+  [0, 0, 1, 0],
+  [0, 0, 2, 0],
+  [0, 0, 3, 0],
+  [0, 0, 4, 0],
+  [0, 0, 5, 0],
+  [0, 0, 6, 0]
 ]
 ##-----------------**--------------------##
-NOISE_TYPE = "dephasing"
-NOISE_VALUE = [0.001, 0.001, 0.001, 0.001]
+NOISE_TYPE = "time-depol"
+NOISE_VALUE = [0, 0, 0.001, 0]
 CONFIG_PATH = "exp.auto.yml"
 NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 RIC_MUL = False  # Whether to remove RIC columns from data points
