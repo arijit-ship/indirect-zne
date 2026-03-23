@@ -558,7 +558,7 @@ def create_timedepol_redun(
 
             # Add depolarizing noise
             for i in range(nqubits):
-                circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob_time_depen)
+                circuit.add_noise_gate(Identity(i), noise_type, noise_u_prob_time_depen)    #prob had bug, fixed
 
         flag += 4*gateset  # Each layer has four angle-params
         chunks.append(circuit.copy())  # Store the circuit for each layer
