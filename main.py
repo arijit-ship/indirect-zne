@@ -127,7 +127,7 @@ def initialize_vqe() -> None:
         "others": {
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
-            "inittial_states": initial_states,
+            "initial_states": initial_states,
             "final_states": final_states
         },
     }
