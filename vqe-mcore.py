@@ -4,21 +4,6 @@ import sys
 import time
 import yaml
 import subprocess
-from concurrent.futures import ProcessPoolExecutor, as_completed
-
-
-def run_single_vqe(args):
-    i, config_file = args
-    result = subprocess.run(
-        [sys.executable, "main.py", config_file],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        print(f"VQE #{i+1} FAILED:\n{result.stderr}")
-        return {"index": i, "success": False}
-    print(f"VQE #{i+1} done.")
-    return {"index": i, "success": True}
 
 
 if __name__ == "__main__":
@@ -32,17 +17,26 @@ if __name__ == "__main__":
         config = yaml.safe_load(f)
 
     num_runs = config["vqe"]["iteration"]
-    num_workers = os.cpu_count()
 
-    print(f"Running {num_runs} VQE runs across {num_workers} workers...")
+    print(f"Launching {num_runs} VQE processes...")
     start_time = time.time()
 
-    args_list = [(i, config_file) for i in range(num_runs)]
+    # Launch all processes simultaneously
+    processes = []
+    for i in range(num_runs):
+        p = subprocess.Popen(
+            [sys.executable, "main.py", config_file],
+        )
+        processes.append((i, p))
+        print(f"VQE #{i+1} started (PID: {p.pid})")
 
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
-        futures = {executor.submit(run_single_vqe, args): args[0] for args in args_list}
-        for future in as_completed(futures):
-            future.result()
+    # Wait for all to finish
+    for i, p in processes:
+        p.wait()
+        if p.returncode != 0:
+            print(f"VQE #{i+1} FAILED (PID: {p.pid})")
+        else:
+            print(f"VQE #{i+1} done (PID: {p.pid})")
 
     total_time = time.time() - start_time
     print(f"All {num_runs} runs done in {total_time:.2f} sec")
