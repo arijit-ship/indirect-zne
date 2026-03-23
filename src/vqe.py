@@ -306,7 +306,7 @@ class IndirectVQE:
         vqe_result: Dict = {
             "initial_cost": initial_cost,
             "min_cost": min_cost,
-            "init_random_param": store_init_param_created,
+            "init_random_param": store_init_param_created.tolist(),
             "optimized_param": sol_optimized_param,
             "initial_density_matrix": initial_density_matrix_json,
             "final_density_matrix": final_density_matrix_json

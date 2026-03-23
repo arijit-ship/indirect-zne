@@ -42,6 +42,7 @@ def initialize_vqe() -> None:
     #states
     initial_states = []
     final_states = []
+    initial_random_param = []
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
     print("=" * symbol_count + "VQE running" + "=" * symbol_count)
@@ -76,8 +77,10 @@ def initialize_vqe() -> None:
         initial_costs_history.append(initial_cost)
         min_cost_history.append(min_cost)
         all_optimized_param.append(optimized_param)
-        
-
+                
+        # Initial random param
+        inital_param_vals = vqe_output["init_random_param"]
+        initial_random_param.append(inital_param_vals)
         # Initial state
         initial_density_matrix = vqe_output["initial_density_matrix"]
         initial_states.append(initial_density_matrix)
@@ -127,6 +130,7 @@ def initialize_vqe() -> None:
         "others": {
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
+            "initial_parameters": initial_random_param,
             "initial_states": initial_states,
             "final_states": final_states
         },
