@@ -16,15 +16,15 @@ with open("optparam.json", "r", encoding="utf-8") as f:
 model: str = "xy-iss"
 OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"experiment07[time-depol-time-evo-noisy_p1e-3_tmax10]"]
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_noisy_p1e-3_tmax100_ric5"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_noisy_p1e-3_tmax100_ric7"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
   [0, 0, 1, 0],
   [0, 0, 2, 0],
   [0, 0, 3, 0],
   [0, 0, 4, 0],
-  #[0, 0, 5, 0],
-  #[0, 0, 6, 0]
+  [0, 0, 5, 0],
+  [0, 0, 6, 0]
 ]
 ##-----------------**--------------------##
 T_MAX = 10

@@ -1,0 +1,57 @@
+\begin{tabular}{lll}
+\toprule
+Description & Simulation & Mean ± Std \\
+\midrule
+xy-ric2 & vqe & -5.16950 ± 0.19350 \\
+xy-ric2 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric2 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric2 & zne & -6.25886 ± 0.22437 \\
+xy-ric2 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+xy-ric3 & vqe & -5.16950 ± 0.19350 \\
+xy-ric3 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric3 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric3 & redundant (noise=35) & -1.84567 ± 0.42715 \\
+xy-ric3 & zne & -6.64647 ± 0.28091 \\
+xy-ric3 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+xy-ric4 & vqe & -5.16950 ± 0.19350 \\
+xy-ric4 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric4 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric4 & redundant (noise=35) & -1.84567 ± 0.42715 \\
+xy-ric4 & redundant (noise=49) & -1.21870 ± 0.41368 \\
+xy-ric4 & zne & -6.80755 ± 0.32318 \\
+xy-ric4 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+xy-ric5 & vqe & -5.16950 ± 0.19350 \\
+xy-ric5 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric5 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric5 & redundant (noise=35) & -1.84567 ± 0.42715 \\
+xy-ric5 & redundant (noise=49) & -1.21870 ± 0.41368 \\
+xy-ric5 & redundant (noise=63) & -0.85107 ± 0.42232 \\
+xy-ric5 & zne & -6.87773 ± 0.34726 \\
+xy-ric5 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+xy-ric6 & vqe & -5.16950 ± 0.19350 \\
+xy-ric6 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric6 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric6 & redundant (noise=35) & -1.84567 ± 0.42715 \\
+xy-ric6 & redundant (noise=49) & -1.21870 ± 0.41368 \\
+xy-ric6 & redundant (noise=63) & -0.85107 ± 0.42232 \\
+xy-ric6 & redundant (noise=77) & -0.59358 ± 0.50139 \\
+xy-ric6 & zne & -6.91393 ± 0.36385 \\
+xy-ric6 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+xy-ric7 & vqe & -5.16950 ± 0.19350 \\
+xy-ric7 & redundant (noise=7) & -5.16950 ± 0.19350 \\
+xy-ric7 & redundant (noise=21) & -2.99078 ± 0.39084 \\
+xy-ric7 & redundant (noise=35) & -1.84567 ± 0.42715 \\
+xy-ric7 & redundant (noise=49) & -1.21870 ± 0.41368 \\
+xy-ric7 & redundant (noise=63) & -0.85107 ± 0.42232 \\
+xy-ric7 & redundant (noise=77) & -0.59358 ± 0.50139 \\
+xy-ric7 & redundant (noise=91) & -0.31962 ± 0.75925 \\
+xy-ric7 & zne & -6.92748 ± 0.36929 \\
+xy-ric7 & noiseoff & -7.99421 ± 0.04690 \\
+ &  &  \\
+\bottomrule
+\end{tabular}
