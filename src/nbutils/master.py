@@ -321,12 +321,6 @@ def plot_single_zne(
 
     return fig
 
-from typing import Dict, List, Tuple, Any, Optional, Union
-import matplotlib.pyplot as plt
-import numpy as np
-import os
-from pprint import pprint
-
 
 def plot_multi_zne(
     data_list: List[Dict[str, Any]],
@@ -734,7 +728,8 @@ def plot_multi_zne(
     # ------------------------------------------------------------------ #
     base_name = os.path.splitext(plot_file_name)[0]
     save_path = os.path.join(output_dir, f"{base_name}.{save_format}")
-    fig.savefig(save_path, format=save_format, dpi=dpi, bbox_inches="tight")
+    #fig.savefig(save_path, format=save_format, dpi=dpi, bbox_inches="tight")
+    fig.savefig(save_path, format=save_format, dpi=dpi)
     print(f"✅ Figure saved as (in '{output_dir}' folder): {base_name}.{save_format}")
 
     if show_plot:
