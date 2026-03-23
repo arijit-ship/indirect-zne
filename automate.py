@@ -14,21 +14,22 @@ with open("optparam.json", "r", encoding="utf-8") as f:
 
 # === CONFIGURATION ===
 model: str = "xy-iss"
-OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"xy-time-depol-noisy-time-evo"]
+OPTIMIZED_PARAM = ALL_OPTIMIZED_PARAMS[f"experiment08[time-depol-time-evo-noisy_p1e-4_tmax100]"]
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_ric7"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_noisy_p1e-4_tmax100_ric4"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
   [0, 0, 1, 0],
   [0, 0, 2, 0],
-  [0, 0, 3, 0],
-  [0, 0, 4, 0],
-  [0, 0, 5, 0],
-  [0, 0, 6, 0]
+  #[0, 0, 3, 0],
+  #[0, 0, 4, 0],
+  #[0, 0, 5, 0],
+  #[0, 0, 6, 0]
 ]
 ##-----------------**--------------------##
+T_MAX = 100
 NOISE_TYPE = "time-depol"
-NOISE_VALUE = [0, 0, 0.001, 0]
+NOISE_VALUE = [0, 0, 0.0001, 0]
 CONFIG_PATH = "exp.auto.yml"
 NUM_RUNS = 10  # or len(OPTIMIZED_PARAM)
 RIC_MUL = False  # Whether to remove RIC columns from data points
@@ -60,6 +61,10 @@ def set_i_factor(config, i_factor):
 def set_noise_value(config, noise_value):
     """Set the noise value in the config."""
     config["noise_profile"]["noise_prob"] = noise_value
+
+def set_t_max_value(config, tmax):
+    """Set t_max in time-evolution gate"""
+    config["ansatz"]["ugate"]["time"]["max"] = tmax
 
 def run_main():
     """Run the main.py script with the given config."""
@@ -104,6 +109,7 @@ def main():
         set_init_param(config, OPTIMIZED_PARAM[i])
         set_ansatz_type(config, ANSATZ_TYPE)
         set_noise_type(config, NOISE_TYPE)
+        set_t_max_value(config, T_MAX)
         set_noise_value(config, NOISE_VALUE)
         set_i_factor(config, I_FACTOR)
         config["zne"]["data_points"] = None
