@@ -241,7 +241,7 @@ class IndirectVQE:
             # (1) Create random initial param
             random_initial_param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
 
-            store_init_param_created = random_initial_param
+            store_init_param_created = random_initial_param.tolist()
             # (2) Calculate the initial cost with random initial param
             initial_cost = self.cost_function(param=random_initial_param)
 
@@ -306,7 +306,7 @@ class IndirectVQE:
         vqe_result: Dict = {
             "initial_cost": initial_cost,
             "min_cost": min_cost,
-            "init_random_param": store_init_param_created.tolist(),
+            "init_random_param": store_init_param_created,
             "optimized_param": sol_optimized_param,
             "initial_density_matrix": initial_density_matrix_json,
             "final_density_matrix": final_density_matrix_json
