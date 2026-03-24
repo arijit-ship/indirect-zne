@@ -1,8 +1,8 @@
-run: redundant
-nqubits: 7
+run: zne
+nqubits: 4
 state: dmatrix
 output:
-  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_noisy_p1e-3_tmax100_ric2_sample#1
+  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_noisy_p1e-3_tmax100_ric2_sample#5
   draw:
     status: false
     fig_dpi: 100
@@ -14,20 +14,14 @@ observable:
     - 0.5
     - 0.5
     - 0.5
-    - 0.5
-    - 0.5
-    - 0.5
     bn:
-    - 1.0
-    - 1.0
-    - 1.0
     - 1.0
     - 1.0
     - 1.0
     - 1.0
     r: 1
 ansatz:
-  layer: 30
+  layer: 1
   gateset: 1
   ugate:
     type: xy-iss
@@ -36,37 +30,31 @@ ansatz:
       - 0.5
       - 0.5
       - 0.5
-      - 0.5
-      - 0.5
-      - 0.5
       bn:
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
-      - 0
-      r: 0
+      - 1.0
+      - 1.0
+      - 1.0
+      - 1.0
+      r: 1
     time:
       min: 0.0
       max: 10.0
 vqe:
-  iteration: 1
+  iteration: 5
   optimization:
-    status: false
+    status: true
     algorithm: SLSQP
     constraint: true
 init_param:
   value:
-  - 2.767141205496385
-  - 1.2483706031501336
-  - -1.5027680338219302
-  - 0.03648013277855798
-  - -0.6618389069232589
+  - 2.7671396275656734
+  - 1.2483699735470393
+  - -1.5027673490777225
+  - 0.03647940520285238
+  - -0.6618734418202167
 noise_profile:
   status: true
-  type: time-depol
+  type: time-depol-trotter
   noise_prob:
   - 0.001
   - 0.001
@@ -87,6 +75,16 @@ redundant:
     - 0
 zne:
   method: richardson
-  degree: 0
+  degree: 1
   sampling: default
-  data_points: null
+  data_points:
+  - - 4
+    - 2
+    - 4
+    - 0
+    - -1.204782318448902
+  - - 4
+    - 2
+    - 12
+    - 0
+    - -1.1831429865089134

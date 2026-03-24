@@ -93,6 +93,7 @@ def run_single_vqe(run_index: int, config_path: str) -> None:
             "initial_parameters": vqe_output["init_random_param"],
             "initial_states": [vqe_output["initial_density_matrix"]],
             "final_states": [vqe_output["final_density_matrix"]],
+            "lie_trotter_details": vqe_output["lie_trotter_details"]
         },
     }
 

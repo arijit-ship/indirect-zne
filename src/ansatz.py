@@ -1,5 +1,6 @@
 from typing import List
 
+import numpy as np
 from qulacs import Observable, QuantumCircuit
 from qulacs.gate import CZ, RX, RY, RZ, Identity, Y, merge
 
@@ -138,7 +139,8 @@ def create_noisy_ansatz(
         "bitflip": "BitFlip",
         "dephasing": "Dephasing",
         "xznoise": "IndependentXZ",
-        "time-depol": "time-depol"
+        "time-depol": "time-depol",
+        "time-depol-trotter": "time-depol-trotter"
     }
 
     noise_key = ansatz_noise_type.lower()
@@ -150,7 +152,7 @@ def create_noisy_ansatz(
     else:
         ansatz_noise_type = valid_noise_types[noise_key]
 
-    if ansatz_noise_type != "time-depol":
+    if ansatz_noise_type in ("xy-iss", "ising", "heisenberg"):
         # Creates redundant circuit
         circuit = create_redundant(
             nqubits=nqubits,
@@ -162,7 +164,18 @@ def create_noisy_ansatz(
             param=param,
             identity_factors=identity_factors,
         )
-    else:
+    elif ansatz_noise_type == "time-depol-trotter":
+        circuit = create_time_depol_trotter(
+            nqubits=nqubits,
+            layers=layers,
+            noise_type="Depolarizing",
+            noise_prob=ansatz_noise_prob,
+            gateset=gateset,
+            hamiltonian=ugateH,
+            param=param,
+            identity_factors=identity_factors
+        )
+    elif ansatz_noise_type == "time-depol":
         # p_i = Δp · (t_i+1 - t_i)
         # Δp =  ansatz_noise_prob [R, CZ, U, Y]
         circuit = create_timedepol_redun(
@@ -568,3 +581,190 @@ def create_timedepol_redun(
     }
 
     return output
+
+
+def create_time_depol_trotter(
+        nqubits: int,
+        layers: int,
+        #ugateH: Observable,
+        #param: list[float],
+        #C: float,
+        noise_type: str,
+        noise_prob: List[float],
+        gateset: int,
+        hamiltonian: Observable,
+        param: List[float],
+        identity_factors: List[int],
+        delta_t: float = 0.1,
+) -> dict:
+
+
+    # Noise propabilities: [R-gates, CZ-gate, U-gate, Y-gate]
+    noise_r_prob: float = noise_prob[0]
+    noise_cz_prob: float = noise_prob[1]
+    noise_u_prob: float = noise_prob[2]
+    noise_y_prob: float = noise_prob[3]
+
+    # Noisy identy factors: [R-gates, CZ-gate, U-gate, Y-gate]
+    r_gate_factor: int = identity_factors[0]  # Identity sacaling factor for rotational gates
+    cz_gate_factor: int = identity_factors[1]  # Identity scaling factor for CZ gate
+    u_gate_factor: int = identity_factors[2]  # Identity scaling factor for time-evolution gates
+    y_gate_factor: int = identity_factors[3]  # Identity scaling factor for Y gate
+
+    chunks = []
+    trotter_details = []
+
+    circuit = QuantumCircuit(nqubits)
+    
+    # flag = layers matches your original indexing logic
+    flag = layers  
+
+    C = noise_u_prob
+    
+    for layer in range(layers):
+        # 1. Apply Rotation Gates
+
+        # Add Rx to first and second qubits
+        circuit.add_noise_gate(RX(0, param[flag]), noise_type, noise_r_prob)
+        circuit.add_noise_gate(RX(1, param[flag + 1]), noise_type, noise_r_prob)
+
+        # Add identities with Rx and make redudant circuit
+
+        for _ in range(r_gate_factor):
+
+            # First qubit
+            circuit.add_noise_gate(RX(0, param[flag]).get_inverse(), noise_type, noise_r_prob)  # Rx_dagger
+            circuit.add_noise_gate(RX(0, param[flag]), noise_type, noise_r_prob)
+
+            # Second qubit
+            circuit.add_noise_gate(RX(1, param[flag + 1]).get_inverse(), noise_type, noise_r_prob)  # Rx_dagger
+            circuit.add_noise_gate(RX(1, param[flag + 1]), noise_type, noise_r_prob)
+
+         # Add Ry to first and second qubits
+        circuit.add_noise_gate(RY(0, param[flag + 2]), noise_type, noise_r_prob)
+        circuit.add_noise_gate(RY(1, param[flag + 3]), noise_type, noise_r_prob)
+
+         # Add identities with Ry and make redudant circuit
+        for _ in range(r_gate_factor):
+            # First qubit
+            circuit.add_noise_gate(RY(0, param[flag + 2]).get_inverse(), noise_type, noise_r_prob)  # Ry_dagger
+            circuit.add_noise_gate(RY(0, param[flag + 2]), noise_type, noise_r_prob)
+
+            # Second qubit
+            circuit.add_noise_gate(RY(1, param[flag + 3]).get_inverse(), noise_type, noise_r_prob)  # Ry_dagger
+            circuit.add_noise_gate(RY(1, param[flag + 3]), noise_type, noise_r_prob)
+
+        circuit.add_CZ_gate(0, 1)
+        circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+        circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)
+
+        # Add identites with CZ gates
+        for _ in range(cz_gate_factor):
+            # circuit.add_noise_gate(CZ(0, 1).get_inverse(), noise_type, noise_cz_prob)
+            # circuit.add_noise_gate(CZ(0, 1), noise_type, noise_cz_prob)
+            circuit.add_gate(CZ(0, 1).get_inverse())
+            circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+            circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)
+            circuit.add_CZ_gate(0, 1)
+            circuit.add_noise_gate(Identity(0), noise_type, noise_cz_prob)
+            circuit.add_noise_gate(Identity(1), noise_type, noise_cz_prob)
+        
+        
+        # 2. Determine time boundaries
+        if layer == 0:
+            ti = 0.0
+            tf = param[0]
+        else:
+            ti = param[layer-1]
+            tf = param[layer]
+
+        trotter_dict = None
+        # 3. Trotterize and get the nested dictionary
+        circuit, trotter_dict = lie_trotter_evo(
+            nqubits=nqubits, 
+            circuit=circuit, 
+            tf=tf, 
+            ti=ti, 
+            delta_t=delta_t, 
+            ugateH=hamiltonian, 
+            C=C
+        )
+        for _ in range(u_gate_factor):
+
+
+            # Add Y gates to all odd qubits
+            circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
+
+            circuit, trotter_dict_temp = lie_trotter_evo(
+                nqubits=nqubits, 
+                circuit=circuit, 
+                tf=tf, 
+                ti=ti, 
+                delta_t=delta_t, 
+                ugateH=hamiltonian, 
+                C=C
+            )
+
+            # Add Y gates to all odd qubits
+            circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
+
+            circuit, trotter_dict_temp = lie_trotter_evo(
+                nqubits=nqubits, 
+                circuit=circuit, 
+                tf=tf, 
+                ti=ti, 
+                delta_t=delta_t, 
+                ugateH=hamiltonian, 
+                C=C
+            )
+
+
+        # 4. Format into your requested structure
+        layer_entry = {
+            "parent_layer": layer,
+            "time_interval": [ti, tf],
+            "trotter_details": trotter_dict
+        }
+        trotter_details.append(layer_entry)
+            
+        #chunks.append(circuit.copy())
+        flag += 2 
+        #print(f"layer entry trotter details: {layer_entry}\n")
+        
+    return {
+        "chunks": None,
+        "circuit": circuit,
+        "trotter_details": trotter_details
+    }
+
+def lie_trotter_evo(nqubits, circuit, tf, ti, delta_t, ugateH, C):
+
+    n_i = int(np.ceil(abs(tf-ti) / delta_t)) if delta_t > 0 else 1
+    if n_i == 0: n_i = 1
+    
+    depolnoise_prb = C * ((tf-ti) / n_i)
+    # ti = ti/n_i
+    # tf = tf/n_i
+    time_evo_gate = create_time_evo_unitary(hamiltonian=ugateH, ti=ti/n_i, tf=tf/n_i)
+    
+    # Initialize the structure for this parent layer
+    trotter_dict = {
+        "total_steps": n_i,
+        "noise_prob": depolnoise_prb,
+        "steps": [] 
+    }
+    
+    for i in range(n_i):
+        circuit.add_gate(time_evo_gate)
+        for q in range(nqubits):
+            circuit.add_noise_gate(Identity(q), "Depolarizing", depolnoise_prb)
+        
+        # Append in the "deep_trotter"
+        trotter_dict["steps"].append({
+            "deep_trotter": {
+                "step_loc": i,
+                "Ni": n_i
+            }
+        })
+        
+    return circuit, trotter_dict

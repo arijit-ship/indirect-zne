@@ -64,6 +64,9 @@ class IndirectVQE:
         self.ansatz: dict = None
         self.ansatz_circuit: QuantumCircuit = None
 
+        # Lie-trotte
+        self.lie_trotter_details: list = []
+
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
         """
@@ -146,6 +149,13 @@ class IndirectVQE:
                 param=param,
                 identity_factors=self.ansatz_identity_factors,
             )
+            # If Lie-troter
+            if self.ansatz_noise_type == "time-depol-trotter":
+                #print ("TROTTE!!!!\n\n\n\n\n\n")
+                self.lie_trotter_details = self.ansatz.get("trotter_details", [])
+                #print(self.lie_trotter_details)
+            else:
+                self.lie_trotter_details = None
         else:
             self.ansatz = noiseless_ansatz(
                 nqubits=self.nqubits,
@@ -155,6 +165,9 @@ class IndirectVQE:
                 param=param,
             )
         self.ansatz_circuit = self.ansatz["circuit"]
+        
+        
+
         return self.ansatz_circuit
 
     def cost_function(self, param: List[float]) -> float:
@@ -309,7 +322,8 @@ class IndirectVQE:
             "init_random_param": store_init_param_created,
             "optimized_param": sol_optimized_param,
             "initial_density_matrix": initial_density_matrix_json,
-            "final_density_matrix": final_density_matrix_json
+            "final_density_matrix": final_density_matrix_json,
+            "lie_trotter_details": self.lie_trotter_details
         }
 
         return vqe_result

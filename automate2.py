@@ -8,11 +8,11 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment10[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax_60"  # <-- Set this to your simulation raw data folder
-
+#RAW_DATA_FOLDER = "experiments/recent/experiment10[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax_100"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_noisy_p1e-3_tmax60_ric2"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_noisy_p1e-3_tmax100_ric2"  # Output file prefix
 I_FACTOR = [
   [0, 0, 0, 0],
   [0, 0, 1, 0],
@@ -23,7 +23,7 @@ I_FACTOR = [
  # [0, 0, 6, 0]
 ]
 ##-----------------**--------------------##
-CONFIG_PATH = "exp.auto.yml"
+CONFIG_PATH = "exp.auto.small.yml"
 RIC_MUL = False  # Whether to remove RIC columns from data points
 
 
