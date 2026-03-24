@@ -83,8 +83,8 @@ def noiseless_ansatz(nqubits: int, layers: int, gateset: int, ugateH: Observable
             time_evo_gate = create_time_evo_unitary(ugateH, ti, tf)
             circuit.add_gate(time_evo_gate)
         else:
-            ti = param[layer]
-            tf = param[layer + 1]
+            ti = param[layer-1]
+            tf = param[layer]
             time_evo_gate = create_time_evo_unitary(ugateH, ti, tf)
             circuit.add_gate(time_evo_gate)
 
@@ -307,8 +307,8 @@ def create_redundant(
             circuit.add_gate(time_evo_gate)
 
         else:
-            ti = param[layer]
-            tf = param[layer + 1]
+            ti = param[layer-1]
+            tf = param[layer]
             time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
             circuit.add_gate(time_evo_gate)
 
@@ -330,8 +330,8 @@ def create_redundant(
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[layer]
-                tf = param[layer + 1]
+                ti = param[layer-1]
+                tf = param[layer]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -350,8 +350,8 @@ def create_redundant(
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[layer]
-                tf = param[layer + 1]
+                ti = param[layer-1]
+                tf = param[layer]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -516,8 +516,8 @@ def create_timedepol_redun(
             layer_ti = ti
             layer_tf = tf
         else:
-            ti = param[layer]
-            tf = param[layer + 1]
+            ti = param[layer-1]
+            tf = param[layer]
             time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
             circuit.add_gate(time_evo_gate)
             layer_ti = ti
@@ -544,8 +544,8 @@ def create_timedepol_redun(
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[layer]
-                tf = param[layer + 1]
+                ti = param[layer-1]
+                tf = param[layer]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -564,8 +564,8 @@ def create_timedepol_redun(
                 circuit.add_gate(time_evo_gate)
 
             else:
-                ti = param[layer]
-                tf = param[layer + 1]
+                ti = param[layer-1]
+                tf = param[layer]
                 time_evo_gate = create_time_evo_unitary(hamiltonian, ti, tf)
                 circuit.add_gate(time_evo_gate)
 
@@ -695,7 +695,7 @@ def create_time_depol_trotter(
             # Add Y gates to all odd qubits
             circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
 
-            circuit, trotter_dict_temp = lie_trotter_evo(
+            circuit, _trotter_dict_temp = lie_trotter_evo(
                 nqubits=nqubits, 
                 circuit=circuit, 
                 tf=tf, 
@@ -708,7 +708,7 @@ def create_time_depol_trotter(
             # Add Y gates to all odd qubits
             circuit = add_ygate_odd(circuit, noise_type, noise_y_prob, y_gate_factor)
 
-            circuit, trotter_dict_temp = lie_trotter_evo(
+            circuit, _trotter_dict_temp = lie_trotter_evo(
                 nqubits=nqubits, 
                 circuit=circuit, 
                 tf=tf, 
@@ -728,7 +728,7 @@ def create_time_depol_trotter(
         trotter_details.append(layer_entry)
             
         #chunks.append(circuit.copy())
-        flag += 2 
+        flag += 4*gateset 
         #print(f"layer entry trotter details: {layer_entry}\n")
         
     return {
