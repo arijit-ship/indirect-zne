@@ -3,6 +3,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from pprint import pprint
+import colorsys
+import matplotlib.colors as mcolors
+
 
 def get_plotting_data(simulation_data):
     plot_map = {}
@@ -732,6 +735,266 @@ def plot_multi_zne(
     #fig.savefig(save_path, format=save_format, dpi=dpi, bbox_inches="tight")
     fig.savefig(save_path, format=save_format, dpi=dpi)
     print(f"✅ Figure saved as (in '{output_dir}' folder): {base_name}.{save_format}")
+
+    if show_plot:
+        plt.show()
+    else:
+        plt.close(fig)
+
+    return fig
+
+
+def _derive_series_colors(base_color: str) -> Dict[str, str]:
+    """
+    Derive a full ``plot_colors``-style dict from a single base color.
+
+    Given a base color (any matplotlib color spec), returns:
+      - 'noisy'      : base color at full saturation / slightly darkened
+      - 'zne'        : base color lightened (mixed toward white, ~40 %)
+      - 'noise_free' : base color desaturated (mixed toward gray, ~35 %)
+
+    All three are returned as hex strings so they work everywhere matplotlib
+    accepts a color string.
+    """
+    import colorsys
+
+    def _to_rgb(c: str) -> Tuple[float, float, float]:
+        return mcolors.to_rgb(c)
+
+    def _to_hex(rgb: Tuple[float, float, float]) -> str:
+        return mcolors.to_hex(rgb)
+
+    def _lighten(rgb, amount=0.40):
+        """Mix rgb toward white by `amount` (0 = no change, 1 = white)."""
+        return tuple(v + (1.0 - v) * amount for v in rgb)
+
+    def _darken(rgb, amount=0.20):
+        """Mix rgb toward black by `amount` (0 = no change, 1 = black)."""
+        return tuple(v * (1.0 - amount) for v in rgb)
+
+    def _desaturate(rgb, amount=0.35):
+        """Reduce saturation by `amount` in HLS space."""
+        h, l, s = colorsys.rgb_to_hls(*rgb)
+        s_new = s * (1.0 - amount)
+        return colorsys.hls_to_rgb(h, l, s_new)
+
+    base_rgb = _to_rgb(base_color)
+    return {
+        "noisy":      _to_hex(_darken(base_rgb, 0.15)),
+        "zne":        _to_hex(_lighten(base_rgb, 0.40)),
+        "noise_free": _to_hex(_desaturate(base_rgb, 0.35)),
+    }
+
+
+# Default qualitative color cycle used when series_colors is not provided.
+_DEFAULT_SERIES_COLORS = [
+    "#1f77b4",  # muted blue
+    "#d62728",  # brick red
+    "#2ca02c",  # cooked asparagus green
+    "#ff7f0e",  # safety orange
+    "#9467bd",  # muted purple
+    "#8c564b",  # chestnut brown
+    "#e377c2",  # raspberry yogurt pink
+    "#17becf",  # blue-teal
+]
+
+
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from pprint import pprint
+from typing import List, Dict, Any, Optional, Union, Tuple
+
+
+def plot_single_zne_imposed(
+    data_list: List[Dict[str, Any]],
+    plot_colors: Dict[str, str],  # only "exact" will be used
+    plot_file_name: str,
+    output_dir: str,
+    plot_titles: Optional[List[str]] = None,
+    extrapol_target: Optional[Union[float, List[float]]] = None,
+    figsize: Tuple[float, float] = (7, 5),
+    dpi: int = 150,
+    xlabel: str = r"Noise level ($\alpha_k\lambda$)",
+    ylabel: str = "Expectation value",
+    title_fontsize: int = 13,
+    label_fontsize: int = 12,
+    tick_fontsize: int = 11,
+    legend_fontsize: int = 10,
+    show_legend: bool = True,
+    legend_loc: str = "best",
+    legend_bbox: Optional[Tuple[float, float]] = None,
+    legend_ncols: Optional[int] = None,
+    grid_style: Optional[Dict[str, Any]] = None,
+    capsize: int = 4,
+    marker_size: float = 6,
+    border_width: float = 1.5,
+    save_format: str = "eps",
+    show_plot: bool = True,
+    print_data: bool = False,
+) -> plt.Figure:
+
+    # ------------------------------------------------------------------ #
+    # Defaults
+    # ------------------------------------------------------------------ #
+    if grid_style is None:
+        grid_style = {"linestyle": "--", "alpha": 0.6}
+    if extrapol_target is None:
+        extrapol_target = 0
+
+    # ------------------------------------------------------------------ #
+    # SERIES COLORS (one color per dataset)
+    # ------------------------------------------------------------------ #
+    SERIES_COLORS = [
+        "#1f77b4",  # blue
+        "#ff7f0e",  # orange
+        "#2ca02c",  # green
+        "#d62728",  # red
+        "#9467bd",  # purple (fallback)
+        "#8c564b",  # brown
+    ]
+
+    # ------------------------------------------------------------------ #
+    # MARKERS (category-wise)
+    # ------------------------------------------------------------------ #
+    markers = {
+        "noisy": "o",
+        "zne": "D",
+        "noise_free": "*",
+    }
+
+    # ------------------------------------------------------------------ #
+    # Figure setup
+    # ------------------------------------------------------------------ #
+    plt.rcParams.update({
+        "font.size":        tick_fontsize,
+        "axes.labelsize":   label_fontsize,
+        "axes.titlesize":   title_fontsize,
+        "legend.fontsize":  legend_fontsize,
+        "xtick.labelsize":  tick_fontsize,
+        "ytick.labelsize":  tick_fontsize,
+    })
+
+    os.makedirs(output_dir, exist_ok=True)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
+
+    # ------------------------------------------------------------------ #
+    # Plot
+    # ------------------------------------------------------------------ #
+    exact_drawn = set()
+
+    for i, data in enumerate(data_list):
+
+        color = SERIES_COLORS[i % len(SERIES_COLORS)]
+
+        # Better labeling
+        if plot_titles is not None and i < len(plot_titles):
+            suffix = f" {plot_titles[i]}"
+        else:
+            suffix = f" ({i})"
+
+        exact_sol      = data["exact_sol"]
+        sorted_noise   = data["sorted_noise"]
+        mean_exp_vals  = data["mean_exp_vals"]
+        std_exp_vals   = data["std_exp_vals"]
+        zne_mean       = data["zne_mean"]
+        zne_std        = data["zne_std"]
+        mean_noise_off = data.get("mean_noise_off")
+        std_noise_off  = data.get("std_noise_off")
+
+        if print_data:
+            print(f"\n--- Series {i} ---")
+            pprint(data, sort_dicts=False, width=80)
+
+        # --- Noisy ---
+        ax.errorbar(
+            sorted_noise,
+            mean_exp_vals,
+            yerr=std_exp_vals,
+            fmt=markers["noisy"],
+            color=color,
+            ecolor=color,
+            capsize=capsize,
+            markersize=marker_size,
+            label=f"Noisy{suffix}",
+        )
+
+        # --- ZNE ---
+        ax.errorbar(
+            np.atleast_1d(extrapol_target),
+            np.atleast_1d(zne_mean),
+            yerr=np.atleast_1d(zne_std),
+            fmt=markers["zne"],
+            color=color,
+            ecolor=color,
+            capsize=capsize,
+            markersize=marker_size,
+            label=f"ZNE{suffix}",
+        )
+
+        # --- Noise-free ---
+        if mean_noise_off is not None:
+            ax.errorbar(
+                0,
+                mean_noise_off,
+                yerr=std_noise_off if std_noise_off is not None else 0,
+                fmt=markers["noise_free"],
+                color=color,
+                ecolor=color,
+                capsize=capsize,
+                markersize=marker_size + 2,
+                label=f"Noise-free{suffix}",
+            )
+
+        # --- Exact line (draw once) ---
+        exact_key = round(exact_sol, 12)
+        if exact_key not in exact_drawn:
+            ax.axhline(
+                y=exact_sol,
+                color=plot_colors["exact"],
+                linestyle="--",
+                linewidth=1.5,
+                label="Exact",
+            )
+            exact_drawn.add(exact_key)
+
+    # ------------------------------------------------------------------ #
+    # Styling
+    # ------------------------------------------------------------------ #
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(**grid_style)
+
+    ax.tick_params(width=1, length=4, direction="inout")
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(border_width)
+
+    # ------------------------------------------------------------------ #
+    # Legend
+    # ------------------------------------------------------------------ #
+    if show_legend:
+        kwargs = dict(frameon=False)
+        if legend_ncols:
+            kwargs["ncol"] = legend_ncols
+        if legend_bbox:
+            ax.legend(loc=legend_loc, bbox_to_anchor=legend_bbox, **kwargs)
+        else:
+            ax.legend(loc=legend_loc, **kwargs)
+
+    # ------------------------------------------------------------------ #
+    # Layout
+    # ------------------------------------------------------------------ #
+    plt.tight_layout()
+
+    # ------------------------------------------------------------------ #
+    # Save
+    # ------------------------------------------------------------------ #
+    base = os.path.splitext(plot_file_name)[0]
+    path = os.path.join(output_dir, f"{base}.{save_format}")
+    fig.savefig(path, format=save_format, dpi=dpi)
+
+    print(f"✅ Saved: {path}")
 
     if show_plot:
         plt.show()
