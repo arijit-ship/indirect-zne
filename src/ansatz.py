@@ -142,7 +142,7 @@ def create_noisy_ansatz(
         "time-depol": "time-depol",
         "time-depol-trotter": "time-depol-trotter"
     }
-
+    
     noise_key = ansatz_noise_type.lower()
 
     if noise_key not in valid_noise_types:
@@ -152,19 +152,8 @@ def create_noisy_ansatz(
     else:
         ansatz_noise_type = valid_noise_types[noise_key]
 
-    if ansatz_noise_type in ("xy-iss", "ising", "heisenberg"):
-        # Creates redundant circuit
-        circuit = create_redundant(
-            nqubits=nqubits,
-            layers=layers,
-            noise_type=ansatz_noise_type,
-            noise_prob=ansatz_noise_prob,
-            gateset=gateset,
-            hamiltonian=ugateH,
-            param=param,
-            identity_factors=identity_factors,
-        )
-    elif ansatz_noise_type == "time-depol-trotter":
+
+    if ansatz_noise_type == "time-depol-trotter":
         circuit = create_time_depol_trotter(
             nqubits=nqubits,
             layers=layers,
@@ -187,6 +176,18 @@ def create_noisy_ansatz(
             hamiltonian=ugateH,
             param=param,
             identity_factors=identity_factors
+        )
+    else:
+        # Creates redundant circuit
+        circuit = create_redundant(
+            nqubits=nqubits,
+            layers=layers,
+            noise_type=ansatz_noise_type,
+            noise_prob=ansatz_noise_prob,
+            gateset=gateset,
+            hamiltonian=ugateH,
+            param=param,
+            identity_factors=identity_factors,
         )
 
     return circuit
