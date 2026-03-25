@@ -9,7 +9,7 @@ from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
-from src.constraint import create_time_constraints
+from src.constraint import create_time_constraints, create_tf_fixed_constraint
 from src.createparam import create_param
 from src.hamiltonian import (
     create_heisenberg_hamiltonian,
@@ -210,6 +210,7 @@ class IndirectVQE:
 
     def run_vqe(self) -> Dict:
 
+        constraints = None
         vqe_constraint = None
         isRandom: bool = False
         initial_cost: float = 0
@@ -260,7 +261,22 @@ class IndirectVQE:
 
             # (3) Checking constraint before optimization
             if self.constraint and self.optimizer == "SLSQP":
+
                 vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
+                
+                if self.ansatz_noise_type == "time-depol-trotter":
+                    num_time = self.ansatz_layer
+                    total_params = len(random_initial_param)
+                    tf_index = num_time - 1  # Correct: index of the last time parameter
+
+                    # Standardize constraints for SLSQP
+                    vqe_constraint = create_time_constraints(num_time, total_params)
+                    t_final_constraints = create_tf_fixed_constraint(tf_index, total_params, self.ansatz_tf)
+                    
+                    # Passing as a list of LinearConstraint objects is supported in SciPy 1.1.0+
+                    constraints = [vqe_constraint, t_final_constraints]
+                else:
+                    constraints = vqe_constraint
 
             elif self.optimizer != "SLSQP" and self.constraint:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
@@ -268,7 +284,7 @@ class IndirectVQE:
             # (4) Run optimization
             min_cost, sol_optimized_param = self.run_optimization(
                 parameters = random_initial_param,
-                constraint = vqe_constraint
+                constraint = constraints
             )  # type: ignore
 
             # for i in range(self.iteration):
@@ -331,7 +347,7 @@ class IndirectVQE:
     def drawCircuit(self, prefix: str, dpi: int, filetype: str) -> None:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(current_dir)  # Go up one level
+        parent_dir = os.path.dirname(current_dir)
         output_dir = os.path.join(parent_dir, "output")
         os.makedirs(output_dir, exist_ok=True)
         if filetype.lower() == "svg":
@@ -341,10 +357,12 @@ class IndirectVQE:
         else:
             raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
 
-        circuit_drawer(self.ansatz["chunks"][0], "mpl")  # type: ignore
+        chunks = self.ansatz.get("chunks")
+        if chunks is None:
+            raise ValueError("chunks not available for this ansatz type (e.g. time-depol-trotter)")
+        circuit_drawer(chunks[0], "mpl")  # only this line
         plt.savefig(output_file, dpi=dpi)
         plt.close()
-        # Print the path of the output file
         print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
 
     def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:

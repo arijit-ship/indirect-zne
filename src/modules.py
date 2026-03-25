@@ -3,9 +3,9 @@ from qulacs import Observable
 
 """
 This script contains supporting functions.
-I’ve gone through a lot of refactoring to make the code more readable—but honestly, it feels never-ending and I’m kinda
+I've gone through a lot of refactoring to make the code more readable—but honestly, it feels never-ending and I'm kinda
 fed up with it.
-As long as the code works, I’m good with it.
+As long as the code works, I'm good with it.
 To future me and anyone else working on this code: when storing noise-related parameters,
 please keep the gates in order—[R-gates, CZ-gate, U-gate, Y-gate].
 """
@@ -121,10 +121,27 @@ def calculate_noise_levels(nqubits: int, identity_factors: list[int], noise_prof
         noise_T = nqubits * nT if u_gate_prob != 0 else 0
         noise_y = nY if y_gate_prob != 0 else 0
 
+    # --- Raw gate counts (noise-model independent) ---
+    # odd_n already computed above, reused here directly.
+    # raw_y resolves to 0 naturally when u_gate_factor == 0.
+    raw_r  = 4 + 8 * r_gate_factor
+    raw_cz = 1 + 2 * cz_gate_factor
+    raw_u  = 1 + 2 * u_gate_factor
+    raw_y  = u_gate_factor * 2 * odd_n * (1 + 2 * y_gate_factor)
+
     return {
+        # --- existing keys, untouched ---
         "identity_factors": identity_factors,
         "noise_level": [noise_rot, noise_CZ, noise_T, noise_y],
         "gates_num": [nR, nCz, nT, nY],
         "noise_profile": noise_profile,
         "odd_wires": odd_n,
+        # --- new isolated key ---
+        "raw_gate_count": {
+            "R":     raw_r,
+            "CZ":    raw_cz,
+            "U":     raw_u,
+            "Y":     raw_y,
+            "total": raw_r + raw_cz + raw_u + raw_y,
+        },
     }

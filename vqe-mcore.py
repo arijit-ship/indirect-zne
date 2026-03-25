@@ -30,7 +30,7 @@ def load_config(config_path):
     return config
 
 
-def run_single_vqe(run_index: int, config_path: str) -> None:
+def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> None:
     """
     Runs a single VQE and writes JSON output immediately after completion.
     Identical JSON structure to initialize_vqe() in main.py.
@@ -57,7 +57,7 @@ def run_single_vqe(run_index: int, config_path: str) -> None:
     )
     exact_cost: float = get_eigen_min(hamiltonian=target_observable)
 
-    print(f"[Run {run_index:03d}] Starting...")
+    print(f"[Run {run_index:03d}] Running...")
     start_time = time.time()
 
     vqe_instance = IndirectVQE(
@@ -98,9 +98,9 @@ def run_single_vqe(run_index: int, config_path: str) -> None:
     }
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(current_dir, "output")
-    os.makedirs(output_dir, exist_ok=True)
-    output_file = os.path.join(output_dir, f"{file_name_prefix}_run{run_index:03d}_VQE.json")
+    batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
+    os.makedirs(batch_dir, exist_ok=True)
+    output_file = os.path.join(batch_dir, f"{file_name_prefix}_run{run_index:03d}_VQE.json")
 
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=None, separators=(",", ":"))
@@ -108,7 +108,11 @@ def run_single_vqe(run_index: int, config_path: str) -> None:
     print(f"[Run {run_index:03d}] Output saved to: {os.path.abspath(output_file)}")
 
     if circuit_draw_status:
-        vqe_instance.drawCircuit(prefix=f"{file_name_prefix}_run{run_index:03d}", dpi=fig_dpi, filetype=fig_filetype)
+        vqe_instance.drawCircuit(
+            prefix=f"{file_name_prefix}_run{run_index:03d}",
+            dpi=fig_dpi,
+            filetype=fig_filetype,
+        )
 
 
 if __name__ == "__main__":
@@ -125,6 +129,9 @@ if __name__ == "__main__":
     num_runs: int = config["vqe"]["iteration"]
     num_cores: int = os.cpu_count()
 
+    # Single timestamp shared across all runs in this batch
+    batch_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     print(f"Launching {num_runs} isolated VQE processes ({num_cores} logical cores available)...")
     print("=" * symbol_count + "VQE-MCORE" + "=" * symbol_count)
 
@@ -132,7 +139,7 @@ if __name__ == "__main__":
 
     processes = []
     for i in range(num_runs):
-        p = multiprocessing.Process(target=run_single_vqe, args=(i, config_file))
+        p = multiprocessing.Process(target=run_single_vqe, args=(i, config_file, batch_timestamp))
         p.start()
         processes.append((i, p))
         print(f"[Run {i:03d}] Started (PID: {p.pid})")
@@ -147,4 +154,5 @@ if __name__ == "__main__":
     total_time = time.time() - start_time
     print("=" * symbol_count + "Done" + "=" * symbol_count)
     print(f"All {num_runs} runs completed in {total_time:.2f} sec")
-    print(f"Output files: output/{config['output']['file_name_prefix']}_run000_VQE.json ... run{num_runs-1:03d}_VQE.json")
+    print(f"Output folder: output/{config['output']['file_name_prefix']}_{batch_timestamp}/")
+    print(f"Output files:  {config['output']['file_name_prefix']}_run000_VQE.json ... run{num_runs-1:03d}_VQE.json")
