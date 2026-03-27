@@ -25,130 +25,172 @@ class ZeroNoiseExtrapolation:
         self.degree = degree
         self.method = method
         self.sampling_mode = sampling_mode
-
-        # Number of independent variables
+ 
+        # Number of independent variables (noise dimensions / circuit layers).
         self.independent_var_number: int = len(datapoints[0]) - 1
-
+ 
         self.noise_data = [tuple(point[: self.independent_var_number]) for point in self.datapoints]
         self.expectation_vals = [point[-1] for point in datapoints]
-
+ 
     def get_noise_levels(self) -> List[Tuple[int]]:
         """
         Returns a list containing all the noise-level values (independent variable values)
         extracted from the given datapoints.
         """
         return self.noise_data
-
+ 
     def get_expec_vals(self) -> List[float]:
         """
-        Returns a list containing all the expectations values (dependent variable values)
+        Returns a list containing all the expectation values (dependent variable values)
         extracted from the given datapoints.
         """
         return self.expectation_vals
-
+ 
     def get_required_points(self) -> int:
         """
-        Returns the number of datapoints required in order to perform Richardson extrapolation
-        at a given degree and independent variables.
+        Returns the number of datapoints required to perform multivariate Richardson
+        extrapolation at the configured degree and number of independent variables.
+ 
+        This equals the number of multivariate monomials M = C(degree + l, degree),
+        where l is the number of noise dimensions (circuit layers/chunks).
         """
         monomials = self.get_monomials(self.independent_var_number, self.degree)
         return len(monomials)
-
+ 
     def get_independent_var_number(self) -> int:
         """
-        Returns the unmber of independent variables.
+        Returns the number of independent variables (noise dimensions).
         """
         return self.independent_var_number
-
+ 
     def sampling(self) -> list:
         """
-        This method samples data points from the dataset based on the sampling mode specified
-        in the `self.sampling_mode`. The format of `self.sampling_mode` can be:
-
-        - "random-N": Randomly selects `N` items from the dataset.
-        - "default-N": Selects the first `N` items from the dataset.
-        - "default": Selects all the items from the dataset.
-
-        The method ensures the number of requested items (`N`) does not exceed the dataset size.
-        If the format of `self.sampling_mode` is invalid, it raises a ValueError.
+        Samples datapoints from the dataset according to `self.sampling_mode`.
+ 
+        Supported formats:
+            - ``"default"``   : Returns all datapoints unchanged.
+            - ``"default-N"`` : Returns the first N datapoints.
+            - ``"random-N"``  : Returns N datapoints chosen uniformly at random
+                                without replacement.
+ 
+        Raises:
+            ValueError: If the format of ``self.sampling_mode`` is invalid, or if
+                        N exceeds the size of the dataset.
         """
-        # Handle the case for "default" (all items)
+        # Return the full dataset when no sub-sampling is requested.
         if self.sampling_mode == "default":
             return self.datapoints
-
-        # Check for "default-N" or "random-N"
+ 
+        # Parse "default-N" or "random-N".
         match = re.match(r"(random|default)-(\d+)", self.sampling_mode)
         if not match:
             raise ValueError(
                 "Invalid argument format. Use 'random-N', 'default-N', or 'default', where N is an integer."
             )
-
+ 
         mode, num_samples = match.groups()
         num_samples = int(num_samples)
-
-        # Ensure the number of samples doesn't exceed the data size
+ 
         if num_samples > len(self.datapoints):
             raise ValueError("Sample size exceeds the size of the dataset.")
-
-        # Handle "random-N" and "default-N"
+ 
         if mode == "random":
             return random.sample(self.datapoints, num_samples)
-        elif mode == "default":
-            return self.datapoints[:num_samples]  # First `num_samples` items
-
+        else:  # mode == "default"
+            return self.datapoints[:num_samples]
+ 
     def mul_RichardsonZNE(self, data) -> float:
-
+        """
+        Performs multivariate Layerwise Richardson Extrapolation (LRE) to estimate
+        the zero-noise expectation value.
+ 
+        Implements Eq. (36) from arXiv:2402.04000:
+ 
+            O_LRE = P(0) = sum_i <O(lambda_i)> * det(M_i(0)) / det(A)
+ 
+        Exactly M = C(degree + l, degree) datapoints are used, where l is the number
+        of noise dimensions.  Any additional points supplied in `data` are ignored;
+        call with a pre-sampled subset if a different selection is desired.
+ 
+        Args:
+            data: List of datapoints, each of the form
+                  [noise_1, noise_2, ..., noise_l, expectation_value].
+ 
+        Returns:
+            Zero-noise extrapolated expectation value (float).
+ 
+        Raises:
+            ValueError: If fewer datapoints are provided than required, or if the
+                        resulting sample matrix is singular.
+        """
         number_of_required_points = self.get_required_points()
-        if number_of_required_points < len(data):
+ 
+        # BUG FIX: the guard was inverted — it previously raised when len(data) > required,
+        # i.e. on every valid over-supplied call.  The correct check is the opposite:
+        # raise only when there are *too few* points to form the square system.
+        if number_of_required_points > len(data):
             raise ValueError(
                 f"Multivariate Richardson error. At degree: {self.degree}, "
-                f"Required data points: {number_of_required_points}, but was given: {len(data)}."
+                f"required data points: {number_of_required_points}, but was given: {len(data)}."
             )
-
+ 
+        # Use exactly the required number of points to form the square system.
         richardson_datapoints = data[:number_of_required_points]
         richardson_noise_vals = [tuple(point[: self.independent_var_number]) for point in richardson_datapoints]
         richardson_expectation_vals = [point[-1] for point in richardson_datapoints]
-        RichardsonZNEval = 0
-        sampleMatrix = self.sample_matrix(sample_points=richardson_noise_vals, degree=self.degree)  # type: ignore
-        detA = np.linalg.det(sampleMatrix)
-        if abs(detA) <= 1e-9:
-            raise ValueError(f"Determinant of sample matrix is/close to zero. Det: {detA}, Deg: {self.degree}")
-        # elif abs(detA) >= 1e+50:
-        #     raise ValueError(f"Determinant of sample matrix close to inf. Det: {detA}, Deg: {self.degree}")
-
-        matrices = self.generate_modified_matrices(sampleMatrix)  # type: ignore
-
-        if len(richardson_expectation_vals) != len(matrices):
-            raise ValueError("Unmatched length.")
-
-        for E, matrix in zip(richardson_expectation_vals, matrices):
-            eta = np.linalg.det(matrix) / detA
-            E = np.array(E)
-            RichardsonZNEval += E * eta
-            eta = 0
-
-        return RichardsonZNEval
-
+ 
+        sample_matrix = self.sample_matrix(sample_points=richardson_noise_vals, degree=self.degree)
+        det_a = np.linalg.det(sample_matrix)
+ 
+        if abs(det_a) <= 1e-9:
+            raise ValueError(
+                f"Determinant of sample matrix is zero or near-zero "
+                f"(det = {det_a:.3e}, degree = {self.degree}). "
+                "Ensure scale-factor vectors are sufficiently distinct."
+            )
+ 
+        # Generate the M_i(0) matrices and accumulate the weighted sum.
+        modified_matrices = self.generate_modified_matrices(sample_matrix)
+ 
+        if len(richardson_expectation_vals) != len(modified_matrices):
+            raise ValueError(
+                f"Length mismatch: {len(richardson_expectation_vals)} expectation values "
+                f"vs {len(modified_matrices)} modified matrices."
+            )
+ 
+        zne_value = 0.0
+        for expectation_val, modified_matrix in zip(richardson_expectation_vals, modified_matrices):
+            eta = np.linalg.det(modified_matrix) / det_a
+            zne_value += np.array(expectation_val) * eta
+ 
+        return float(zne_value)
+ 
     @staticmethod
     def get_monomials(n: int, d: int) -> list[str]:
         """
-        Compute monomials of degree `d` in graded lexicographical order.
+        Computes all multivariate monomials of degree at most `d` in `n` variables,
+        returned in ascending graded-lexicographic order (constant term ``"1"`` first).
+ 
+        Variables are named ``λ_1, …, λ_n`` so the strings can be evaluated directly
+        via ``eval()``.
+ 
+        Args:
+            n: Number of variables.
+            d: Maximum total degree.
+ 
+        Returns:
+            List of monomial strings, e.g. ``['1', 'λ_1', 'λ_2', 'λ_1**2', ...]``.
         """
         variables = [f"λ_{i}" for i in range(1, n + 1)]
-
+ 
         monomials = []
         for degree in range(d, -1, -1):
-            # Generate combinations for the current degree
             combos = list(itertools.combinations_with_replacement(variables, degree))
-
-            # Sort combinations lexicographically
             combos.sort()
-
-            # Construct monomials from sorted combinations
+ 
             for combo in combos:
                 monomial_parts = []
                 counts = Counter(combo)
-                # Ensure variables are processed in lexicographical order
                 for var in sorted(counts.keys()):
                     count = counts[var]
                     if count > 1:
@@ -156,51 +198,109 @@ class ZeroNoiseExtrapolation:
                     else:
                         monomial_parts.append(var)
                 monomial = "*".join(monomial_parts)
-                # Handle the case where degree is 0
                 if not monomial:
                     monomial = "1"
                 monomials.append(monomial)
-        # "1" should be the first monomial. Note that order d > c > b > a means vector of monomials = [a, b, c, d].
+ 
+        # Reverse to ascending order: constant term "1" at index 0, highest-degree
+        # monomials last.  This ordering is required for generate_modified_matrices
+        # to place the substitution value correctly (see paper Eq. 36 footnote).
         return monomials[::-1]
-
+ 
     @staticmethod
     def sample_matrix(sample_points: list[int], degree: int) -> np.ndarray:
-        """Construct a matrix from monomials evaluated at sample points."""
-        n = len(sample_points[0])  # type: ignore # Number of variables based on the first sample point
-        monomials = ZeroNoiseExtrapolation.get_monomials(n, degree)  # type: ignore
+        """
+        Constructs the Vandermonde-like sample matrix A, where entry A[i, j] is the
+        j-th monomial evaluated at the i-th scale-factor vector.
+ 
+        Args:
+            sample_points: List of scale-factor vectors (one per circuit run).
+            degree: Maximum polynomial degree.
+ 
+        Returns:
+            NumPy array of shape (N, M), where N = len(sample_points) and
+            M = number of monomials = C(degree + l, degree).
+        """
+        n = len(sample_points[0])
+        monomials = ZeroNoiseExtrapolation.get_monomials(n, degree)
         matrix = np.zeros((len(sample_points), len(monomials)))
-
+ 
         for i, point in enumerate(sample_points):
             for j, monomial in enumerate(monomials):
-                var_mapping = {f"λ_{k+1}": point[k] for k in range(n)}  # type: ignore
+                var_mapping = {f"λ_{k+1}": point[k] for k in range(n)}
                 matrix[i, j] = eval(monomial, {}, var_mapping)
+ 
         return matrix
-
+ 
     @staticmethod
     def get_eta_coeffs_from_sample_matrix(mat: np.ndarray) -> list[float]:
-        """Given a sample matrix compute the eta coefficients."""
+        """
+        Computes the LRE eta coefficients from a square sample matrix via
+        Cramer's rule (Eq. 36, arXiv:2402.04000).
+ 
+        Each coefficient η_i = det(M_i(0)) / det(A), where M_i(0) is the sample
+        matrix with row i replaced by e₁ = (1, 0, …, 0).
+ 
+        The vector e₁ encodes monomial evaluations at the zero-noise limit λ = 0:
+            - Constant monomial M_1(0) = 1  →  position 0 receives 1.
+            - All higher-degree monomials vanish at λ = 0  →  remaining positions are 0.
+ 
+        This convention requires monomials to be ordered with the constant term first
+        (ascending degree), which is guaranteed by ``get_monomials()``.
+ 
+        Args:
+            mat: Square sample matrix of shape (M, M).
+ 
+        Returns:
+            List of M eta coefficients.
+ 
+        Raises:
+            ValueError: If the matrix is not square or is singular.
+        """
         n_rows, n_cols = mat.shape
         if n_rows != n_cols:
-            raise ValueError("The matrix must be square.")
-
+            raise ValueError("The sample matrix must be square.")
+ 
         det_m = np.linalg.det(mat)
-        if det_m == 0:
-            raise ValueError("The matrix is singular.")
-
+        if np.isclose(det_m, 0.0):
+            raise ValueError(
+                f"The sample matrix is singular (det ≈ {det_m:.3e}). "
+                "Ensure scale-factor vectors are sufficiently distinct."
+            )
+ 
+        # e₁ = [1, 0, …, 0]: constant monomial evaluates to 1 at λ = 0;
+        # all higher-degree monomials evaluate to 0.  (Paper Eq. 36 footnote.)
+        e1 = np.zeros(n_cols)
+        e1[0] = 1.0
+ 
         terms = []
         for i in range(n_rows):
             new_mat = mat.copy()
-            new_mat[i] = np.array([[0] * (n_cols - 1) + [1]])
+            new_mat[i] = e1
             terms.append(np.linalg.det(new_mat) / det_m)
-
+ 
         return terms
-
+ 
     @staticmethod
     def get_eta_coeffs_single_variable(scale_factors: list[float]) -> list[float]:
-        """Returns the array of single-variable Richardson extrapolation coefficients associated
-        to the input array of scale factors."""
-
-        # Lagrange interpolation formula.
+        """
+        Returns the Richardson extrapolation coefficients for the single-variable case
+        using the Lagrange interpolation formula:
+ 
+            β_k = ∏_{i ≠ k} α_i / (α_i - α_k)
+ 
+        The coefficients satisfy Σ β_k = 1 by construction; no normalisation is
+        applied or needed.
+ 
+        Args:
+            scale_factors: List of noise scale factors α_1, …, α_N.
+ 
+        Returns:
+            List of N Richardson coefficients.
+ 
+        References:
+            https://doi.org/10.48550/arXiv.2210.00921
+        """
         richardson_coeffs = []
         for factor in scale_factors:
             coeff = 1.0
@@ -209,32 +309,40 @@ class ZeroNoiseExtrapolation:
                     continue
                 coeff *= l_prime / (l_prime - factor)
             richardson_coeffs.append(coeff)
-
+ 
         return richardson_coeffs
-
+ 
     @staticmethod
-    def generate_modified_matrices(matrix):
+    def generate_modified_matrices(matrix: np.ndarray) -> list[np.ndarray]:
         """
-        It generates the Mi(0) matreces for i = 1 to length of sample matrix.
-        See this papaer for the detail mathematical formalism:
-        "Quantum error mitigation by layerwise Richardson extrapolation"
-        by Vincent Russo, Andrea Mari, https://arxiv.org/abs/2402.04000
+        Generates the sequence of modified matrices M_i(0) for i = 0, …, N-1,
+        as required by the Lagrange extrapolation formula (Eq. 36, arXiv:2402.04000).
+ 
+        Each M_i(0) is a copy of the sample matrix with its i-th row replaced by
+        e₁ = (1, 0, …, 0), which encodes the evaluation of all monomials at the
+        zero-noise limit λ = 0.  The constant monomial evaluates to 1 (position 0);
+        all higher-degree monomials evaluate to 0.
+ 
+        Args:
+            matrix: Square sample matrix of shape (N, N).
+ 
+        Returns:
+            List of N modified matrices, each of shape (N, N).
         """
-        n = len(matrix)  # Size of the square matrix
-        identity_row = [1] + [0] * (n - 1)  # Row to replace with
-
+        n = len(matrix)
+ 
+        # e₁ = [1, 0, …, 0]: constant monomial = 1 at λ = 0, all others = 0.
+        # Monomials are ordered ascending (constant term first) by get_monomials(),
+        # so the substitution value belongs at index 0.
+        identity_row = np.zeros(n)
+        identity_row[0] = 1.0
+ 
         modified_matrices = []
-        determinants = []
         for i in range(n):
-            # Create a copy of the original matrix
             modified_matrix = np.copy(matrix)
-            # Replace the i-th row with the identity_row
             modified_matrix[i] = identity_row
             modified_matrices.append(modified_matrix)
-            # Calculate the determinant of the modified matrix
-            determinant = np.linalg.det(modified_matrix)
-            determinants.append(determinant)
-
+ 
         return modified_matrices
 
     # Standard single variate Richardson Extrapolation

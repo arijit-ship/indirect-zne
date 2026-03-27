@@ -8,21 +8,20 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment11[time-depol-trotter-vs-standard]/data/time-depol/VQE"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "experiments/recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax15/VQE"  # <-- Set this to your simulation raw data folder
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_tmax20_ricmul"  # Output file prefix
-I_FACTOR = [
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax15_ric4"  # Output file prefix
+I_FACTOR =  [
         [0, 0, 0, 0],
-        [1, 1, 1, 0],
-        [1, 0, 1, 1],
-        [2, 1, 3, 0],
-        #[3, 1, 1, 1]
+        [0, 0, 1, 0],
+        [0, 0, 2, 0],
+        [0, 0, 3, 0]
       ]
 ##-----------------**--------------------##
-CONFIG_PATH = "config_samples/q6.yml"
-RIC_MUL = True # Whether to remove RIC columns from data points
+CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
+RIC_MUL = False # Whether to remove RIC columns from data points
 
 
 # === LOAD PARAMS FROM RAW DATA FOLDER ===
@@ -182,10 +181,10 @@ def main():
             print("DEBUG: Datapoints\n")
             print(data_points)
             #cleaned_data_points = [tuple(row) for row in data_points]
-            config["zne"]["data_points"] = [[p[0] + p[3], p[1], p[2], p[4]] for p in data_points]
-            # print("AFTER TRANSFORMATION")
+            config["zne"]["data_points"] = [[0.1* (p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
+            print("AFTER TRANSFORMATION")
             # print   (data_points)
-            # print(config["zne"]["data_points"])
+            print(config["zne"]["data_points"])
 
         set_output_prefix(config, i)  # same prefix
         set_init_param(config, optimized_param_out)
