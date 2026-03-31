@@ -12,14 +12,15 @@ RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variouso
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax20_ric6"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax20_ric7"  # Output file prefix
 I_FACTOR =  [
         [0, 0, 0, 0],
         [1, 1, 1, 0],
         [2, 2, 2, 0],
         [3, 3, 3, 0],
         [4, 4, 4, 0],
-        [5, 5, 5, 0]
+        [5, 5, 5, 0],
+        [6, 6, 6, 0]
       ]
     
 ##-----------------**--------------------##

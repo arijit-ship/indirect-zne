@@ -211,7 +211,7 @@ output:
     fig_dpi: 100
     status: false
     type: png
-  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ric6_sample#10
+  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ric7_sample#10
 redundant:
   identity_factors:
   - - 0
@@ -238,6 +238,10 @@ redundant:
     - 5
     - 5
     - 0
+  - - 6
+    - 6
+    - 6
+    - 0
 run: zne
 state: dmatrix
 vqe:
@@ -257,7 +261,7 @@ zne:
     - 6
     - 21
     - 8
-    - -3.2608058993957774
+    - -3.260805899395778
   - - 20
     - 10
     - 35
@@ -267,7 +271,7 @@ zne:
     - 14
     - 49
     - 24
-    - -0.9646153510497348
+    - -0.9646153510497347
   - - 36
     - 18
     - 63
@@ -278,6 +282,11 @@ zne:
     - 77
     - 40
     - -0.31258849080798395
+  - - 52
+    - 26
+    - 91
+    - 48
+    - -0.1798820767739954
   degree: 1
   method: richardson
   sampling: default
