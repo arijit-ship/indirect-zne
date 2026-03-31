@@ -8,16 +8,18 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax80/VQE"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/VQE"  # <-- Set this to your simulation raw data folder
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax80_ric4"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax20_ric6"  # Output file prefix
 I_FACTOR =  [
         [0, 0, 0, 0],
         [1, 1, 1, 0],
         [2, 2, 2, 0],
-        [3, 3, 3, 0]
+        [3, 3, 3, 0],
+        [4, 4, 4, 0],
+        [5, 5, 5, 0]
       ]
     
 ##-----------------**--------------------##
