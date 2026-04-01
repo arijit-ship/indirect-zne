@@ -12,6 +12,8 @@ from sklearn.preprocessing import PolynomialFeatures
 Parts of the following class are adapted from their notebook, which can be found at the
 following GitHub repository:
 https://github.com/unitaryfund/research/blob/main/lre/layerwise_richardson_extrapolation.ipynb.
+
+LLM has been used to refactor the code, add docstrings, and implement additional features.
 """
 
 
@@ -124,6 +126,8 @@ class ZeroNoiseExtrapolation:
                         resulting sample matrix is singular.
         """
         number_of_required_points = self.get_required_points()
+
+        eta_list = []
  
         # BUG FIX: the guard was inverted — it previously raised when len(data) > required,
         # i.e. on every valid over-supplied call.  The correct check is the opposite:
@@ -162,8 +166,16 @@ class ZeroNoiseExtrapolation:
         for expectation_val, modified_matrix in zip(richardson_expectation_vals, modified_matrices):
             eta = np.linalg.det(modified_matrix) / det_a
             zne_value += np.array(expectation_val) * eta
- 
-        return float(zne_value)
+            eta_list.append(eta)
+
+        result = {
+            "extrapolated_value": zne_value,
+            "richardson_steps_details": {
+                "eta_coefficients": eta_list,
+                "sample_matrix_determinant": det_a,
+            }
+        }
+        return result
  
     @staticmethod
     def get_monomials(n: int, d: int) -> list[str]:
@@ -403,7 +415,7 @@ class ZeroNoiseExtrapolation:
             "richardson_steps_details": {
                 "sorted_noise": sorted_total_noise,
                 "sorted_expectation_vals": sorted_expectation_vals,
-                "beta_coeffiecients": betas,
+                "beta_coefficients": betas,
                 "cost_richardson_zne": cost_error_mitigation,
             },
         }
@@ -484,11 +496,15 @@ class ZeroNoiseExtrapolation:
         sampled_data = self.sampling()
 
         if self.method.lower() == "richardson-mul":
+            result = self.mul_RichardsonZNE(data=sampled_data)
+            zne_extrapolated_val = result["extrapolated_value"]
+            richardson_steps_details = result["richardson_steps_details"]
             zne_val = {
                 "degree": self.degree,
                 "sampling": self.sampling_mode,
                 "sampled data": sampled_data,
-                "extrapolated_value": self.mul_RichardsonZNE(data=sampled_data),
+                "extrapolated_value": zne_extrapolated_val,
+                "others": richardson_steps_details
             }
 
         elif self.method.lower() == "richardson":

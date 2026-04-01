@@ -984,13 +984,13 @@ def plot_zne_mul_var_single(
     figsize: Tuple[float, float] = (12, 5),
     dpi: int = 150,
     # --- Axis labels ---
-    xlabel: str = "Noise Vector (gates: Rx+Ry, Cz, U)",
-    ylabel: str = "Expectation value",
+    xlabel: str = None,
+    ylabel: str = None,
     # --- Font sizes ---
-    title_fontsize: int = 13,
-    label_fontsize: int = 12,
-    tick_fontsize: int = 11,
-    legend_fontsize: int = 10,
+    title_fontsize: int = 8,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 8,
+    legend_fontsize: int = 8,
     # --- Legend ---
     show_legend: bool = True,
     legend_loc: str = "best",
@@ -1003,7 +1003,7 @@ def plot_zne_mul_var_single(
     figure_title_y: float = -0.01,
     figure_title_ha: str = "center",
     figure_title_va: str = "top",
-    figure_title_fontsize: int = 12,
+    figure_title_fontsize: int = 8,
     # --- Subplot spacing ---
     subplot_top: Optional[float] = None,
     subplot_bottom: Optional[float] = None,
@@ -1094,7 +1094,7 @@ def plot_zne_mul_var_single(
         x[0], all_means[0], yerr=all_stds[0],
         fmt="o", color=_colors["zne"], ecolor=_colors["zne"],
         elinewidth=border_width, capsize=capsize,
-        markersize=marker_size + 2,
+        markersize=marker_size,
         label=f"ZNE: {all_means[0]:.4f} ± {all_stds[0]:.4f}",
         zorder=5
     )
@@ -1121,7 +1121,7 @@ def plot_zne_mul_var_single(
             ax.axhspan(
                 noise_off_mean - noise_off_std,
                 noise_off_mean + noise_off_std,
-                color=_colors["noise_off"], alpha=0.08
+                color=_colors["noise_off"], alpha=0.2
             )
 
     # 4. Exact / target line
@@ -1231,7 +1231,7 @@ def plot_zne_mul_var_single(
     output_dir.mkdir(parents=True, exist_ok=True)
     for fmt in (save_format if isinstance(save_format, list) else [save_format]):
         out_path = output_dir / f"{plot_file_name}.{fmt.lstrip('.')}"
-        fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
+        fig.savefig(out_path, dpi=dpi)
         print(f"💾 Saved: {out_path}")
 
     if show_plot:
