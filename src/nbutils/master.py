@@ -2,6 +2,7 @@ from typing import Dict, List, Tuple, Any, Optional, Union
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from pathlib import Path
 from pprint import pprint
 import colorsys
 import matplotlib.colors as mcolors
@@ -965,4 +966,276 @@ def plot_single_zne_imposed(
     else:
         plt.close(fig)
 
+    return fig
+
+
+def plot_zne_mul_var_single(
+    data: Dict[str, Any],
+    plot_colors: Dict[str, str],
+    plot_file_name: str,
+    output_dir: str,
+    # --- Panel label ---
+    plot_title: Optional[str] = None,
+    panel_label_y: Optional[float] = None,
+    panel_label_fontsize: Optional[int] = None,
+    # --- Data ---
+    extrapol_target: Optional[float] = None,
+    # --- Figure ---
+    figsize: Tuple[float, float] = (12, 5),
+    dpi: int = 150,
+    # --- Axis labels ---
+    xlabel: str = "Noise Vector (gates: Rx+Ry, Cz, U)",
+    ylabel: str = "Expectation value",
+    # --- Font sizes ---
+    title_fontsize: int = 13,
+    label_fontsize: int = 12,
+    tick_fontsize: int = 11,
+    legend_fontsize: int = 10,
+    # --- Legend ---
+    show_legend: bool = True,
+    legend_loc: str = "best",
+    legend_bbox: Optional[Tuple[float, float]] = None,
+    legend_ncols: int = 1,
+    legend_outside_plot: bool = False,
+    # --- Figure caption ---
+    figure_title: Optional[str] = None,
+    figure_title_x: float = 0.5,
+    figure_title_y: float = -0.01,
+    figure_title_ha: str = "center",
+    figure_title_va: str = "top",
+    figure_title_fontsize: int = 12,
+    # --- Subplot spacing ---
+    subplot_top: Optional[float] = None,
+    subplot_bottom: Optional[float] = None,
+    subplot_left: Optional[float] = None,
+    subplot_right: Optional[float] = None,
+    # --- Styling ---
+    grid_style: Optional[Dict[str, Any]] = None,
+    capsize: int = 4,
+    marker_size: float = 5,
+    border_width: float = 1.5,
+    # --- Save ---
+    save_format: Union[str, List[str]] = "png",
+    show_plot: bool = True,
+    print_data: bool = False,
+) -> plt.Figure:
+    """
+    Single-panel plot for one ZNE-mul-var label.
+
+    Args:
+        data:           single label dict from processed["ZNE-mul-var"][label]
+        plot_colors:    override any of: "zne", "noisy", "exact", "noise_off", "separator"
+        plot_file_name: output filename stem (no extension)
+        output_dir:     directory to save into
+
+    Expected data keys:
+        sorted_noise      : List[List[int]]
+        mean_exp_vals     : List[float]
+        std_exp_vals      : List[float]
+        zne_mean          : float
+        zne_std           : float
+        exact_sol         : float  (optional)
+        mean_noise_off    : float  (optional)
+        std_noise_off     : float  (optional)
+        tmax              : float  (optional)
+        noise_type        : str    (optional)
+    """
+
+    # ------------------------------------------------------------------ #
+    # Defaults
+    # ------------------------------------------------------------------ #
+    _colors = {
+        "zne":       "#60a5fa",
+        "noisy":     "red",
+        "exact":     "magenta",
+        "noise_off": "green",
+        "separator": "#666666",
+    }
+    _colors.update(plot_colors)
+
+    _grid_style = {"linestyle": "--", "alpha": 0.4}
+    if grid_style:
+        _grid_style.update(grid_style)
+
+    if print_data:
+        print(data)
+
+    # ------------------------------------------------------------------ #
+    # Unpack data
+    # ------------------------------------------------------------------ #
+    noise_vecs     = data["sorted_noise"]
+    means          = np.array(data["mean_exp_vals"])
+    stds           = np.array(data["std_exp_vals"])
+    zne_mean       = data["zne_mean"]
+    zne_std        = data["zne_std"]
+    noise_off_mean = data.get("mean_noise_off")
+    noise_off_std  = data.get("std_noise_off")
+    target         = extrapol_target if extrapol_target is not None else data.get("exact_sol")
+
+    # ------------------------------------------------------------------ #
+    # X-axis
+    # ------------------------------------------------------------------ #
+    first_key_len = len(noise_vecs[0])
+    zne_x_label   = f"ZNE\n({','.join(['0'] * first_key_len)})"
+    noise_labels  = [f"({','.join(map(str, nv))})" for nv in noise_vecs]
+    x_labels      = [zne_x_label] + noise_labels
+
+    all_means = np.concatenate([[zne_mean], means])
+    all_stds  = np.concatenate([[zne_std],  stds])
+    x         = np.arange(len(x_labels))
+
+    # ------------------------------------------------------------------ #
+    # Figure
+    # ------------------------------------------------------------------ #
+    fig, ax = plt.subplots(figsize=figsize)
+
+    # 1. ZNE extrapolated point
+    ax.errorbar(
+        x[0], all_means[0], yerr=all_stds[0],
+        fmt="o", color=_colors["zne"], ecolor=_colors["zne"],
+        elinewidth=border_width, capsize=capsize,
+        markersize=marker_size + 2,
+        label=f"ZNE: {all_means[0]:.4f} ± {all_stds[0]:.4f}",
+        zorder=5
+    )
+
+    # 2. Noisy simulation points
+    ax.errorbar(
+        x[1:], all_means[1:], yerr=all_stds[1:],
+        fmt="o", color=_colors["noisy"], ecolor=_colors["noisy"],
+        elinewidth=border_width, capsize=capsize,
+        markersize=marker_size,
+        linestyle="None",
+        label="Noisy estimations",
+        zorder=3
+    )
+
+    # 3. VQE noise-off line + band
+    if noise_off_mean is not None:
+        ax.axhline(
+            noise_off_mean, color=_colors["noise_off"],
+            linestyle="--", linewidth=border_width, zorder=4,
+            label=f"VQE noise-off: {noise_off_mean:.4f} ± {noise_off_std:.4f}"
+        )
+        if noise_off_std is not None:
+            ax.axhspan(
+                noise_off_mean - noise_off_std,
+                noise_off_mean + noise_off_std,
+                color=_colors["noise_off"], alpha=0.08
+            )
+
+    # 4. Exact / target line
+    if target is not None:
+        ax.axhline(
+            target, color=_colors["exact"],
+            linestyle="--", linewidth=border_width,
+            label=f"Exact: {target:.4f}", zorder=4
+        )
+
+    # 5. Vertical separator
+    ax.axvline(0.5, color=_colors["separator"], linestyle=":", alpha=0.8)
+
+    # ------------------------------------------------------------------ #
+    # Ticks & labels
+    # ------------------------------------------------------------------ #
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels, rotation=90, ha="center")
+    ax.tick_params(axis="both", labelsize=tick_fontsize)
+    for lbl in ax.get_xticklabels():
+        lbl.set_fontsize(tick_fontsize)
+    for lbl in ax.get_yticklabels():
+        lbl.set_fontsize(tick_fontsize)
+
+    ax.set_xlabel(xlabel, fontsize=label_fontsize)
+    ax.set_ylabel(ylabel, fontsize=label_fontsize)
+    ax.grid(**_grid_style)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(border_width)
+
+    # ------------------------------------------------------------------ #
+    # Panel title
+    # ------------------------------------------------------------------ #
+    panel_title = (plot_title)
+    title_fs    = panel_label_fontsize or title_fontsize
+
+    if panel_label_y is None:
+        ax.set_title(panel_title, fontsize=title_fs, pad=8)
+    else:
+        ax.annotate(
+            panel_title,
+            xy=(0.5, panel_label_y), xycoords="axes fraction",
+            ha="center", va="top", fontsize=title_fs,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Legend
+    # ------------------------------------------------------------------ #
+    if show_legend:
+        if legend_outside_plot:
+            ax.legend(
+                fontsize=legend_fontsize,
+                loc="upper left",
+                bbox_to_anchor=(1.01, 1),
+                borderaxespad=0,
+                frameon=False,
+                ncol=legend_ncols,
+            )
+        elif legend_bbox:
+            ax.legend(
+                fontsize=legend_fontsize,
+                loc=legend_loc,
+                bbox_to_anchor=legend_bbox,
+                ncol=legend_ncols,
+                frameon=False,
+            )
+        else:
+            ax.legend(
+                fontsize=legend_fontsize,
+                loc=legend_loc,
+                ncol=legend_ncols,
+                frameon=False,
+            )
+
+    # ------------------------------------------------------------------ #
+    # Figure caption
+    # ------------------------------------------------------------------ #
+    if figure_title:
+        fig.text(
+            figure_title_x, figure_title_y,
+            figure_title,
+            ha=figure_title_ha, va=figure_title_va,
+            fontsize=figure_title_fontsize,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Spacing
+    # ------------------------------------------------------------------ #
+    spacing = {k: v for k, v in {
+        "top":    subplot_top,
+        "bottom": subplot_bottom,
+        "left":   subplot_left,
+        "right":  subplot_right,
+    }.items() if v is not None}
+
+    if spacing:
+        plt.subplots_adjust(**spacing)
+    else:
+        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)   # default room for rotated x labels
+
+    # ------------------------------------------------------------------ #
+    # Save
+    # ------------------------------------------------------------------ #
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for fmt in (save_format if isinstance(save_format, list) else [save_format]):
+        out_path = output_dir / f"{plot_file_name}.{fmt.lstrip('.')}"
+        fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
+        print(f"💾 Saved: {out_path}")
+
+    if show_plot:
+        plt.show()
+
+    plt.close(fig)
     return fig

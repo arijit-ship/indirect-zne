@@ -211,7 +211,7 @@ output:
     fig_dpi: 100
     status: false
     type: png
-  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ric7_sample#10
+  file_name_prefix: AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d1_sample#10
 redundant:
   identity_factors:
   - - 0
@@ -221,27 +221,19 @@ redundant:
   - - 1
     - 1
     - 1
-    - 0
-  - - 2
+    - 1
+  - - 1
+    - 1
+    - 1
     - 2
+  - - 1
+    - 1
     - 2
-    - 0
-  - - 3
-    - 3
-    - 3
-    - 0
-  - - 4
-    - 4
-    - 4
-    - 0
-  - - 5
-    - 5
-    - 5
-    - 0
-  - - 6
-    - 6
-    - 6
-    - 0
+    - 1
+  - - 1
+    - 2
+    - 1
+    - 1
 run: zne
 state: dmatrix
 vqe:
@@ -255,38 +247,23 @@ zne:
   - - 4
     - 2
     - 7
-    - 0
-    - -6.345024747497366
-  - - 12
+    - -6.345024747497367
+  - - 36
     - 6
     - 21
-    - 8
-    - -3.260805899395778
-  - - 20
-    - 10
-    - 35
-    - 16
-    - -1.7453862769540833
-  - - 28
-    - 14
-    - 49
-    - 24
-    - -0.9646153510497347
-  - - 36
-    - 18
-    - 63
-    - 32
-    - -0.5454018620821959
-  - - 44
-    - 22
-    - 77
-    - 40
-    - -0.31258849080798395
+    - -2.5371406913775143
   - - 52
-    - 26
-    - 91
-    - 48
-    - -0.1798820767739954
+    - 6
+    - 21
+    - -1.986754799715673
+  - - 60
+    - 6
+    - 35
+    - -1.5020677539751117
+  - - 36
+    - 10
+    - 21
+    - -1.9964856870495786
   degree: 1
-  method: richardson
+  method: richardson-mul
   sampling: default
