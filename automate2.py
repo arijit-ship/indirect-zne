@@ -12,31 +12,15 @@ RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variouso
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d3"  # Output file prefix
-I_FACTOR =  [[0, 0, 0, 0],
- [1, 1, 1, 1],
- [1, 1, 1, 2],
- [1, 1, 1, 3],
- [1, 1, 1, 4],
- [1, 1, 2, 1],
- [1, 1, 2, 2],
- [1, 1, 2, 3],
- [1, 1, 3, 1],
- [1, 1, 3, 2],
- [1, 1, 4, 1],
- [1, 2, 1, 1],
- [1, 2, 1, 2],
- [1, 2, 1, 3],
- [1, 2, 2, 1],
- [1, 2, 2, 2],
- [1, 2, 3, 1],
- [1, 3, 1, 1],
- [1, 3, 1, 2],
- [1, 3, 2, 1]]
+STATIC_PREFIX = f"AUTOMATE_{model}_noisy_time_evo_time_depol_varioustmax_tmax20_learned_folding_ric2"  # Output file prefix
+I_FACTOR =  [
+    [0, 0, 0, 0],
+    [1, 2, 7, 0]
+    ]
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
-RIC_MUL = True # Whether to remove RIC columns from data points
+RIC_MUL = False # Whether to remove RIC columns from data points
 
 
 # === LOAD PARAMS FROM RAW DATA FOLDER ===

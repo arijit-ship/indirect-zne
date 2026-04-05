@@ -575,7 +575,18 @@ def plot_multi_zne(
             markeredgewidth=0.8,
             elinewidth=1,
         )
+        # Unmitigated
 
+        ax.axhline(
+            mean_exp_vals[0], color=plot_colors["unmitigated"],
+            linestyle="--", linewidth=border_width, zorder=4,
+            label="Unmitigated"
+        )
+        ax.axhspan(
+                    mean_exp_vals[0] - std_exp_vals[0],
+                    mean_exp_vals[0] + std_exp_vals[0],
+                    color=plot_colors["unmitigated"], alpha=0.2
+                )
         # --- ZNE extrapolated ---
         ax.errorbar(
             x=np.atleast_1d(extrapol_target),
@@ -593,19 +604,31 @@ def plot_multi_zne(
 
         # --- Noise-free estimation (x=0, only if available) ---
         if mean_noise_off is not None:
-            ax.errorbar(
-                x=0,
-                y=mean_noise_off,
-                yerr=std_noise_off if std_noise_off is not None else 0,
-                fmt="*",
-                ecolor=plot_colors["noise_free"],
-                capsize=capsize,
-                label="Noise-free estimation",
-                color=plot_colors["noise_free"],
-                markersize=marker_size + 2,
-                markeredgewidth=1,
-                elinewidth=1,
-            )
+
+            ax.axhline(
+            mean_noise_off, color=plot_colors["noise_free"],
+            linestyle="--", linewidth=border_width, zorder=4,
+            label="Noise-free estimation"
+        )
+            if std_noise_off is not None:
+                ax.axhspan(
+                    mean_noise_off - std_noise_off,
+                    mean_noise_off + std_noise_off,
+                    color=plot_colors["noise_free"], alpha=0.2
+                )
+            # ax.errorbar(
+            #     x=0,
+            #     y=mean_noise_off,
+            #     yerr=std_noise_off if std_noise_off is not None else 0,
+            #     fmt="*",
+            #     ecolor=plot_colors["noise_free"],
+            #     capsize=capsize,
+            #     label="Noise-free estimation",
+            #     color=plot_colors["noise_free"],
+            #     markersize=marker_size + 2,
+            #     markeredgewidth=1,
+            #     elinewidth=1,
+            # )
 
         # --- Exact solution ---
         ax.axhline(
