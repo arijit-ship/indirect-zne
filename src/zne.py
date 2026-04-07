@@ -167,11 +167,13 @@ class ZeroNoiseExtrapolation:
             eta = np.linalg.det(modified_matrix) / det_a
             zne_value += np.array(expectation_val) * eta
             eta_list.append(eta)
-
+        eta_sum = sum(np.abs(eta) for eta in eta_list)
+        cost = eta_sum **2
         result = {
             "extrapolated_value": zne_value,
             "richardson_steps_details": {
                 "eta_coefficients": eta_list,
+                "cost_zne": cost,
                 "sample_matrix_determinant": det_a,
             }
         }

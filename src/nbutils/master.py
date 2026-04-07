@@ -347,10 +347,10 @@ def plot_multi_zne(
     xlabel: str = r"Noise level ($\alpha_k\lambda$)",
     ylabel: str = "Expectation value",
     # --- Font sizes ---
-    title_fontsize: int = 13,
-    label_fontsize: int = 12,
-    tick_fontsize: int = 11,
-    legend_fontsize: int = 10,
+    title_fontsize: int = 8,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 8,
+    legend_fontsize: int = 8,
     # --- Global legend ---
     show_legend: bool = True,
     global_legend: bool = False,
@@ -1260,5 +1260,497 @@ def plot_zne_mul_var_single(
     if show_plot:
         plt.show()
 
+    plt.close(fig)
+    return fig
+
+# Multivariate ZNE: plot extrapolated value vs extrapolation degree, with noisy points and optional exact/noise-free references.
+
+def ricmul_plot_zne_vs_degree(
+    processed_mul_var: Dict[str, Any],
+    plot_colors: Dict[str, str],
+    plot_file_name: str,
+    output_dir: str,
+    # --- Data ---
+    exact_sol: Optional[float] = None,
+    # --- Figure ---
+    figsize: Tuple[float, float] = (7, 5),
+    dpi: int = 150,
+    # --- Axis labels ---
+    xlabel: str = "Extrapolation Order",
+    ylabel: str = "ZNE Value",
+    # --- Font sizes ---
+    title_fontsize: int = 13,
+    label_fontsize: int = 12,
+    tick_fontsize: int = 11,
+    legend_fontsize: int = 10,
+    # --- Legend ---
+    show_legend: bool = True,
+    legend_loc: str = "best",
+    legend_bbox: Optional[Tuple[float, float]] = None,
+    legend_ncols: int = 1,
+    # --- Figure caption ---
+    figure_title: Optional[str] = None,
+    figure_title_x: float = 0.5,
+    figure_title_y: float = -0.01,
+    figure_title_ha: str = "center",
+    figure_title_va: str = "top",
+    figure_title_fontsize: int = 12,
+    # --- Annotations ---
+    annotate_cost: bool = True,
+    annotation_fontsize: int = 5,
+    # --- Styling ---
+    grid_style: Optional[Dict[str, Any]] = None,
+    capsize: int = 5,
+    marker_size: float = 6,
+    border_width: float = 1.5,
+    save_format: str = "eps",
+    show_plot: bool = True,
+    print_data: bool = False,
+) -> plt.Figure:
+    """
+    Plots ZNE extrapolated value vs extrapolation degree for multivariate ZNE.
+
+    Each entry in ``processed_mul_var`` is a flat dict with keys:
+        - 'degree'         : int         — extrapolation degree
+        - 'zne_mean'       : float       — mean extrapolated value
+        - 'zne_std'        : float       — std of extrapolated value
+        - 'exact_sol'      : float       — exact reference solution
+        - 'mean_noise_off' : float|None  — noise-free mean reference
+        - 'std_noise_off'  : float|None  — noise-free std reference
+        - 'cost_mean'      : float|None  — sampling overhead c = gamma^2
+        - 'cost_std'       : float|None  — std of sampling overhead
+
+    Parameters
+    ----------
+    processed_mul_var : dict
+        The ZNE-mul-var processed data, e.g. PROCESSED_SIM_DATA["ZNE-mul-var"].
+    plot_colors : dict
+        Named color dict with keys: 'zne', 'exact', 'noise_free'.
+    plot_file_name : str
+        Base file name (no extension; extension derived from save_format).
+    output_dir : str
+        Output directory (created if absent).
+    exact_sol : float, optional
+        Exact solution override. If None, taken from first entry's 'exact_sol'.
+    figsize : tuple of float
+        Figure size in inches. Default (7, 5).
+    dpi : int
+        Figure resolution. Default 150.
+    xlabel : str
+        X-axis label. Default 'Extrapolation Degree'.
+    ylabel : str
+        Y-axis label. Default 'ZNE Extrapolated Energy'.
+    title_fontsize : int
+        Title font size. Default 13.
+    label_fontsize : int
+        Axis label font size. Default 12.
+    tick_fontsize : int
+        Tick label font size. Default 11.
+    legend_fontsize : int
+        Legend font size. Default 10.
+    show_legend : bool
+        Master switch for legend. Default True.
+    legend_loc : str
+        Matplotlib loc string. Default 'best'.
+    legend_bbox : tuple of float, optional
+        Explicit bbox_to_anchor (x, y) in axes coordinates.
+    legend_ncols : int
+        Number of legend columns. Default 1.
+    figure_title : str, optional
+        Text placed via fig.text() at an arbitrary figure position.
+    figure_title_x : float
+        X position of figure_title in figure coordinates. Default 0.5.
+    figure_title_y : float
+        Y position of figure_title in figure coordinates. Default -0.01.
+    figure_title_ha : str
+        Horizontal alignment of figure_title. Default 'center'.
+    figure_title_va : str
+        Vertical alignment of figure_title. Default 'top'.
+    figure_title_fontsize : int
+        Font size for figure_title. Default 12.
+    annotate_cost : bool
+        Annotate sampling overhead c on each point. Default True.
+    annotation_fontsize : int
+        Font size for cost annotations. Default 8.
+    grid_style : dict, optional
+        kwargs for ax.grid(). Default {"linestyle": "--", "alpha": 0.4}.
+    capsize : int
+        Errorbar cap size. Default 5.
+    marker_size : float
+        Marker size. Default 6.
+    border_width : float
+        Spine line width. Default 1.5.
+    save_format : str
+        File format: 'eps', 'png', 'pdf', etc. Default 'eps'.
+    show_plot : bool
+        Call plt.show() after saving. Default True.
+    print_data : bool
+        Pretty-print each label's data to stdout. Default False.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+
+    # --- Defaults ---
+    if grid_style is None:
+        grid_style = {"linestyle": "--", "alpha": 0.4}
+
+    # --- Sort labels by degree ---
+    labels  = sorted(processed_mul_var.keys(), key=lambda k: processed_mul_var[k]["degree"])
+    degrees = [processed_mul_var[k]["degree"]    for k in labels]
+    means   = [processed_mul_var[k]["zne_mean"]  for k in labels]
+    stds    = [processed_mul_var[k]["zne_std"]   for k in labels]
+    costs   = [processed_mul_var[k].get("cost_mean") for k in labels]
+
+    first = processed_mul_var[labels[0]]
+    _exact_sol    = exact_sol if exact_sol is not None else first.get("exact_sol")
+    _noise_off    = first.get("mean_noise_off")
+    _noise_off_std = first.get("std_noise_off")
+
+    if print_data:
+        for k in labels:
+            print(f"\n[{k}]")
+            for key, val in processed_mul_var[k].items():
+                print(f"  {key}: {val}")
+
+    # --- Build figure ---
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+
+    # ZNE mean ± std
+    ax.errorbar(
+        degrees, means, yerr=stds,
+        fmt="o-",
+        capsize=capsize,
+        markersize=marker_size,
+        color=plot_colors.get("zne", "steelblue"),
+        label="ZNE (multivariate)",
+        zorder=3,
+    )
+
+    # Exact solution
+    if _exact_sol is not None:
+        ax.axhline(
+            _exact_sol,
+            color=plot_colors.get("exact", "red"),
+            linestyle="--",
+            label=f"Exact: {_exact_sol:.4f}",
+        )
+
+    # Noise-off reference
+    if _noise_off is not None:
+        ax.axhline(
+            _noise_off,
+            color=plot_colors.get("noise_free", "green"),
+            linestyle=":",
+            label=f"Noise-off: {_noise_off:.4f}",
+        )
+        if _noise_off_std is not None:
+            ax.axhspan(
+                _noise_off - _noise_off_std,
+                _noise_off + _noise_off_std,
+                alpha=0.12,
+                color=plot_colors.get("noise_free", "green"),
+            )
+
+    # Annotate cost
+    if annotate_cost:
+        for d, m, c in zip(degrees, means, costs):
+            if c is not None:
+                ax.annotate(
+                    f"c={c:.1f}",
+                    xy=(d, m),
+                    xytext=(5, 8),
+                    textcoords="offset points",
+                    fontsize=annotation_fontsize,
+                    color=plot_colors.get("zne", "steelblue"),
+                )
+
+    # --- Axes formatting ---
+    ax.set_xlabel(xlabel, fontsize=label_fontsize)
+    ax.set_ylabel(ylabel, fontsize=label_fontsize)
+    ax.set_title(figure_title, fontsize=title_fontsize)
+    ax.set_xticks(degrees)
+    ax.tick_params(axis="both", labelsize=tick_fontsize)
+    ax.grid(**grid_style)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(border_width)
+
+    # --- Legend ---
+    if show_legend:
+        legend_kwargs = dict(fontsize=legend_fontsize, loc=legend_loc, ncols=legend_ncols, frameon=False)
+        if legend_bbox is not None:
+            legend_kwargs["bbox_to_anchor"] = legend_bbox
+        ax.legend(**legend_kwargs)
+
+    # --- Figure caption ---
+    if figure_title is not None:
+        fig.text(
+            figure_title_x, figure_title_y,
+            figure_title,
+            ha=figure_title_ha,
+            va=figure_title_va,
+            fontsize=figure_title_fontsize,
+        )
+
+    plt.tight_layout()
+
+    # --- Save ---
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, f"{plot_file_name}.{save_format}")
+    fig.savefig(out_path, format=save_format, bbox_inches="tight")
+    print(f"✅ Saved: {out_path}")
+
+    if show_plot:
+        plt.show()
+    plt.close(fig)
+    return fig
+
+# Univariate ZNE: plot extrapolated value vs extrapolation degree.
+
+def ric_plot_zne_vs_degree(
+    DATA: Dict[str, Any],
+    plot_colors: Dict[str, str],
+    plot_file_name: str,
+    output_dir: str,
+    # --- Data ---
+    exact_sol: Optional[float] = None,
+    # --- Figure ---
+    figsize: Tuple[float, float] = (7, 5),
+    dpi: int = 150,
+    # --- Axis labels ---
+    xlabel: str = "Extrapolation Order",
+    ylabel: str = "ZNE Value",
+    # --- Font sizes ---
+    title_fontsize: int = 8,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 8,
+    legend_fontsize: int = 8,
+    # --- Legend ---
+    show_legend: bool = True,
+    legend_loc: str = "best",
+    legend_bbox: Optional[Tuple[float, float]] = None,
+    legend_ncols: int = 1,
+    # --- Figure caption ---
+    figure_title: Optional[str] = None,
+    figure_title_x: float = 0.5,
+    figure_title_y: float = -0.01,
+    figure_title_ha: str = "center",
+    figure_title_va: str = "top",
+    figure_title_fontsize: int = 12,
+    # --- Annotations ---
+    annotate_values: bool = True,
+    annotation_fontsize: int = 8,
+    # --- Styling ---
+    grid_style: Optional[Dict[str, Any]] = None,
+    capsize: int = 5,
+    marker_size: float = 6,
+    border_width: float = 1.5,
+    save_format: str = "eps",
+    show_plot: bool = True,
+    print_data: bool = False,
+) -> plt.Figure:
+    """
+    Plots ZNE extrapolated value vs extrapolation order (Richardson degree).
+
+    Each entry in ``DATA`` is a dict with keys:
+        - 'oder'           : int         — extrapolation order (Richardson degree)
+        - 'sorted_noise'   : list[int]   — noise levels used
+        - 'mean_exp_vals'  : list[float] — mean expectation values at each noise level
+        - 'std_exp_vals'   : list[float] — std of expectation values
+        - 'zne_mean'       : float       — mean ZNE extrapolated value
+        - 'zne_std'        : float       — std of ZNE extrapolated value
+        - 'exact_sol'      : float       — exact reference solution
+        - 'mean_noise_off' : float|None  — noise-free mean reference
+        - 'std_noise_off'  : float|None  — noise-free std reference
+
+    Parameters
+    ----------
+    DATA : dict
+        Raw ZNE results keyed by label (e.g. 'ric2', 'ric3', ...).
+    plot_colors : dict
+        Named color dict with keys: 'zne', 'exact', 'noise_free'.
+    plot_file_name : str
+        Base file name (no extension; extension derived from save_format).
+    output_dir : str
+        Output directory (created if absent).
+    exact_sol : float, optional
+        Exact solution override. If None, taken from first entry's 'exact_sol'.
+    figsize : tuple of float
+        Figure size in inches. Default (7, 5).
+    dpi : int
+        Figure resolution. Default 150.
+    xlabel : str
+        X-axis label. Default 'Extrapolation Order'.
+    ylabel : str
+        Y-axis label. Default 'ZNE Extrapolated Energy'.
+    title_fontsize : int
+        Title font size. Default 13.
+    label_fontsize : int
+        Axis label font size. Default 12.
+    tick_fontsize : int
+        Tick label font size. Default 11.
+    legend_fontsize : int
+        Legend font size. Default 10.
+    show_legend : bool
+        Master switch for legend. Default True.
+    legend_loc : str
+        Matplotlib loc string. Default 'best'.
+    legend_bbox : tuple of float, optional
+        Explicit bbox_to_anchor (x, y) in axes coordinates.
+    legend_ncols : int
+        Number of legend columns. Default 1.
+    figure_title : str, optional
+        Text placed via fig.text() at an arbitrary figure position.
+    figure_title_x : float
+        X position of figure_title in figure coordinates. Default 0.5.
+    figure_title_y : float
+        Y position of figure_title in figure coordinates. Default -0.01.
+    figure_title_ha : str
+        Horizontal alignment of figure_title. Default 'center'.
+    figure_title_va : str
+        Vertical alignment of figure_title. Default 'top'.
+    figure_title_fontsize : int
+        Font size for figure_title. Default 12.
+    annotate_values : bool
+        Annotate ZNE mean value on each point. Default True.
+    annotation_fontsize : int
+        Font size for value annotations. Default 8.
+    grid_style : dict, optional
+        kwargs for ax.grid(). Default {"linestyle": "--", "alpha": 0.4}.
+    capsize : int
+        Errorbar cap size. Default 5.
+    marker_size : float
+        Marker size. Default 6.
+    border_width : float
+        Spine line width. Default 1.5.
+    save_format : str
+        File format: 'eps', 'png', 'pdf', etc. Default 'eps'.
+    show_plot : bool
+        Call plt.show() after saving. Default True.
+    print_data : bool
+        Pretty-print each label's data to stdout. Default False.
+
+    Returns
+    -------
+    matplotlib.figure.Figure
+    """
+
+    # --- Defaults ---
+    if grid_style is None:
+        grid_style = {"linestyle": "--", "alpha": 0.4}
+
+    # --- Sort labels by order ---
+    labels  = sorted(DATA.keys(), key=lambda k: DATA[k]["oder"])
+    orders  = [DATA[k]["oder"]     for k in labels]
+    means   = [DATA[k]["zne_mean"] for k in labels]
+    stds    = [DATA[k]["zne_std"]  for k in labels]
+
+    first = DATA[labels[0]]
+    _exact_sol     = exact_sol if exact_sol is not None else first.get("exact_sol")
+    _noise_off     = first.get("mean_noise_off")
+    _noise_off_std = first.get("std_noise_off")
+
+    if print_data:
+        for k in labels:
+            print(f"\n[{k}]")
+            for key, val in DATA[k].items():
+                print(f"  {key}: {val}")
+
+    # --- Build figure ---
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+
+    # ZNE mean ± std
+    ax.errorbar(
+        orders, means, yerr=stds,
+        fmt="o-",
+        capsize=capsize,
+        markersize=marker_size,
+        color=plot_colors.get("zne", "steelblue"),
+        label="ZNE (Richardson)",
+        zorder=3,
+    )
+
+    # Exact solution
+    if _exact_sol is not None:
+        ax.axhline(
+            _exact_sol,
+            color=plot_colors.get("exact", "red"),
+            linestyle="--",
+            label=f"Exact: {_exact_sol:.4f}",
+        )
+
+    # Noise-off reference
+    if _noise_off is not None:
+        ax.axhline(
+            _noise_off,
+            color=plot_colors.get("noise_free", "green"),
+            linestyle=":",
+            label=f"Noise-off: {_noise_off:.4f}",
+        )
+        if _noise_off_std is not None:
+            ax.axhspan(
+                _noise_off - _noise_off_std,
+                _noise_off + _noise_off_std,
+                alpha=0.12,
+                color=plot_colors.get("noise_free", "green"),
+            )
+
+    # Annotate ZNE values
+    if annotate_values:
+        for order, mean in zip(orders, means):
+            ax.annotate(
+                f"{mean:.4f}",
+                xy=(order, mean),
+                xytext=(5, 8),
+                textcoords="offset points",
+                fontsize=annotation_fontsize,
+                color=plot_colors.get("zne", "steelblue"),
+            )
+
+    # --- Axes formatting ---
+    ax.set_xlabel(xlabel, fontsize=label_fontsize)
+    ax.set_ylabel(ylabel, fontsize=label_fontsize)
+    ax.set_xticks(orders)
+    ax.tick_params(axis="both", labelsize=tick_fontsize)
+    ax.grid(**grid_style)
+
+    for spine in ax.spines.values():
+        spine.set_linewidth(border_width)
+
+    # --- Legend ---
+    if show_legend:
+        legend_kwargs = dict(
+            fontsize=legend_fontsize,
+            loc=legend_loc,
+            ncols=legend_ncols,
+            frameon=False,
+        )
+        if legend_bbox is not None:
+            legend_kwargs["bbox_to_anchor"] = legend_bbox
+        ax.legend(**legend_kwargs)
+
+    # --- Figure title / caption ---
+    if figure_title is not None:
+        ax.set_title(figure_title, fontsize=title_fontsize)
+        fig.text(
+            figure_title_x, figure_title_y,
+            figure_title,
+            ha=figure_title_ha,
+            va=figure_title_va,
+            fontsize=figure_title_fontsize,
+        )
+
+    #plt.tight_layout()
+
+    # --- Save ---
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, f"{plot_file_name}.{save_format}")
+    fig.savefig(out_path, format=save_format, bbox_inches="tight")
+    print(f"✅ Saved: {out_path}")
+
+    if show_plot:
+        plt.show()
     plt.close(fig)
     return fig

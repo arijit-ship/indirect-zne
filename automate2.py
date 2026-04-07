@@ -8,71 +8,24 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/VQE"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "experiments/recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax20/VQE"  # <-- Set this to your simulation raw data folder
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d5"  # Output file prefix
-I_FACTOR =  [[0, 0, 0, 0],
- [1, 1, 1, 1],
- [1, 1, 1, 2],
- [1, 1, 1, 3],
- [1, 1, 1, 4],
- [1, 1, 1, 5],
- [1, 1, 1, 6],
- [1, 1, 2, 1],
- [1, 1, 2, 2],
- [1, 1, 2, 3],
- [1, 1, 2, 4],
- [1, 1, 2, 5],
- [1, 1, 3, 1],
- [1, 1, 3, 2],
- [1, 1, 3, 3],
- [1, 1, 3, 4],
- [1, 1, 4, 1],
- [1, 1, 4, 2],
- [1, 1, 4, 3],
- [1, 1, 5, 1],
- [1, 1, 5, 2],
- [1, 1, 6, 1],
- [1, 2, 1, 1],
- [1, 2, 1, 2],
- [1, 2, 1, 3],
- [1, 2, 1, 4],
- [1, 2, 1, 5],
- [1, 2, 2, 1],
- [1, 2, 2, 2],
- [1, 2, 2, 3],
- [1, 2, 2, 4],
- [1, 2, 3, 1],
- [1, 2, 3, 2],
- [1, 2, 3, 3],
- [1, 2, 4, 1],
- [1, 2, 4, 2],
- [1, 2, 5, 1],
- [1, 3, 1, 1],
- [1, 3, 1, 2],
- [1, 3, 1, 3],
- [1, 3, 1, 4],
- [1, 3, 2, 1],
- [1, 3, 2, 2],
- [1, 3, 2, 3],
- [1, 3, 3, 1],
- [1, 3, 3, 2],
- [1, 3, 4, 1],
- [1, 4, 1, 1],
- [1, 4, 1, 2],
- [1, 4, 1, 3],
- [1, 4, 2, 1],
- [1, 4, 2, 2],
- [1, 4, 3, 1],
- [1, 5, 1, 1],
- [1, 5, 1, 2],
- [1, 5, 2, 1]]
+STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ric7"  # Output file prefix
+I_FACTOR =  [
+    [0, 0, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 2, 0],
+    [0, 0, 3, 0],
+    [0, 0, 4, 0],
+    [0, 0, 5, 0],
+    [0, 0, 6, 0],
+]
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
-RIC_MUL = True # Whether to remove RIC columns from data points
+RIC_MUL = False # Whether to remove RIC columns from data points
 
 
 # === LOAD PARAMS FROM RAW DATA FOLDER ===
