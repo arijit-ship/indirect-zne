@@ -238,7 +238,7 @@ def plot_single_zne(
     #  Build figure                                                        #
     # ------------------------------------------------------------------ #
     os.makedirs(output_dir, exist_ok=True)
-    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi, layout="constrained")
 
     # --- Noisy estimation ---
     ax.errorbar(
@@ -878,7 +878,7 @@ def plot_single_zne_imposed(
     })
 
     os.makedirs(output_dir, exist_ok=True)
-    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi)
+    fig, ax = plt.subplots(1, 1, figsize=figsize, dpi=dpi, layout="constrained")
     ax.set_axisbelow(True) # Grid goes behind data
 
     # ------------------------------------------------------------------ #
@@ -1110,7 +1110,7 @@ def plot_zne_mul_var_single(
     # ------------------------------------------------------------------ #
     # Figure
     # ------------------------------------------------------------------ #
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize, dpi= dpi, layout="constrained")
 
     # 1. ZNE extrapolated point
     ax.errorbar(
@@ -1415,7 +1415,7 @@ def ricmul_plot_zne_vs_degree(
                 print(f"  {key}: {val}")
 
     # --- Build figure ---
-    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi, layout="constrained")
 
     # ZNE mean ± std
     ax.errorbar(
@@ -1494,12 +1494,12 @@ def ricmul_plot_zne_vs_degree(
             fontsize=figure_title_fontsize,
         )
 
-    plt.tight_layout()
+    #plt.tight_layout()
 
     # --- Save ---
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, f"{plot_file_name}.{save_format}")
-    fig.savefig(out_path, format=save_format, bbox_inches="tight")
+    fig.savefig(out_path, format=save_format, dpi=dpi)
     print(f"✅ Saved: {out_path}")
 
     if show_plot:
@@ -1659,7 +1659,7 @@ def ric_plot_zne_vs_degree(
                 print(f"  {key}: {val}")
 
     # --- Build figure ---
-    fig, ax = plt.subplots(figsize=figsize, dpi=dpi)
+    fig, ax = plt.subplots(figsize=figsize, dpi=dpi, layout="constrained")
 
     # ZNE mean ± std
     ax.errorbar(
@@ -1685,7 +1685,7 @@ def ric_plot_zne_vs_degree(
     if _noise_off is not None:
         ax.axhline(
             _noise_off,
-            color=plot_colors.get("noise_free", "green"),
+            color=plot_colors.get("noise_off", "green"),
             linestyle=":",
             label=f"Noise-off: {_noise_off:.4f}",
         )
@@ -1694,7 +1694,7 @@ def ric_plot_zne_vs_degree(
                 _noise_off - _noise_off_std,
                 _noise_off + _noise_off_std,
                 alpha=0.12,
-                color=plot_colors.get("noise_free", "green"),
+                color=plot_colors.get("noise_off", "green"),
             )
 
     # Annotate ZNE values
@@ -1747,7 +1747,8 @@ def ric_plot_zne_vs_degree(
     # --- Save ---
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, f"{plot_file_name}.{save_format}")
-    fig.savefig(out_path, format=save_format, bbox_inches="tight")
+    
+    fig.savefig(out_path, format=save_format, dpi=dpi)
     print(f"✅ Saved: {out_path}")
 
     if show_plot:

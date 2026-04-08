@@ -8,19 +8,19 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/tmax20/VQE"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "experiments/recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/p1e-1/VQE"  # <-- Set this to your simulation raw data folder
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ric7"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_tmax_20_various_p_ric2"  # Output file prefix
 I_FACTOR =  [
     [0, 0, 0, 0],
     [0, 0, 1, 0],
-    [0, 0, 2, 0],
-    [0, 0, 3, 0],
-    [0, 0, 4, 0],
-    [0, 0, 5, 0],
-    [0, 0, 6, 0],
+    # [0, 0, 2, 0],
+    # [0, 0, 3, 0],
+    # [0, 0, 4, 0],
+    # [0, 0, 5, 0],
+    # [0, 0, 6, 0],
 ]
     
 ##-----------------**--------------------##
@@ -99,6 +99,7 @@ def set_noise_value(config, noise_value):
 def set_t_max_value(config, tmax):
     """Set t_max in time-evolution gate."""
     config["ansatz"]["ugate"]["time"]["max"] = tmax
+
 
 def run_main():
     """Run the main.py script with the given config."""
