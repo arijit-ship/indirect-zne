@@ -1277,12 +1277,12 @@ def ricmul_plot_zne_vs_degree(
     dpi: int = 150,
     # --- Axis labels ---
     xlabel: str = "Extrapolation Order",
-    ylabel: str = "ZNE Value",
+    ylabel: str = "ZNE",
     # --- Font sizes ---
-    title_fontsize: int = 13,
-    label_fontsize: int = 12,
-    tick_fontsize: int = 11,
-    legend_fontsize: int = 10,
+    title_fontsize: int = 8,
+    label_fontsize: int = 8,
+    tick_fontsize: int = 8,
+    legend_fontsize: int = 8,
     # --- Legend ---
     show_legend: bool = True,
     legend_loc: str = "best",
@@ -1301,7 +1301,7 @@ def ricmul_plot_zne_vs_degree(
     # --- Styling ---
     grid_style: Optional[Dict[str, Any]] = None,
     capsize: int = 5,
-    marker_size: float = 6,
+    marker_size: float = 8,
     border_width: float = 1.5,
     save_format: str = "eps",
     show_plot: bool = True,
@@ -1538,7 +1538,7 @@ def ric_plot_zne_vs_degree(
     dpi: int = 150,
     # --- Axis labels ---
     xlabel: str = "Extrapolation Order",
-    ylabel: str = "ZNE Value",
+    ylabel: str = "ZNE",
     # --- Font sizes ---
     title_fontsize: int = 8,
     label_fontsize: int = 8,
@@ -1562,7 +1562,7 @@ def ric_plot_zne_vs_degree(
     # --- Styling ---
     grid_style: Optional[Dict[str, Any]] = None,
     capsize: int = 5,
-    marker_size: float = 6,
+    marker_size: float = 5,
     border_width: float = 1.5,
     save_format: str = "eps",
     show_plot: bool = True,
@@ -1572,7 +1572,7 @@ def ric_plot_zne_vs_degree(
     Plots ZNE extrapolated value vs extrapolation order (Richardson degree).
 
     Each entry in ``DATA`` is a dict with keys:
-        - 'oder'           : int         — extrapolation order (Richardson degree)
+        - 'order'           : int         — extrapolation order (Richardson degree)
         - 'sorted_noise'   : list[int]   — noise levels used
         - 'mean_exp_vals'  : list[float] — mean expectation values at each noise level
         - 'std_exp_vals'   : list[float] — std of expectation values
@@ -1659,8 +1659,8 @@ def ric_plot_zne_vs_degree(
         grid_style = {"linestyle": "--", "alpha": 0.4}
 
     # --- Sort labels by order ---
-    labels  = sorted(DATA.keys(), key=lambda k: DATA[k]["oder"])
-    orders  = [DATA[k]["oder"]     for k in labels]
+    labels  = sorted(DATA.keys(), key=lambda k: DATA[k]["order"])
+    orders  = [DATA[k]["order"]     for k in labels]
     means   = [DATA[k]["zne_mean"] for k in labels]
     stds    = [DATA[k]["zne_std"]  for k in labels]
     
