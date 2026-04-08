@@ -1408,6 +1408,9 @@ def ricmul_plot_zne_vs_degree(
     _noise_off    = first.get("mean_noise_off")
     _noise_off_std = first.get("std_noise_off")
 
+    _unmitigated_mean = first.get("mean_exp_vals", [None])[0]
+    _unmitigate_sd = first.get("std_exp_vals", [None])[0]
+
     if print_data:
         for k in labels:
             print(f"\n[{k}]")
@@ -1437,11 +1440,25 @@ def ricmul_plot_zne_vs_degree(
             label=f"Exact: {_exact_sol:.4f}",
         )
 
+    # Unmitigated
+    ax.axhline(
+        _unmitigated_mean,
+        color=plot_colors.get("unmitigated", "orange"),
+        linestyle=":",
+        label=f"Unmitigated: {_unmitigated_mean:.4f}",
+    )
+    ax.axhspan(
+            _unmitigated_mean - _unmitigate_sd,
+             _unmitigated_mean + _unmitigate_sd,
+                alpha=0.12,
+                color=plot_colors.get("unmitigated", "orange"),
+            )
+
     # Noise-off reference
     if _noise_off is not None:
         ax.axhline(
             _noise_off,
-            color=plot_colors.get("noise_free", "green"),
+            color=plot_colors.get("noise_off", "green"),
             linestyle=":",
             label=f"Noise-off: {_noise_off:.4f}",
         )
@@ -1450,7 +1467,7 @@ def ricmul_plot_zne_vs_degree(
                 _noise_off - _noise_off_std,
                 _noise_off + _noise_off_std,
                 alpha=0.12,
-                color=plot_colors.get("noise_free", "green"),
+                color=plot_colors.get("noise_off", "green"),
             )
 
     # Annotate cost
@@ -1646,11 +1663,13 @@ def ric_plot_zne_vs_degree(
     orders  = [DATA[k]["oder"]     for k in labels]
     means   = [DATA[k]["zne_mean"] for k in labels]
     stds    = [DATA[k]["zne_std"]  for k in labels]
-
+    
     first = DATA[labels[0]]
     _exact_sol     = exact_sol if exact_sol is not None else first.get("exact_sol")
     _noise_off     = first.get("mean_noise_off")
     _noise_off_std = first.get("std_noise_off")
+    _unmitigated_mean = first.get("mean_exp_vals", [None])[0]
+    _unmitigate_sd = first.get("std_exp_vals", [None])[0]
 
     if print_data:
         for k in labels:
@@ -1668,7 +1687,7 @@ def ric_plot_zne_vs_degree(
         capsize=capsize,
         markersize=marker_size,
         color=plot_colors.get("zne", "steelblue"),
-        label="ZNE (Richardson)",
+        label="ZNE",
         zorder=3,
     )
 
@@ -1680,7 +1699,19 @@ def ric_plot_zne_vs_degree(
             linestyle="--",
             label=f"Exact: {_exact_sol:.4f}",
         )
-
+    # Unmitigated
+    ax.axhline(
+        _unmitigated_mean,
+        color=plot_colors.get("unmitigated", "orange"),
+        linestyle=":",
+        label=f"Unmitigated: {_unmitigated_mean:.4f}",
+    )
+    ax.axhspan(
+            _unmitigated_mean - _unmitigate_sd,
+             _unmitigated_mean + _unmitigate_sd,
+                alpha=0.12,
+                color=plot_colors.get("unmitigated", "orange"),
+            )
     # Noise-off reference
     if _noise_off is not None:
         ax.axhline(
