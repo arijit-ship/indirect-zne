@@ -415,6 +415,9 @@ class ZeroNoiseExtrapolation:
         result = {
             "extrapolated_val": zne_val,
             "richardson_steps_details": {
+                # For the single variate ZNE, user input degree is discarded, and the extrapolation is computed based off the numbe of data point provided. 
+                # Hence, degree is set to len(sorted_total_noise) - 1
+                "true_degree": len(sorted_total_noise) - 1,  
                 "sorted_noise": sorted_total_noise,
                 "sorted_expectation_vals": sorted_expectation_vals,
                 "beta_coefficients": betas,
