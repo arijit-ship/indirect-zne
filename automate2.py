@@ -8,7 +8,7 @@ import json
 import subprocess
 
 # === CONFIGURATION ===
-RAW_DATA_FOLDER = "experiments/recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/p1e-1/VQE"  # <-- Set this to your simulation raw data folder
+RAW_DATA_FOLDER = "experiments/recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/VQE_noiseoff"  # <-- Set this to your simulation raw data folder
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
