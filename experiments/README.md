@@ -23,7 +23,7 @@ Download the code from [v2 release](https://github.com/arijit-ship/indirect-zne/
 ## 🛠️ Installation
 
 - **Python Version:** `3.11`  
-- To install dependencies, run:  
+- To install dependencies on Ubuntu (Linux), run:  
 ```bash
   pip install -r requirements.txt
 ```
@@ -43,6 +43,8 @@ A faster multi-core script can alternatively be run for VQE optimization (the re
 ```bash
   python3 vqe-mcore.py <config.yml>
 ```
+
+⚠️ WARNING: 7-qubit, 30-layer VQE optimization can take a significant amount of time.
 
 ## 📋 Sample Configuration File
 
