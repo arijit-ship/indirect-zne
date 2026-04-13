@@ -8,12 +8,8 @@ The relevant links for different experiments are compiled in the table below.
 
 |Description|Link  |
 |--|--|
-| Noise-free XY-ansatz experiment: Richardson (2-point linear) & exponential ZNE |[Jupyter notebook](experiment08/experimentBook.xyansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_xy_noisefree) |
-|Noise-free Ising-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](experiment08/experimentBook.isingansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_ising_noisefree)|
-|Noise-free Hysenberg-ansatz experiment: Richardson (2-point linear) & exponential ZNE|[Jupyter notebook](experiment08/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](experiment08/experimental%20data/data/noisefree_time_evo_heisenberg_noisefree)|
-|Noisy XY-ansatz experiment: Richardson (2-point linear)|[Jupyter notebook](experiment07/experimentBook.noisyxy.ipynb), [Raw data (JSON)](experiment07/experimental%20data/data)|
-|Further studies- Heisenberg multivariate Richardson ZNE, 3-point nonlinear Richardson ZNE |[Jupyter notebook](experiment09/experimentBook.heisenbergansatz.ipynb), [Raw data (JSON)](experiment09/experimental%20data/data)|
-|Code to reproduce experimental data (v0)|[indirect-zne](https://github.com/arijit-ship/indirect-zne/releases/tag/v0)|
+| Plot 1: Single-variate Richardson extrapolation of different orders are shown. Depolarizing noise is applied only to the multi-qubit time-evolution gate. |[Jupyter notebook](experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data) |
+
 
 
 
@@ -28,12 +24,21 @@ Download the code from [v0 release](https://github.com/arijit-ship/indirect-zne/
   ```bash
   pip install -r requirements.txt
   ```
-
+- On Windows install minimum dependencies via
+  ```bash
+  pip install -r requirements.winmin.txt
+  ```
 ## ⚙️ Usage
+
+The `main.py` is used for VQE optimization, redundent circuit run, and finally perfoming ZNE.
 
 To run the program, use:  
   ```bash
   python3 main.py <config.yml>
+  ```
+A faster multi-core script can altervatively be run for VQE optimization (the redundant circuit run and ZNE can be done using `main.py`)
+```bash
+  python3 vqe-mcore.py <config.yml>
   ```
 
 ## 📋 Sample configuration file
