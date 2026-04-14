@@ -71,7 +71,7 @@ init_param:
 noise_profile:
   status: True
   type: "time-depol" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
-  noise_prob: [0.001,0.005,0.001,0.001] # Noise probabilities for [R, CZ, U, Y] gates.
+  noise_prob: [0,0,0.1,0.0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
     # NOT IMPLEMENTED! Adds noise to the initial parameters.
     status: False
@@ -87,7 +87,7 @@ redundant:
 zne:
   # Method options: 'linear', 'polynomial', 'richardson', or 'richardson-mul'.
   # 'linear' and 'polynomial' use scikit-learn for regression.
-  method: "richardson-mul"
+  method: "richardson"
 
   # Degree is only applicable for 'polynomial' and 'richardson-mul'. The 'richardson' method does not accept degree as a parameter.
   degree: 1
