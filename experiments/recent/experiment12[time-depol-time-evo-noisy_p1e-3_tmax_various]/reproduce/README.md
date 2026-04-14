@@ -89,6 +89,8 @@ tmax<N>/
     └── ric4/         ← populated in Stage 2
 ```
 
+![Standard Tmax directory structure](image.png)
+
 **For `tmax20` only** (multiple ZNE orders are run for this value):
 ```
 tmax20/
@@ -103,7 +105,7 @@ tmax20/
     └── ric7/         ← 7-point ZNE (order 6)
 ```
 
-![Directory structure example](image.png)
+![tmax20 directory structure with all ZNE orders](image-2.png)
 
 Copy the 10 noisy JSON files into `VQE/` and the 10 noise-free JSON files into `VQE_noise_off/` for each directory.
 
@@ -197,9 +199,21 @@ Open the notebook and set the `BASE_DIR` variable to the root directory containi
 BASE_DIR = "PATH/TO/data/"   # directory that contains tmax5/, tmax8/, tmax10/, ...
 ```
 
-![Jupyter notebook BASE_DIR example](image-1.png)
+![Jupyter notebook BASE_DIR setting](image-1.png)
 
 Then run all cells to generate the plots.
+
+---
+
+## Reference: Full Project Tree
+
+The screenshots below show the expected project structure after all stages are complete.
+
+![Project tree — overview](image-5.png)
+
+![Project tree — overview](image-3.png)
+
+![Project tree — detail](image-4.png)
 
 ---
 
