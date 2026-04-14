@@ -111,24 +111,24 @@ Copy the 10 noisy JSON files into `VQE/` and the 10 noise-free JSON files into `
 
 ### Stage 2 — Redundant & ZNE
 
-Both ZNE variants are run using `automate2.py`. The two differ in the `RIC_MUL` flag and the `I_FACTOR` values.
+Both ZNE variants are run using `automate2.py`. They differ in the `RIC_MUL` flag, the `I_FACTOR` values, and the `zne` settings in `config.reproduce2.yml`.
 
 ---
 
 #### 2a. Multivariate ZNE (`ZNE-mul-var`)
 
-This is run **five times** — once per polynomial degree (`muld1` through `muld5`). For each run, `I_FACTOR` must be freshly computed, then pasted into `automate2.py`.
+This is run **five times** — once per polynomial degree (`muld1` through `muld5`). Repeat Steps 1–4 below for each degree, incrementing `d` each time.
 
 ##### Step 1 — Compute `I_FACTOR` for the target degree
 
-Run the following snippet, setting `d` to the target degree (1 through 5). `l` and `Delta` stay fixed across all runs:
+Run the following snippet with `d` set to the target degree (1 through 5). `l` and `Delta` stay fixed across all runs:
 
 ```python
 import math
 from itertools import product as iproduct
 
 l, Delta = 4, 1
-d = 1  # ← set this to 1, 2, 3, 4, or 5 for each run
+d = 1  # ← set to 1, 2, 3, 4, or 5
 
 ms = [m for m in iproduct(range(d+1), repeat=l) if sum(m) <= d]
 lambdas = [[1 + Delta*mi for mi in m] for m in ms]
@@ -168,7 +168,18 @@ CONFIG_PATH = "PATH/TO/config.reproduce2.yml"
 RIC_MUL = True
 ```
 
-##### Step 3 — Run and collect output
+##### Step 3 — Update `config.reproduce2.yml`
+
+Set `zne.method` to `richardson-mul` and `zne.degree` to the current value of `d`:
+
+```yaml
+zne:
+  method: "richardson-mul"
+  degree: 1   # ← set to match current d (1, 2, 3, 4, or 5)
+  sampling: "default"
+```
+
+##### Step 4 — Run and collect output
 
 ```bash
 python3 automate2.py
@@ -176,25 +187,23 @@ python3 automate2.py
 
 Each run produces **20 JSON files** in the `output/` folder — 10 redundant circuit results and their 10 corresponding ZNE results. Copy them to the matching degree subfolder:
 
-| Degree (`d`) | Copy JSON files to        |
-|--------------|---------------------------|
-| 1            | `ZNE/ZNE-mul-var/muld1/`  |
-| 2            | `ZNE/ZNE-mul-var/muld2/`  |
-| 3            | `ZNE/ZNE-mul-var/muld3/`  |
-| 4            | `ZNE/ZNE-mul-var/muld4/`  |
-| 5            | `ZNE/ZNE-mul-var/muld5/`  |
-
-Repeat Steps 1–3 for each degree, incrementing `d` and updating `STATIC_PREFIX` each time.
+| Degree (`d`) | Copy JSON files to       |
+|--------------|--------------------------|
+| 1            | `ZNE/ZNE-mul-var/muld1/` |
+| 2            | `ZNE/ZNE-mul-var/muld2/` |
+| 3            | `ZNE/ZNE-mul-var/muld3/` |
+| 4            | `ZNE/ZNE-mul-var/muld4/` |
+| 5            | `ZNE/ZNE-mul-var/muld5/` |
 
 ---
 
 #### 2b. Single-variate ZNE (`ZNE-single-var`)
 
-This is run **six times** — once per ZNE order (corresponding to `ric2` through `ric7`). The `I_FACTOR` here uses uniform folding across all gates except Y.
+This is run **six times** — once per ZNE order (`ric2` through `ric7`). Repeat Steps 1–3 below for each order.
 
-##### Configure `automate2.py`
+##### Step 1 — Configure `automate2.py`
 
-Set the following in `automate2.py`. The only value that changes between runs is the number of uncommented rows in `I_FACTOR` and the `STATIC_PREFIX`:
+The only values that change between runs are the number of uncommented rows in `I_FACTOR` and `STATIC_PREFIX`:
 
 ```python
 # === CONFIGURATION ===
@@ -205,7 +214,7 @@ model: str = "xy-iss"
 ANSATZ_TYPE = model
 
 # Update the suffix to match the current order, e.g. ric2, ric3, ...
-STATIC_PREFIX = f"EXPERIMENT_DESCRIPTION_{model}_ric4"
+STATIC_PREFIX = f"EXPERIMENT_DESCRIPTION_{model}_ric2"
 
 # Keep the first N+1 rows for an N-order (i.e. (N+1)-point) ZNE; comment the rest.
 # For example, for ric4 (order 3), keep the first 4 rows:
@@ -225,7 +234,17 @@ CONFIG_PATH = "PATH/TO/config.reproduce2.yml"
 RIC_MUL = False
 ```
 
-##### Run and collect output
+##### Step 2 — Update `config.reproduce2.yml`
+
+Set `zne.method` to `richardson`. The `degree` field is not used for single-variate Richardson extrapolation:
+
+```yaml
+zne:
+  method: "richardson"
+  sampling: "default"
+```
+
+##### Step 3 — Run and collect output
 
 ```bash
 python3 automate2.py
@@ -233,14 +252,14 @@ python3 automate2.py
 
 Each run produces **20 JSON files** in the `output/` folder. Copy them to the corresponding subfolder:
 
-| Run | Rows kept in `I_FACTOR` | Copy JSON files to              |
-|-----|-------------------------|---------------------------------|
-| 1   | First 2 rows            | `ZNE/ZNE-single-var/ric2/`     |
-| 2   | First 3 rows            | `ZNE/ZNE-single-var/ric3/`     |
-| 3   | First 4 rows            | `ZNE/ZNE-single-var/ric4/`     |
-| 4   | First 5 rows            | `ZNE/ZNE-single-var/ric5/`     |
-| 5   | First 6 rows            | `ZNE/ZNE-single-var/ric6/`     |
-| 6   | All 7 rows              | `ZNE/ZNE-single-var/ric7/`     |
+| Run | Rows kept in `I_FACTOR` | Copy JSON files to          |
+|-----|-------------------------|-----------------------------|
+| 1   | First 2 rows            | `ZNE/ZNE-single-var/ric2/` |
+| 2   | First 3 rows            | `ZNE/ZNE-single-var/ric3/` |
+| 3   | First 4 rows            | `ZNE/ZNE-single-var/ric4/` |
+| 4   | First 5 rows            | `ZNE/ZNE-single-var/ric5/` |
+| 5   | First 6 rows            | `ZNE/ZNE-single-var/ric6/` |
+| 6   | All 7 rows              | `ZNE/ZNE-single-var/ric7/` |
 
 ---
 
@@ -254,7 +273,7 @@ Open the notebook and set the `BASE_DIR` variable to the `data/` directory:
 BASE_DIR = "PATH/TO/data/"
 ```
 
-![notebook](img/image-4.png)
+![Jupyter notebook BASE_DIR setting](img/image-4.png)
 
 Then run all cells to generate the plots.
 
@@ -268,9 +287,11 @@ Then run all cells to generate the plots.
 - [ ] Run noise-free VQE → copy 10 JSONs to `VQE_noiseoff/`
 - [ ] Multivariate ZNE — for each degree `d` in 1–5:
   - [ ] Compute `I_FACTOR` with the snippet (set `d`)
-  - [ ] Configure and run `automate2.py` (`RIC_MUL = True`)
-  - [ ] Copy 20 JSONs to `ZNE/ZNE-mul-var/muldN/`
+  - [ ] Configure `automate2.py` (`RIC_MUL = True`, update `STATIC_PREFIX`)
+  - [ ] Set `zne.method: "richardson-mul"` and `zne.degree: d` in `config.reproduce2.yml`
+  - [ ] Run `automate2.py` → copy 20 JSONs to `ZNE/ZNE-mul-var/muldN/`
 - [ ] Single-variate ZNE — for each order (ric2–ric7):
-  - [ ] Configure and run `automate2.py` (`RIC_MUL = False`)
-  - [ ] Copy 20 JSONs to `ZNE/ZNE-single-var/ricN/`
+  - [ ] Configure `automate2.py` (`RIC_MUL = False`, update `I_FACTOR` rows and `STATIC_PREFIX`)
+  - [ ] Set `zne.method: "richardson"` in `config.reproduce2.yml`
+  - [ ] Run `automate2.py` → copy 20 JSONs to `ZNE/ZNE-single-var/ricN/`
 - [ ] Set `BASE_DIR` in the Jupyter notebook and run all cells to generate plots
