@@ -1,63 +1,3 @@
-# About
-
-Experimental findings can be found in this directory.
-
-# Link Table
-
-The relevant links for different experiments are compiled in the table below.
-
-|Description|Link  |
-|--|--|
-| Plot 1: Single-variate Richardson extrapolation of different orders are shown. Depolarizing noise is applied only to the multi-qubit time-evolution gate. |[Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data), [Reproduce](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/reproduce/) |
-|Plot 2: VQE/ZNE performance for different choices of the initial time parameter upper bound $T_{\text{max}}$.| [Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data) |
-|Plot 3: Single-variate ZNE of different orders vs $\Delta p$.|[Jupyter notebook](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/experiment15[depol-time-evo-noisy_tmax_20_various_p].ipynb), [Raw data (JSON)](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/)|
-|Plot 4: Multivariate ZNE|[Jupyter notebook](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20].ipynb), [Raw data (JSON)](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/)|
-
-# Reproducing
-
-- The Jupyter notebooks can be used to reproduce the plots, which read the available raw experimental JSON data.
-- One can reproduce the raw data by running the Python scripts (unfortunately we have many scripts) as outlined below. However, it requires additional configuration file setup.
-
-
-# Indirect-Control VQE and ZNE Error Mitigation: How to Use the Code
-
-Download the code from [v2 release](https://github.com/arijit-ship/indirect-zne/releases/tag/v2.0).
-
-## 🛠️ Installation
-
-- **Python Version:** `3.11`  
-- To install dependencies on Ubuntu (Linux), run:  
-```bash
-  pip install -r requirements.txt
-```
-- On Windows, install minimum dependencies via:
-```bash
-  pip install -r requirements.winmin.txt
-```
-## ⚙️ Usage
-
-The `main.py` is used for VQE optimization, redundant circuit runs, and finally performing ZNE.
-
-To run the program, use:  
-```bash
-  python3 main.py <config.yml>
-```
-
-`<config.yml>` needs to set-up properly for each kind of `run`.
-
-A faster multi-core script can alternatively be run for VQE optimization (the redundant circuit run and ZNE can be done using `main.py`):
-```bash
-  python3 vqe-mcore.py <config.yml>
-```
-Additionally, there is an automation script `automate2.py` that can automate the redundant circuit run and ZNE.
-
-⚠️ WARNING: 7-qubit, 30-layer VQE optimization can take a significant amount of time.
-
-## 📋 Sample Configuration File
-
-([Sample experimental config files](../config_samples/))
-
-```yaml
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
 run: "vqe"
 
@@ -111,7 +51,7 @@ ansatz:
       r: 0
     time:
       min: 0.0
-      max: 100
+      max: <VARY THIS IN 1,3,5,8,10,15,20,30,40,50,60,80,100. ONE ENTRY PER EXPERIMENT>
 
 # Variational Quantum Eigensolver (VQE) configuration
 vqe:
@@ -129,7 +69,7 @@ init_param:
 
 # Noise configuration
 noise_profile:
-  status: False
+  status: True
   type: "time-depol" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
   noise_prob: [0, 0, 0.001, 0.0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
@@ -160,4 +100,3 @@ zne:
 
   # Data points for extrapolation
   data_points:  
-  ```
