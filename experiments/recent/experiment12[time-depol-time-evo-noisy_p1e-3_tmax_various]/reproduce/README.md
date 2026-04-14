@@ -196,7 +196,7 @@ RAW_DATA_FOLDER = "PATH/TO/tmax<next_N>/VQE/"
 
 Once all JSON files are in place, use the provided Jupyter notebook to process and plot the data. The notebook computes the mean and standard deviation across the 10 VQE and ZNE samples for each `Tmax`.
 
-Open the notebook and set the `BASE_DIR` variable to the root directory containing all `tmax<N>/` folders:
+Download and open the [notebook](../experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb) and set the `BASE_DIR` variable to the root directory containing all `tmax<N>/` folders:
 
 ```python
 BASE_DIR = "PATH/TO/data/"   # directory that contains tmax5/, tmax8/, tmax10/, ...
@@ -204,7 +204,7 @@ BASE_DIR = "PATH/TO/data/"   # directory that contains tmax5/, tmax8/, tmax10/, 
 
 ![Jupyter notebook BASE_DIR setting](img/image-1.png)
 
-![Jupyter notebook BASE_DIR setting](image-7.png)
+![Jupyter notebook BASE_DIR setting](img/image-7.png)
 
 Then run all cells to generate the plots.
 
