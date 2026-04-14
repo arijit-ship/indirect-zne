@@ -1,6 +1,7 @@
 # Reproducing the Experiment
 
 ![Result plot](img/image-plot.png)
+![Result plot](img/image-3.png)
 
 This guide walks you through the steps to reproduce the simulation data for this experiment. The pipeline has three sequential stages that must be run **in order**:
 
@@ -63,7 +64,7 @@ This experiment uses a fixed `Tmax = 20` throughout.
 
 3. This produces **10 JSON output files** in the `output/` folder. The experiment is repeated 10 times to compute mean and standard deviation.
 
-![Output folder after VQE run](image-1.png)
+![Output folder after VQE run](img/image-1.png)
 
 > ⏳ **Warning:** VQE can take a significant amount of time depending on your hardware.
 
@@ -102,7 +103,7 @@ data/
         └── ric7/           ← 7-point ZNE (order 6)
 ```
 
-![Full project tree](image.png)
+![Full project tree](img/image.png)
 
 Copy the 10 noisy JSON files into `VQE/` and the 10 noise-free JSON files into `VQE_noiseoff/`.
 
@@ -252,6 +253,8 @@ Open the notebook and set the `BASE_DIR` variable to the `data/` directory:
 ```python
 BASE_DIR = "PATH/TO/data/"
 ```
+
+![notebook](img/image-4.png)
 
 Then run all cells to generate the plots.
 
