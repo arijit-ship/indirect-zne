@@ -161,6 +161,14 @@ CONFIG_PATH = "PATH/TO/config.yml"
 RIC_MUL = False
 ```
 
+Also set `zne.method` in `config.reproduce3.yml`:
+
+```yaml
+zne:
+  method: "richardson"
+  sampling: "default"
+```
+
 #### Run and collect output
 
 Run the script:
