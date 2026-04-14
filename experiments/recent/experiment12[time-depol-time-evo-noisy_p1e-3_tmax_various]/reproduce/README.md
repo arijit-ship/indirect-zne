@@ -36,6 +36,8 @@ Download the [v2.0 release](https://github.com/arijit-ship/indirect-zne/releases
 
 ---
 
+![Project-tree](img/image-project-tree.png)
+
 ## 2. Pipeline
 
 ### Stage 1 — VQE

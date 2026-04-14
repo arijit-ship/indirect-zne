@@ -205,7 +205,7 @@ model: str = "xy-iss"
 ANSATZ_TYPE = model
 
 # Update the suffix to match the current order, e.g. ric2, ric3, ...
-STATIC_PREFIX = f"EXPERIMENT_DESCRIPTION_{model}_ric2"
+STATIC_PREFIX = f"EXPERIMENT_DESCRIPTION_{model}_ric4"
 
 # Keep the first N+1 rows for an N-order (i.e. (N+1)-point) ZNE; comment the rest.
 # For example, for ric4 (order 3), keep the first 4 rows:
