@@ -1,5 +1,8 @@
 # Reproducing the Experiment
 
+![plot1](img/image-8.png)
+![plot2](img/image-9.png)
+
 This guide walks you through the steps to reproduce the simulation data for this experiment. The pipeline has three sequential stages that must be run **in order**:
 
 ```
