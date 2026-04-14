@@ -33,6 +33,8 @@ Download the [v2.0 release](https://github.com/arijit-ship/indirect-zne/releases
   pip install -r requirements.winmin.txt
   ```
 
+![Full project tree](img/image-1.png)
+
 ---
 
 ## 2. Pipeline
@@ -69,7 +71,7 @@ data/
 └── p1e-5/              ← noise_prob[2] = 1e-5
 ```
 
-![Full project tree](img/image-1.png)
+
 
 #### 2.2 Run VQE (noise-free) — once only
 
