@@ -201,6 +201,8 @@ BASE_DIR = "PATH/TO/data/"   # directory that contains tmax5/, tmax8/, tmax10/, 
 
 ![Jupyter notebook BASE_DIR setting](img/image-1.png)
 
+![Jupyter notebook BASE_DIR setting](image-7.png)
+
 Then run all cells to generate the plots.
 
 ---
