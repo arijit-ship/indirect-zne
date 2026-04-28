@@ -735,7 +735,8 @@ def create_time_depol_trotter(
     return {
         "chunks": None,
         "circuit": circuit,
-        "trotter_details": trotter_details
+        "trotter_details": trotter_details,
+        "delta_t": delta_t
     }
 
 def lie_trotter_evo(nqubits, circuit, tf, ti, delta_t, ugateH, C):
