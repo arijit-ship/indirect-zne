@@ -724,6 +724,7 @@ def create_time_depol_trotter(
         layer_entry = {
             "parent_layer": layer,
             "time_interval": [ti, tf],
+            "delta_t": delta_t,
             "trotter_details": trotter_dict
         }
         trotter_details.append(layer_entry)
@@ -736,7 +737,7 @@ def create_time_depol_trotter(
         "chunks": None,
         "circuit": circuit,
         "trotter_details": trotter_details,
-        "delta_t": delta_t
+        #"delta_t": delta_t
     }
 
 def lie_trotter_evo(nqubits, circuit, tf, ti, delta_t, ugateH, C):
