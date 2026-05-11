@@ -12,63 +12,43 @@ RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variouso
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d5"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d3"  # Output file prefix
 I_FACTOR =  [[0, 0, 0, 0],
  [1, 1, 1, 1],
  [1, 1, 1, 2],
  [1, 1, 1, 3],
  [1, 1, 1, 4],
- [1, 1, 1, 5],
- [1, 1, 1, 6],
  [1, 1, 2, 1],
  [1, 1, 2, 2],
  [1, 1, 2, 3],
- [1, 1, 2, 4],
- [1, 1, 2, 5],
  [1, 1, 3, 1],
  [1, 1, 3, 2],
- [1, 1, 3, 3],
- [1, 1, 3, 4],
  [1, 1, 4, 1],
- [1, 1, 4, 2],
- [1, 1, 4, 3],
- [1, 1, 5, 1],
- [1, 1, 5, 2],
- [1, 1, 6, 1],
  [1, 2, 1, 1],
  [1, 2, 1, 2],
  [1, 2, 1, 3],
- [1, 2, 1, 4],
- [1, 2, 1, 5],
  [1, 2, 2, 1],
  [1, 2, 2, 2],
- [1, 2, 2, 3],
- [1, 2, 2, 4],
  [1, 2, 3, 1],
- [1, 2, 3, 2],
- [1, 2, 3, 3],
- [1, 2, 4, 1],
- [1, 2, 4, 2],
- [1, 2, 5, 1],
  [1, 3, 1, 1],
  [1, 3, 1, 2],
- [1, 3, 1, 3],
- [1, 3, 1, 4],
  [1, 3, 2, 1],
- [1, 3, 2, 2],
- [1, 3, 2, 3],
- [1, 3, 3, 1],
- [1, 3, 3, 2],
- [1, 3, 4, 1],
  [1, 4, 1, 1],
- [1, 4, 1, 2],
- [1, 4, 1, 3],
- [1, 4, 2, 1],
- [1, 4, 2, 2],
- [1, 4, 3, 1],
- [1, 5, 1, 1],
- [1, 5, 1, 2],
- [1, 5, 2, 1]]
+ [2, 1, 1, 1],
+ [2, 1, 1, 2],
+ [2, 1, 1, 3],
+ [2, 1, 2, 1],
+ [2, 1, 2, 2],
+ [2, 1, 3, 1],
+ [2, 2, 1, 1],
+ [2, 2, 1, 2],
+ [2, 2, 2, 1],
+ [2, 3, 1, 1],
+ [3, 1, 1, 1],
+ [3, 1, 1, 2],
+ [3, 1, 2, 1],
+ [3, 2, 1, 1],
+ [4, 1, 1, 1]]
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
@@ -220,7 +200,7 @@ def main():
         # ZNE RUN
         optimized_param_out = data["config"]["init_param"]["value"]
         data_points = data["output"].get("data_points", None)
-
+        folding_factors = data["config"]["redundant"].get("identity_factors", None)
         print(f"Data points from output sample#{i+1}: {data_points}")
 
         with open(CONFIG_PATH, "r") as f:
@@ -233,7 +213,17 @@ def main():
             print("DEBUG: Datapoints\n")
             print(data_points)
             #cleaned_data_points = [tuple(row) for row in data_points]
-            config["zne"]["data_points"] = [[(p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
+            #config["zne"]["data_points"] = [[(p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
+            config["zne"]["data_points"] = [
+                [
+                    2*p[0] + 1,   # scale factor for R:  (2K_R + 1)
+                    2*p[1] + 1,   # scale factor for CZ: (2K_CZ + 1)
+                    2*p[2] + 1,   # scale factor for T:  (2K_T + 1)
+                    2*p[3] + 1,   # scale factor for Y:  (2K_Y + 1)
+                    e[4]             # expectation value
+                ]
+                for p, e in zip(folding_factors, data_points)
+            ]
             print("AFTER TRANSFORMATION")
             # print   (data_points)
             print(config["zne"]["data_points"])

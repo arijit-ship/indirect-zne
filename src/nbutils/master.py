@@ -286,7 +286,7 @@ def plot_single_zne(
         color=plot_colors["exact"],
         linestyle="--",
         linewidth=1.5,
-        label="Exact Solution",
+        label="Exact solution",
     )
 
     # --- Cosmetics ---
@@ -636,7 +636,7 @@ def plot_multi_zne(
             color=plot_colors["exact"],
             linestyle="--",
             linewidth=1.5,
-            label="Exact Solution",
+            label="Exact solution",
         )
 
         # --- Axis labels ---
@@ -946,7 +946,7 @@ def plot_single_zne_imposed(
                 color=plot_colors.get("exact", "red"),
                 linestyle="--",
                 linewidth=1.5,
-                label="Exact",
+                label="Exact solution",
                 zorder=2
             )
             legend_handles.append(h_exact)
@@ -1152,7 +1152,7 @@ def plot_zne_mul_var_single(
         ax.axhline(
             target, color=_colors["exact"],
             linestyle="--", linewidth=border_width,
-            label=f"Exact: {target:.4f}", zorder=4
+            label=f"Exact solution: {target:.4f}", zorder=4
         )
 
     # 5. Vertical separator
@@ -1437,7 +1437,7 @@ def ricmul_plot_zne_vs_degree(
             _exact_sol,
             color=plot_colors.get("exact", "red"),
             linestyle="--",
-            label=f"Exact: {_exact_sol:.4f}",
+            label=f"Exact solution: {_exact_sol:.4f}",
         )
 
     # Unmitigated
@@ -1697,7 +1697,7 @@ def ric_plot_zne_vs_degree(
             _exact_sol,
             color=plot_colors.get("exact", "red"),
             linestyle="--",
-            label=f"Exact: {_exact_sol:.4f}",
+            label=f"Exact solution: {_exact_sol:.4f}",
         )
     # Unmitigated
     ax.axhline(
