@@ -6,6 +6,12 @@ Experimental findings can be found in this directory.
 
 The relevant links for different experiments are compiled in the table below.
 
+
+|Description|Link  |
+|--|--|
+| ![alt text](image.png) ![alt text](image-1.png)|[Jupyter notebook](recent/experiment16[time-depol-trotter-vs-standard]/experiment16[time-depol-trotter-vs-standard].ipynb), [Raw data (JSON)](recent/experiment16[time-depol-trotter-vs-standard]/data/) |
+|![alt text](image-2.png) ![alt text](image-3.png)|[Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/)|
+
 |Description|Link  |
 |--|--|
 | Plot 1: Single-variate Richardson extrapolation of different orders are shown. Depolarizing noise is applied only to the multi-qubit time-evolution gate. |[Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data), [Reproduce](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/reproduce/) |
