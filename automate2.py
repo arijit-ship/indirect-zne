@@ -14,15 +14,10 @@ RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variouso
 #RAW_DATA_FOLDER = "output/"
 model: str = "xy-iss"
 ANSATZ_TYPE = model
-STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d3"  # Output file prefix
+STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d4"  # Output file prefix
 
 # [R, CZ, T, Y] 
-FOLDING_FACTOR =  [
-    [0, 0, 0, 0],
-    [0, 0, 1, 0],
-    [0, 0, 2, 0]
-]
-
+FOLDING_FACTOR =  [[0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 2, 1]]
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
@@ -30,16 +25,44 @@ CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
 
 ##-----------------**--------------------##
 # MULTI-VARIATE CONFIG
-RIC_MUL = False # Multi-variate ZNE or not
-GATE_COUNT_SPACE = False
+RIC_MUL = True # Multi-variate ZNE or not
+GATE_COUNT_SPACE = True
 
 FOLDING_FACTOR_MULTIVAR = [[0, 0, 0, 0],
  [1, 1, 1, 1],
  [1, 1, 1, 2],
+ [1, 1, 1, 3],
+ [1, 1, 1, 4],
+ [1, 1, 1, 5],
  [1, 1, 2, 1],
+ [1, 1, 2, 2],
+ [1, 1, 2, 3],
+ [1, 1, 2, 4],
+ [1, 1, 3, 1],
+ [1, 1, 3, 2],
+ [1, 1, 3, 3],
+ [1, 1, 4, 1],
+ [1, 1, 4, 2],
+ [1, 1, 5, 1],
  [1, 2, 1, 1],
- [2, 1, 1, 1]
- ]
+ [1, 2, 1, 2],
+ [1, 2, 1, 3],
+ [1, 2, 1, 4],
+ [1, 2, 2, 1],
+ [1, 2, 2, 2],
+ [1, 2, 2, 3],
+ [1, 2, 3, 1],
+ [1, 2, 3, 2],
+ [1, 2, 4, 1],
+ [1, 3, 1, 1],
+ [1, 3, 1, 2],
+ [1, 3, 1, 3],
+ [1, 3, 2, 1],
+ [1, 3, 2, 2],
+ [1, 3, 3, 1],
+ [1, 4, 1, 1],
+ [1, 4, 1, 2],
+ [1, 4, 2, 1]]
 ##-----------------**--------------------##
 
 
@@ -172,8 +195,10 @@ def main():
         set_t_max_value(config, t_max)
         set_noise_value(config, noise_value)
         if not RIC_MUL:
+            print("Setting singlevariate folding factors for redundant runs...") 
             set_i_factor(config, FOLDING_FACTOR)
         else:
+            print("Setting multivariate folding factors for redundant runs...") 
             set_i_factor(config, FOLDING_FACTOR_MULTIVAR)
         config["zne"]["data_points"] = None
 
@@ -206,7 +231,7 @@ def main():
             #cleaned_data_points = [tuple(row) for row in data_points]
             if GATE_COUNT_SPACE:
                 print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to gate count space...")
-                config["zne"]["data_points"] = [[(p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
+                config["zne"]["data_points"] = [[(p[0] + p[3]), p[1]/2, p[2]/7, p[4]] for p in data_points]
             else:
                 print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to RIC folding factor space...")
                 config["zne"]["data_points"] = [

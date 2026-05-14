@@ -12,7 +12,7 @@ The relevant links for different experiments are compiled in the table below.
 | ![alt text](image.png) ![alt text](image-1.png)|[Jupyter notebook](recent/experiment16[time-depol-trotter-vs-standard]/experiment16[time-depol-trotter-vs-standard].ipynb), [Raw data (JSON)](recent/experiment16[time-depol-trotter-vs-standard]/data/) |
 |![alt text](image-2.png) ![alt text](image-3.png)|[Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/)|
 |![alt text](image-4.png)|[Jupyter notebook](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/experiment15[depol-time-evo-noisy_tmax_20_various_p].ipynb), [Raw data (JSON)](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/)|
-|![alt text](image-5.png)|[Jputer notebook](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20].ipynb), [Raw data (JSON)](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/)|
+|![alt text](image-5.png)|[Jupyter notebook](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20].ipynb), [Raw data (JSON)](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/)|
 
 <!-- |Description|Link  |
 |--|--|
@@ -25,6 +25,7 @@ The relevant links for different experiments are compiled in the table below.
 
 - The Jupyter notebooks can be used to reproduce the plots, which read the available raw experimental JSON data.
 - One can reproduce the raw data by running the Python scripts (unfortunately we have many scripts) as outlined below. However, it requires additional configuration file setup.
+
 
 
 # Indirect-Control VQE and ZNE Error Mitigation: How to Use the Code
