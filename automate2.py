@@ -1,5 +1,7 @@
 """
 Automation script for redundant and ZNE runs.
+
+For multivariate ZNE, it also overwrites the data point for ZNE based off how we want to define the noise level.
 """
 
 import os
@@ -13,46 +15,32 @@ RAW_DATA_FOLDER = "experiments/recent/experiment14[depol-time-evo-noisy_variouso
 model: str = "xy-iss"
 ANSATZ_TYPE = model
 STATIC_PREFIX = f"AUTOMATE_xy-iss_noisy_time_evo_time_depol_varioustmax_tmax20_ricmul_d3"  # Output file prefix
-I_FACTOR =  [[0, 0, 0, 0],
- [1, 1, 1, 1],
- [1, 1, 1, 2],
- [1, 1, 1, 3],
- [1, 1, 1, 4],
- [1, 1, 2, 1],
- [1, 1, 2, 2],
- [1, 1, 2, 3],
- [1, 1, 3, 1],
- [1, 1, 3, 2],
- [1, 1, 4, 1],
- [1, 2, 1, 1],
- [1, 2, 1, 2],
- [1, 2, 1, 3],
- [1, 2, 2, 1],
- [1, 2, 2, 2],
- [1, 2, 3, 1],
- [1, 3, 1, 1],
- [1, 3, 1, 2],
- [1, 3, 2, 1],
- [1, 4, 1, 1],
- [2, 1, 1, 1],
- [2, 1, 1, 2],
- [2, 1, 1, 3],
- [2, 1, 2, 1],
- [2, 1, 2, 2],
- [2, 1, 3, 1],
- [2, 2, 1, 1],
- [2, 2, 1, 2],
- [2, 2, 2, 1],
- [2, 3, 1, 1],
- [3, 1, 1, 1],
- [3, 1, 1, 2],
- [3, 1, 2, 1],
- [3, 2, 1, 1],
- [4, 1, 1, 1]]
+
+# [R, CZ, T, Y] 
+FOLDING_FACTOR =  [
+    [0, 0, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 2, 0]
+]
+
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
-RIC_MUL = True # Whether to remove RIC columns from data points
+##-----------------**--------------------##
+
+##-----------------**--------------------##
+# MULTI-VARIATE CONFIG
+RIC_MUL = False # Multi-variate ZNE or not
+GATE_COUNT_SPACE = False
+
+FOLDING_FACTOR_MULTIVAR = [[0, 0, 0, 0],
+ [1, 1, 1, 1],
+ [1, 1, 1, 2],
+ [1, 1, 2, 1],
+ [1, 2, 1, 1],
+ [2, 1, 1, 1]
+ ]
+##-----------------**--------------------##
 
 
 # === LOAD PARAMS FROM RAW DATA FOLDER ===
@@ -116,7 +104,7 @@ def set_noise_type(config, noise_type):
     config["noise_profile"]["type"] = noise_type
 
 def set_i_factor(config, i_factor):
-    """Set the i_factor in the config."""
+    """Set the i_factor in the config. Alias for redundant folding factors."""
     config["redundant"]["identity_factors"] = i_factor
 
 def set_noise_value(config, noise_value):
@@ -183,7 +171,10 @@ def main():
         set_noise_type(config, noise_type)
         set_t_max_value(config, t_max)
         set_noise_value(config, noise_value)
-        set_i_factor(config, I_FACTOR)
+        if not RIC_MUL:
+            set_i_factor(config, FOLDING_FACTOR)
+        else:
+            set_i_factor(config, FOLDING_FACTOR_MULTIVAR)
         config["zne"]["data_points"] = None
 
         with open(CONFIG_PATH, "w") as f:
@@ -213,17 +204,21 @@ def main():
             print("DEBUG: Datapoints\n")
             print(data_points)
             #cleaned_data_points = [tuple(row) for row in data_points]
-            #config["zne"]["data_points"] = [[(p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
-            config["zne"]["data_points"] = [
-                [
-                    2*p[0] + 1,   # scale factor for R:  (2K_R + 1)
-                    2*p[1] + 1,   # scale factor for CZ: (2K_CZ + 1)
-                    2*p[2] + 1,   # scale factor for T:  (2K_T + 1)
-                    2*p[3] + 1,   # scale factor for Y:  (2K_Y + 1)
-                    e[4]             # expectation value
+            if GATE_COUNT_SPACE:
+                print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to gate count space...")
+                config["zne"]["data_points"] = [[(p[0] + p[3]), p[1], p[2], p[4]] for p in data_points]
+            else:
+                print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to RIC folding factor space...")
+                config["zne"]["data_points"] = [
+                    [
+                        2*p[0] + 1,   # scale factor for R:  (2K_R + 1)
+                        2*p[1] + 1,   # scale factor for CZ: (2K_CZ + 1)
+                        2*p[2] + 1,   # scale factor for T:  (2K_T + 1)
+                        2*p[3] + 1,   # scale factor for Y:  (2K_Y + 1)
+                        e[4]             # expectation value
+                    ]
+                    for p, e in zip(folding_factors, data_points)
                 ]
-                for p, e in zip(folding_factors, data_points)
-            ]
             print("AFTER TRANSFORMATION")
             # print   (data_points)
             print(config["zne"]["data_points"])
