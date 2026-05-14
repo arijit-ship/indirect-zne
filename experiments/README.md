@@ -30,7 +30,7 @@ The relevant links for different experiments are compiled in the table below.
 
 # Indirect-Control VQE and ZNE Error Mitigation: How to Use the Code
 
-Download the code from [v2 release](https://github.com/arijit-ship/indirect-zne/releases/tag/v2.0).
+Download the code from [here](https://github.com/arijit-ship/indirect-zne/releases/tag/reproducing-results).
 
 ## 🛠️ Installation
 
