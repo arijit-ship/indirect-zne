@@ -4,7 +4,7 @@ Experimental findings can be found in this directory.
 
 # Link Table
 
-The relevant links for different experiments are compiled in the table below.
+The relevant links for different experiments are compiled in the table below. Usually a single Jupyter notebook has multiple figures, please the find the figure correctly.
 
 
 |Description|Link  |
@@ -13,6 +13,7 @@ The relevant links for different experiments are compiled in the table below.
 |![alt text](image-2.png) ![alt text](image-3.png)|[Jupyter notebook](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various].ipynb), [Raw data (JSON)](recent/experiment12[time-depol-time-evo-noisy_p1e-3_tmax_various]/data/)|
 |![alt text](image-4.png)|[Jupyter notebook](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/experiment15[depol-time-evo-noisy_tmax_20_various_p].ipynb), [Raw data (JSON)](recent/experiment15[depol-time-evo-noisy_tmax_20_various_p]/data/)|
 |![alt text](image-5.png)|[Jupyter notebook](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20].ipynb), [Raw data (JSON)](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/data/)|
+|![alt text](image-6.png)|[Jupyter notebook](recent/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20]/experiment14[depol-time-evo-noisy_variousorderzne_tmax_20].ipynb)|
 
 <!-- |Description|Link  |
 |--|--|
@@ -59,6 +60,13 @@ A faster multi-core script can alternatively be run for VQE optimization (the re
   python3 vqe-mcore.py <config.yml>
 ```
 Additionally, there is an automation script `automate2.py` that can automate the redundant circuit run and ZNE.
+
+All data for the plots presented in the table were produced using `vqe-mcore.py` 
+for VQE optimizations, and `automate2.py` was used to automatically run folded 
+circuits and perform ZNE.
+
+Additional support can be provided if a reviewer wishes to reproduce any result 
+from scratch.
 
 ⚠️ WARNING: 7-qubit, 30-layer VQE optimization can take a significant amount of time.
 
