@@ -70,7 +70,7 @@ from scratch.
 
 ⚠️ WARNING: 7-qubit, 30-layer VQE optimization can take a significant amount of time.
 
-![alt text](../thesis_figure_file.png)
+![alt text](thesis_figure_file.png)
 
 ## 📋 Configuring YAML File
 
