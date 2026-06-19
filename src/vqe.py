@@ -170,7 +170,7 @@ class IndirectVQE:
 
         return self.ansatz_circuit
 
-    def cost_function(self, param: List[float]) -> float:
+    def _cost_function(self, param: List[float]) -> float:
         """
         Variational quantum eigensolver cost function.
         """
@@ -187,6 +187,148 @@ class IndirectVQE:
         cost = self.observable_hami.get_expectation_value(state)
 
         return cost
+
+    def cost_function(self, param: List[float], n_shots: int=10000) -> float:
+        """
+        Variational quantum eigensolver cost function.
+        """
+
+        if self.state.lower() == "dmatrix":
+            state = DensityMatrix(self.nqubits)
+        elif self.state.lower() == "statevector":
+            state = QuantumState(self.nqubits)
+        else:
+            raise ValueError(f"Unsupported state: {self.state}. Supported states are: 'dmatrix', 'statevector'")
+
+        self.ansatz_circuit = self.create_ansatz(param=param)
+        self.ansatz_circuit.update_quantum_state(state)
+        cost, var, std = self._estimate_expectation_shots(self.observable_hami, state, n_shots)
+
+        return cost
+    
+    def _estimate_expectation_shots(
+        self,
+        observable_hami,
+        state,
+        n_shots: int,
+    ):
+        """
+        Shot-based expectation value estimation with variance.
+        Splits total n_shots equally between X and Z measurement bases.
+        """
+        n = state.get_qubit_count()
+        n_terms = observable_hami.get_term_count()
+
+        # ----------------------------------------------------------
+        # Parse Hamiltonian
+        # ----------------------------------------------------------
+        xx_terms = []
+        zz_terms = []
+        x_terms = []
+        z_terms = []
+        constant_energy = 0.0
+
+        for i in range(n_terms):
+            term = observable_hami.get_term(i)
+            coeff = term.get_coef().real
+            pauli_ids = term.get_pauli_id_list()
+            pauli_qubits = term.get_index_list()
+
+            # Handle pure Identity terms (if any)
+            if len(pauli_ids) == 0 or all(p == 0 for p in pauli_ids):
+                constant_energy += coeff
+                continue
+
+            if len(pauli_ids) == 2 and all(p == 1 for p in pauli_ids):
+                xx_terms.append((coeff, pauli_qubits[0], pauli_qubits[1]))
+            elif len(pauli_ids) == 2 and all(p == 3 for p in pauli_ids):
+                zz_terms.append((coeff, pauli_qubits[0], pauli_qubits[1]))
+            elif len(pauli_ids) == 1 and pauli_ids[0] == 1:
+                x_terms.append((coeff, pauli_qubits[0]))
+            elif len(pauli_ids) == 1 and pauli_ids[0] == 3:
+                z_terms.append((coeff, pauli_qubits[0]))
+            else:
+                print(f"[WARNING] Term {i} skipped (unsupported Pauli type)")
+
+        # ----------------------------------------------------------
+        # Allocate Shot Budget
+        # ----------------------------------------------------------
+        # Split shots between the two bases needed
+        has_x = bool(xx_terms or x_terms)
+        has_z = bool(zz_terms or z_terms)
+        
+        # Simple equal split strategy
+        shots_x = n_shots // 2 if (has_x and has_z) else (n_shots if has_x else 0)
+        shots_z = n_shots - shots_x if (has_x and has_z) else (n_shots if has_z else 0)
+
+        # ----------------------------------------------------------
+        # X-basis measurement group
+        # ----------------------------------------------------------
+        x_shot_energies = np.zeros(shots_x)
+        if shots_x > 0:
+            # Clone state and rotate to X basis (Hadamard)
+            x_state = state.copy()
+            from qulacs import QuantumCircuit
+            rot = QuantumCircuit(n)
+            for q in range(n):
+                rot.add_H_gate(q)
+            rot.update_quantum_state(x_state)
+
+            # Sampling: Qulacs returns an array of integers
+            samples = x_state.sampling(shots_x)
+            for shot_idx, bitstring in enumerate(samples):
+                # Bit extraction: bitstring LSB is qubit 0
+                e_shot = 0.0
+                
+                # Optimization: only extract bits for qubits we actually care about,
+                # or pre-unpack up to max needed index.
+                bits = [(bitstring >> i) & 1 for i in range(n)]
+                xvals = [1 - 2 * b for b in bits]
+
+                for coeff, qi, qj in xx_terms:
+                    e_shot += coeff * xvals[qi] * xvals[qj]
+                for coeff, qi in x_terms:
+                    e_shot += coeff * xvals[qi]
+
+                x_shot_energies[shot_idx] = e_shot
+
+        # ----------------------------------------------------------
+        # Z-basis measurement group
+        # ----------------------------------------------------------
+        z_shot_energies = np.zeros(shots_z)
+        if shots_z > 0:
+            samples = state.sampling(shots_z)
+            for shot_idx, bitstring in enumerate(samples):
+                e_shot = 0.0
+                bits = [(bitstring >> i) & 1 for i in range(n)]
+                zvals = [1 - 2 * b for b in bits]
+
+                for coeff, qi, qj in zz_terms:
+                    e_shot += coeff * zvals[qi] * zvals[qj]
+                for coeff, qi in z_terms:
+                    e_shot += coeff * zvals[qi]
+
+                z_shot_energies[shot_idx] = e_shot
+
+        # ----------------------------------------------------------
+        # Mean and Variance Calculations
+        # ----------------------------------------------------------
+        mean_x = x_shot_energies.mean() if shots_x > 0 else 0.0
+        mean_z = z_shot_energies.mean() if shots_z > 0 else 0.0
+        
+        # Combined mean includes the static identity offset
+        mean_energy = mean_x + mean_z + constant_energy
+
+        var_energy = 0.0
+        # Var(Sample Mean) = Var(Shot Energies) / N_shots
+        if shots_x > 1:
+            var_energy += np.var(x_shot_energies, ddof=1) / shots_x
+        if shots_z > 1:
+            var_energy += np.var(z_shot_energies, ddof=1) / shots_z
+
+        stderr = np.sqrt(var_energy)
+
+        return mean_energy, var_energy, stderr
 
     def run_optimization(self, parameters, constraint):
 

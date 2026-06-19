@@ -157,6 +157,10 @@ def run_redundant() -> None:
     identity_factors: Union[List[int], List[List[int]]] = config["redundant"]["identity_factors"]
     ansatz_type: str = ansatz["ugate"]["type"]
 
+    ####
+    initial_states = []
+    final_states = []
+
     print("=" * symbol_count + "Config" + "=" * symbol_count)
     print(config)
     print("=" * symbol_count + "VQE values at different noise levels" + "=" * symbol_count)
@@ -223,6 +227,11 @@ def run_redundant() -> None:
         print(f"Noise level (nR, nT, nY, nCz): {noise_level_list} ")
         print(f"Time taken: {each_run_time} sec")
 
+        initial_state = [vqe_output["initial_density_matrix"]],
+        final_state =   [vqe_output["final_density_matrix"]],
+        initial_states.append(initial_state)
+        final_states.append(final_state)
+
         # Not printing - in the list iteration, cosmatic purpose only.
         if i < len(identity_factors):
             print("-" * symbol_count)
@@ -258,7 +267,10 @@ def run_redundant() -> None:
         "others": {
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": time_evolution_hamiltonian_string,
-        },
+            "initial_states": initial_states,
+            "final_states": final_states
+
+        }
     }
 
     with open(output_file, "w") as file:

@@ -1278,6 +1278,8 @@ def ricmul_plot_zne_vs_degree(
     # --- Axis labels ---
     xlabel: str = "Extrapolation Order",
     ylabel: str = "ZNE",
+    # --- ZNE label ---
+    zne_label: str = "ZNE (multivariate)",
     # --- Font sizes ---
     title_fontsize: int = 8,
     label_fontsize: int = 8,
@@ -1427,7 +1429,7 @@ def ricmul_plot_zne_vs_degree(
         capsize=capsize,
         markersize=marker_size,
         color=plot_colors.get("zne", "steelblue"),
-        label="ZNE (multivariate)",
+        label=zne_label,
         zorder=3,
     )
 
