@@ -30,7 +30,7 @@ observable:
     r: 1
 # Circuit configuration
 ansatz:
-  layer: 30
+  layer: 1
   # Not tested. Keep gateset=1, there could be bugs.
   gateset: 1
   ugate:

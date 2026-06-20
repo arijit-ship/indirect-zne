@@ -67,6 +67,10 @@ class IndirectVQE:
         # Lie-trotte
         self.lie_trotter_details: list = []
 
+        # Cost function calling counter
+        # how many times did we hit the quantum backend?
+        self.cost_fn_calling_counter: int = 0
+
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
         """
@@ -170,7 +174,7 @@ class IndirectVQE:
 
         return self.ansatz_circuit
 
-    def _cost_function(self, param: List[float]) -> float:
+    def cost_function(self, param: List[float]) -> float:
         """
         Variational quantum eigensolver cost function.
         """
@@ -185,10 +189,290 @@ class IndirectVQE:
         self.ansatz_circuit = self.create_ansatz(param=param)
         self.ansatz_circuit.update_quantum_state(state)
         cost = self.observable_hami.get_expectation_value(state)
+        
+        self.cost_fn_calling_counter += 1
 
         return cost
 
-    def cost_function(self, param: List[float], n_shots: int=10000) -> float:
+
+    # Improved version.
+    # Jun 20, 2026
+    def run_optimization(self, parameters, constraint):
+
+        cost_history = []
+
+        def _tracked_cost(param):
+            cost = self.cost_function(param)
+            cost_history.append(cost)
+            return cost
+
+        opt = minimize(
+            _tracked_cost,
+            parameters,
+            method=self.optimizer,
+            constraints=constraint,
+        )
+
+        min_cost = np.min(cost_history)
+        optimized_params = opt.x.tolist()
+
+        return min_cost, optimized_params
+
+    # Old version
+    def __run_optimization(self, parameters, constraint):
+
+        cost_history = []
+        min_cost = None
+        optimized_params = None  # List to store optimized parameters (solutions)
+
+        opt = minimize(
+            self.cost_function,
+            parameters,
+            method=self.optimizer,
+            constraints=constraint,
+            callback=lambda x: cost_history.append(self.cost_function(x)),
+        )
+
+        min_cost = np.min(cost_history)
+
+        optimized_params = opt.x.tolist()
+
+        return min_cost, optimized_params
+
+    def run_vqe(self) -> Dict:
+
+        constraints = None
+        vqe_constraint = None
+        isRandom: bool = False
+        initial_cost: float = 0
+        min_cost: float | None = None
+        sol_optimized_param = None
+
+        # Storing density matrices
+        initial_density_matrix_json = None
+        final_density_matrix_json = None
+        store_init_param_created = None
+
+        # Decide the initial param type: random or provided. If provided, validate the length.
+        if isinstance(self.init_param, str) and self.init_param.lower() == "random":
+            isRandom = True
+        elif isinstance(self.init_param, list):
+            expected_length = self.ansatz_layer + (self.ansatz_layer * 4 * self.ansatz_gateset)
+            if len(self.init_param) == expected_length:
+                isRandom = False
+            else:
+                raise ValueError(
+                    f"Invalid initial parameters length: {len(self.init_param)}. Expected: {expected_length}."
+                )
+        else:
+            raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
+
+        # Optimization is off
+        if not self.optimization_status:
+
+            if isRandom:
+                random_initial_param = create_param(
+                    self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf
+                )
+                initial_cost = self.cost_function(param=random_initial_param)
+
+            else:
+                initial_param = self.init_param
+                initial_cost = self.cost_function(param=initial_param)
+
+        # Optimization is on
+        else:
+
+            # (1) Create random initial param
+            random_initial_param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+
+            store_init_param_created = random_initial_param.tolist()
+            # (2) Calculate the initial cost with random initial param
+            initial_cost = self.cost_function(param=random_initial_param)
+
+            # (3) Checking constraint before optimization
+            if self.constraint and self.optimizer == "SLSQP":
+
+                vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
+                
+                if self.ansatz_noise_type == "time-depol-trotter":
+                    num_time = self.ansatz_layer
+                    total_params = len(random_initial_param)
+                    tf_index = num_time - 1  # Correct: index of the last time parameter
+
+                    # Standardize constraints for SLSQP
+                    vqe_constraint = create_time_constraints(num_time, total_params)
+                    t_final_constraints = create_tf_fixed_constraint(tf_index, total_params, self.ansatz_tf)
+                    
+                    # Passing as a list of LinearConstraint objects is supported in SciPy 1.1.0+
+                    constraints = [vqe_constraint, t_final_constraints]
+                else:
+                    constraints = vqe_constraint
+
+            elif self.optimizer != "SLSQP" and self.constraint:
+                raise ValueError(f"Constaint not supported for: {self.optimizer}")
+
+            # (4) Run optimization
+            min_cost, sol_optimized_param = self.run_optimization(
+                parameters = random_initial_param,
+                constraint = constraints
+            )  # type: ignore
+
+            # for i in range(self.iteration):
+
+            #     # (1) Create random initial param
+            #     param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
+
+            #     # (2) Calculate the initial cost with random initial param
+            #     initial_costs.append(self.cost_function(param=param))
+
+            #     # (3) Run optimization
+            #     start_time = time.time()
+            #     cost, sol_optimized_param = self.run_optimization(param, constraint)  # type: ignore
+            #     end_time = time.time()
+
+            #     run_time = end_time - start_time
+            #     min_cost_history.append(cost)
+            #     optimized_param.append(sol_optimized_param)
+
+            #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
+        # --- ADD THIS LOGIC HERE ---
+
+        # Post-optimization state reconstruction
+        # for storing the density matrices
+        if sol_optimized_param is not None:
+            # Initialize a fresh DensityMatrix object
+            state = DensityMatrix(self.nqubits)
+            
+            # Re-create the ansatz circuit with the best parameters found
+            final_circuit = self.create_ansatz(param=sol_optimized_param)
+            
+            # Apply the circuit to the state
+            final_circuit.update_quantum_state(state)
+            
+            # Get the actual numerical matrix (numpy array)
+            final_density_matrix_json = state.to_json()
+
+            # esetting
+            state = 0
+            state = DensityMatrix(self.nqubits)
+            # Re-create the ansatz circuit with the best parameters found
+            initial_circuit = self.create_ansatz(param=store_init_param_created)
+            # Apply the circuit to the state
+            initial_circuit.update_quantum_state(state)
+            # Get the actual numerical matrix (numpy array)
+            initial_density_matrix_json = state.to_json()
+
+
+        vqe_result: Dict = {
+            "initial_cost": initial_cost,
+            "min_cost": min_cost,
+            "init_random_param": store_init_param_created,
+            "optimized_param": sol_optimized_param,
+            "initial_density_matrix": initial_density_matrix_json,
+            "final_density_matrix": final_density_matrix_json,
+            "lie_trotter_details": self.lie_trotter_details,
+            "cost_callings": self.cost_fn_calling_counter
+        }
+
+        return vqe_result
+
+    def drawCircuit(self, prefix: str, dpi: int, filetype: str) -> None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)
+        output_dir = os.path.join(parent_dir, "output")
+        os.makedirs(output_dir, exist_ok=True)
+        if filetype.lower() == "svg":
+            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.svg")
+        elif filetype.lower() == "png":
+            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.png")
+        else:
+            raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
+
+        chunks = self.ansatz.get("chunks")
+        if chunks is None:
+            raise ValueError("chunks not available for this ansatz type (e.g. time-depol-trotter)")
+        circuit_drawer(chunks[0], "mpl")  # only this line
+        plt.savefig(output_file, dpi=dpi)
+        plt.close()
+        print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
+
+    def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
+        """
+        Returns the noise levels.
+        """
+
+        noise_details = calculate_noise_levels(
+            nqubits=self.nqubits, identity_factors=self.ansatz_identity_factors, noise_profile=self.noise_profile
+        )
+
+        return noise_details
+
+    def get_ugate_hamiltonain(self) -> Observable:
+        """
+        Returns time-evolution gate Hamiltonian.
+        """
+        return self.ugate_hami
+
+    ###################################################################
+    ###################################################################
+    ######################TEST FUNCTIONS##################################
+    ###################################################################
+    def __cost_function(self, param: List[float], n_shots: int = 10000) -> float:
+        """
+        VQE cost function using finite sampling via quri-parts estimator.
+        Uses qulacs vector sampler which models finite measurement sampling.
+        """
+        from quri_parts.core.operator import Operator, pauli_label
+        from quri_parts.core.state import GeneralCircuitQuantumState
+        from quri_parts.core.estimator.sampling import create_sampling_estimator
+        from quri_parts.qulacs.sampler import create_qulacs_vector_sampler
+        from quri_parts.core.measurement import bitwise_commuting_pauli_measurement
+        from quri_parts.core.sampling.shots_allocator import create_equipartition_shots_allocator
+        from quri_parts.qulacs.circuit import convert_circuit
+
+        self.ansatz_circuit = self.create_ansatz(param=param)
+
+        # Convert native qulacs circuit to quri-parts circuit
+        quri_circuit = convert_circuit(self.ansatz_circuit)
+
+        # Convert qulacs Observable to quri-parts Operator
+        operator = Operator()
+        pauli_map = {1: "X", 2: "Y", 3: "Z"}
+
+        for i in range(self.observable_hami.get_term_count()):
+            term = self.observable_hami.get_term(i)
+            coeff = term.get_coef().real
+            pauli_ids = term.get_pauli_id_list()
+            pauli_qubits = term.get_index_list()
+
+            if len(pauli_ids) == 0 or all(p == 0 for p in pauli_ids):
+                operator.constant += coeff
+                continue
+
+            label_str = " ".join(
+                f"{pauli_map[pid]}{qidx}"
+                for pid, qidx in zip(pauli_ids, pauli_qubits)
+            )
+            operator[pauli_label(label_str)] = coeff
+
+        # Wrap quri-parts circuit as state and estimate
+        circuit_state = GeneralCircuitQuantumState(self.nqubits, quri_circuit)
+        estimator = create_sampling_estimator(
+            n_shots=n_shots,
+            sampler=create_qulacs_vector_sampler(),
+            measurement_factory=bitwise_commuting_pauli_measurement,
+            shots_allocator=create_equipartition_shots_allocator(),
+        )
+
+        cost = estimator(operator, circuit_state).value.real
+        self.cost_fn_calling_counter += 1
+
+        return cost
+
+
+    def __cost_function(self, param: List[float], n_shots: int=10000) -> float:
         """
         Variational quantum eigensolver cost function.
         """
@@ -206,7 +490,7 @@ class IndirectVQE:
 
         return cost
     
-    def _estimate_expectation_shots(
+    def __estimate_expectation_shots(
         self,
         observable_hami,
         state,
@@ -330,196 +614,7 @@ class IndirectVQE:
 
         return mean_energy, var_energy, stderr
 
-    def run_optimization(self, parameters, constraint):
-
-        cost_history = []
-        min_cost = None
-        optimized_params = None  # List to store optimized parameters (solutions)
-
-        opt = minimize(
-            self.cost_function,
-            parameters,
-            method=self.optimizer,
-            constraints=constraint,
-            callback=lambda x: cost_history.append(self.cost_function(x)),
-        )
-
-        min_cost = np.min(cost_history)
-
-        optimized_params = opt.x.tolist()
-
-        return min_cost, optimized_params
-
-    def run_vqe(self) -> Dict:
-
-        constraints = None
-        vqe_constraint = None
-        isRandom: bool = False
-        initial_cost: float = 0
-        min_cost: float | None = None
-        sol_optimized_param = None
-
-        # Storing density matrices
-        initial_density_matrix_json = None
-        final_density_matrix_json = None
-        store_init_param_created = None
-
-        # Decide the initial param type: random or provided. If provided, validate the length.
-        if isinstance(self.init_param, str) and self.init_param.lower() == "random":
-            isRandom = True
-        elif isinstance(self.init_param, list):
-            expected_length = self.ansatz_layer + (self.ansatz_layer * 4 * self.ansatz_gateset)
-            if len(self.init_param) == expected_length:
-                isRandom = False
-            else:
-                raise ValueError(
-                    f"Invalid initial parameters length: {len(self.init_param)}. Expected: {expected_length}."
-                )
-        else:
-            raise ValueError(f"Unsupported initial parameters: {self.init_param}.")
-
-        # Optimization is off
-        if not self.optimization_status:
-
-            if isRandom:
-                random_initial_param = create_param(
-                    self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf
-                )
-                initial_cost = self.cost_function(param=random_initial_param)
-
-            else:
-                initial_param = self.init_param
-                initial_cost = self.cost_function(param=initial_param)
-
-        # Optimization is on
-        else:
-
-            # (1) Create random initial param
-            random_initial_param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
-
-            store_init_param_created = random_initial_param.tolist()
-            # (2) Calculate the initial cost with random initial param
-            initial_cost = self.cost_function(param=random_initial_param)
-
-            # (3) Checking constraint before optimization
-            if self.constraint and self.optimizer == "SLSQP":
-
-                vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
-                
-                if self.ansatz_noise_type == "time-depol-trotter":
-                    num_time = self.ansatz_layer
-                    total_params = len(random_initial_param)
-                    tf_index = num_time - 1  # Correct: index of the last time parameter
-
-                    # Standardize constraints for SLSQP
-                    vqe_constraint = create_time_constraints(num_time, total_params)
-                    t_final_constraints = create_tf_fixed_constraint(tf_index, total_params, self.ansatz_tf)
-                    
-                    # Passing as a list of LinearConstraint objects is supported in SciPy 1.1.0+
-                    constraints = [vqe_constraint, t_final_constraints]
-                else:
-                    constraints = vqe_constraint
-
-            elif self.optimizer != "SLSQP" and self.constraint:
-                raise ValueError(f"Constaint not supported for: {self.optimizer}")
-
-            # (4) Run optimization
-            min_cost, sol_optimized_param = self.run_optimization(
-                parameters = random_initial_param,
-                constraint = constraints
-            )  # type: ignore
-
-            # for i in range(self.iteration):
-
-            #     # (1) Create random initial param
-            #     param = create_param(self.ansatz_layer, self.ansatz_gateset, self.ansatz_ti, self.ansatz_tf)
-
-            #     # (2) Calculate the initial cost with random initial param
-            #     initial_costs.append(self.cost_function(param=param))
-
-            #     # (3) Run optimization
-            #     start_time = time.time()
-            #     cost, sol_optimized_param = self.run_optimization(param, constraint)  # type: ignore
-            #     end_time = time.time()
-
-            #     run_time = end_time - start_time
-            #     min_cost_history.append(cost)
-            #     optimized_param.append(sol_optimized_param)
-
-            #     print(f"Iteration {i+1} done with time taken: {run_time} sec.")
-        # --- ADD THIS LOGIC HERE ---
-
-        
-        if sol_optimized_param is not None:
-            # Initialize a fresh DensityMatrix object
-            state = DensityMatrix(self.nqubits)
-            
-            # Re-create the ansatz circuit with the best parameters found
-            final_circuit = self.create_ansatz(param=sol_optimized_param)
-            
-            # Apply the circuit to the state
-            final_circuit.update_quantum_state(state)
-            
-            # Get the actual numerical matrix (numpy array)
-            final_density_matrix_json = state.to_json()
-
-            # esetting
-            state = 0
-            state = DensityMatrix(self.nqubits)
-            # Re-create the ansatz circuit with the best parameters found
-            initial_circuit = self.create_ansatz(param=store_init_param_created)
-            # Apply the circuit to the state
-            initial_circuit.update_quantum_state(state)
-            # Get the actual numerical matrix (numpy array)
-            initial_density_matrix_json = state.to_json()
-
-
-        vqe_result: Dict = {
-            "initial_cost": initial_cost,
-            "min_cost": min_cost,
-            "init_random_param": store_init_param_created,
-            "optimized_param": sol_optimized_param,
-            "initial_density_matrix": initial_density_matrix_json,
-            "final_density_matrix": final_density_matrix_json,
-            "lie_trotter_details": self.lie_trotter_details
-        }
-
-        return vqe_result
-
-    def drawCircuit(self, prefix: str, dpi: int, filetype: str) -> None:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(current_dir)
-        output_dir = os.path.join(parent_dir, "output")
-        os.makedirs(output_dir, exist_ok=True)
-        if filetype.lower() == "svg":
-            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.svg")
-        elif filetype.lower() == "png":
-            output_file = os.path.join(output_dir, f"{prefix}_circuit_{timestamp}.png")
-        else:
-            raise ValueError(f"Invalid circuit figure file type: {filetype}. Valid types are: SVG, PNG.")
-
-        chunks = self.ansatz.get("chunks")
-        if chunks is None:
-            raise ValueError("chunks not available for this ansatz type (e.g. time-depol-trotter)")
-        circuit_drawer(chunks[0], "mpl")  # only this line
-        plt.savefig(output_file, dpi=dpi)
-        plt.close()
-        print(f"Circuit fig saved to: {os.path.abspath(output_file)}")
-
-    def get_noise_level(self) -> Tuple[Union[int, None], Union[int, None], Union[int, None]]:
-        """
-        Returns the noise levels.
-        """
-
-        noise_details = calculate_noise_levels(
-            nqubits=self.nqubits, identity_factors=self.ansatz_identity_factors, noise_profile=self.noise_profile
-        )
-
-        return noise_details
-
-    def get_ugate_hamiltonain(self) -> Observable:
-        """
-        Returns time-evolution gate Hamiltonian.
-        """
-        return self.ugate_hami
+    ###################################################################
+    ###################################################################
+    ###################################################################
+    ###################################################################
