@@ -198,9 +198,31 @@ def main():
             print("DEBUG: Datapoints\n")
             print(data_points)
             #cleaned_data_points = [tuple(row) for row in data_points]
+            # if GATE_COUNT_SPACE:
+            #     print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to gate count space...")
+            #     config["zne"]["data_points"] = [[(p[0] + p[3]), p[1]/2, p[2]/7, p[4]] for p in data_points]
+
+            ## Checking if Gate count is integer
             if GATE_COUNT_SPACE:
                 print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to gate count space...")
-                config["zne"]["data_points"] = [[(p[0] + p[3]), p[1]/2, p[2]/7, p[4]] for p in data_points]
+                
+                transformed = []
+                for i, p in enumerate(data_points):
+                    val1 = p[1] / 2
+                    val2 = p[2] / 7
+
+                    if val1 != int(val1):
+                        raise ValueError(
+                            f"Data point index {i}: p[1]={p[1]} is not divisible by 2 (got {val1})"
+                        )
+                    if val2 != int(val2):
+                        raise ValueError(
+                            f"Data point index {i}: p[2]={p[2]} is not divisible by 7 (got {val2})"
+                        )
+
+                    transformed.append([(p[0] + p[3]), int(val1), int(val2), p[4]])
+
+                config["zne"]["data_points"] = transformed
             else:
                 print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to RIC folding factor space...")
                 config["zne"]["data_points"] = [
