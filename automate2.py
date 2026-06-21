@@ -21,6 +21,7 @@ FOLDING_FACTOR =  [[0, 0, 0, 0], [1, 1, 1, 1], [1, 1, 1, 2], [1, 1, 2, 1]]
     
 ##-----------------**--------------------##
 CONFIG_PATH = "config_samples/q7_various_tmax_time_depol_1e-3.yml"
+NQUBIT: int = 7
 ##-----------------**--------------------##
 
 ##-----------------**--------------------##
@@ -207,17 +208,17 @@ def main():
                 print("OVERWRITING DATA POINTS FOR ZNE: Transforming data points to gate count space...")
                 
                 transformed = []
-                for i, p in enumerate(data_points):
+                for dp_idx, p in enumerate(data_points):  # renamed i -> dp_idx
                     val1 = p[1] / 2
-                    val2 = p[2] / 7
+                    val2 = p[2] / NQUBIT
 
                     if val1 != int(val1):
                         raise ValueError(
-                            f"Data point index {i}: p[1]={p[1]} is not divisible by 2 (got {val1})"
+                            f"Data point index {dp_idx}: p[1]={p[1]} is not divisible by 2 (got {val1})"
                         )
                     if val2 != int(val2):
                         raise ValueError(
-                            f"Data point index {i}: p[2]={p[2]} is not divisible by 7 (got {val2})"
+                            f"Data point index {dp_idx}: p[2]={p[2]} is not divisible by {NQUBIT} (got {val2})"
                         )
 
                     transformed.append([(p[0] + p[3]), int(val1), int(val2), p[4]])
