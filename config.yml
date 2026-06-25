@@ -23,7 +23,7 @@ observable:
   # WARNING: Coefficients can be overwritten:
   # 'custom': Not overwritten.
   # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
-  # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+  # 'heisenberg': Only cn is used (will be overwritten to [1]); bn and r are not used.
   coefficients:
     cn: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
     bn: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]

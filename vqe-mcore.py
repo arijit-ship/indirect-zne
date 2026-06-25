@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+import uuid
 from ast import Dict
 from datetime import datetime
 from typing import List
@@ -29,6 +30,30 @@ def load_config(config_path):
         config = yaml.safe_load(file)
     return config
 
+# Helper functions
+
+def serialize_optimize_result(result):
+    """Convert scipy OptimizeResult to a JSON-serializable dict."""
+    return {
+        "x":        result.x.tolist(),          # optimal parameters
+        "fun":      float(result.fun),           # optimal value
+        "success":  bool(result.success),
+        "message":  str(result.message),
+        "nit":      int(result.nit),
+        "nfev":     int(result.nfev),
+        # hess_inv can be a LinearOperator (not serializable) — guard it
+        "hess_inv": result.hess_inv.todense().tolist()
+                    if hasattr(result, "hess_inv")
+                    and hasattr(result.hess_inv, "todense")
+                    else (result.hess_inv.tolist()
+                    if hasattr(result, "hess_inv")
+                    and isinstance(result.hess_inv, np.ndarray)
+                    else None),
+    }
+
+def generate_experiment_id(prefix="id"):
+    # Generates something like: exp_a1b2c3d4-e5f6-...
+    return f"{prefix}_{uuid.uuid4()}"
 
 def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> None:
     """
@@ -36,6 +61,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     Identical JSON structure to initialize_vqe() in main.py.
     Designed to run in an isolated process — no shared state.
     """
+    experiment_id = generate_experiment_id("id")
+
     config = load_config(config_path)
 
     # Parse config — mirrors main.py exactly
@@ -78,6 +105,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     # Identical JSON structure to initialize_vqe() in main.py.
     # Lists of length 1 since this is a single run.
     output_data = {
+        "id": experiment_id,
         "config": config,
         "output": {
             "exact_sol": exact_cost,
@@ -94,14 +122,20 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
             "initial_states": [vqe_output["initial_density_matrix"]],
             "final_states": [vqe_output["final_density_matrix"]],
             "lie_trotter_details": vqe_output["lie_trotter_details"],
-            "cost_callings": vqe_output["cost_callings"]
+            
         },
+        "artifacts": {
+            "cost_callings_nfev": vqe_output["cost_callings"],
+            "opt_obj": serialize_optimize_result(vqe_output["opt_obj"]),
+            "all_states_per_nfev": vqe_output["all_states_per_nfev"],
+            "all_states_per_nit": vqe_output["all_states_per_nit"],
+        }
     }
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
     os.makedirs(batch_dir, exist_ok=True)
-    output_file = os.path.join(batch_dir, f"{file_name_prefix}_run{run_index:03d}_VQE.json")
+    output_file = os.path.join(batch_dir, f"{file_name_prefix}_run{run_index:03d}_{experiment_id}_VQE.json")
 
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=None, separators=(",", ":"))

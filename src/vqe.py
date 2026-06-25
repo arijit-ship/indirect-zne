@@ -8,6 +8,7 @@ from qulacs import DensityMatrix, Observable, QuantumCircuit, QuantumState
 from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
+
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
 from src.constraint import create_time_constraints, create_tf_fixed_constraint
 from src.createparam import create_param
@@ -70,6 +71,12 @@ class IndirectVQE:
         # Cost function calling counter
         # how many times did we hit the quantum backend?
         self.cost_fn_calling_counter: int = 0
+
+        # All states per cost calling (nfev) 
+        self.all_states_per_nfev = []
+
+        # States and params captured once per optimizer iteration (nit)
+        self.states_per_iteration: list = []
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
@@ -178,7 +185,7 @@ class IndirectVQE:
         """
         Variational quantum eigensolver cost function.
         """
-
+        state = 0
         if self.state.lower() == "dmatrix":
             state = DensityMatrix(self.nqubits)
         elif self.state.lower() == "statevector":
@@ -191,6 +198,12 @@ class IndirectVQE:
         cost = self.observable_hami.get_expectation_value(state)
         
         self.cost_fn_calling_counter += 1
+        self.all_states_per_nfev.append(
+            {
+            "param": param.tolist(),
+            "state": state.to_json()
+            }
+            )
 
         return cost
 
@@ -205,18 +218,29 @@ class IndirectVQE:
             cost = self.cost_function(param)
             cost_history.append(cost)
             return cost
+        
+        def _iteration_callback(param):
+            """Called by SciPy once per major iteration (nit). Captures state + params."""
+            state = DensityMatrix(self.nqubits) if self.state.lower() == "dmatrix" else QuantumState(self.nqubits)
+            circuit = self.create_ansatz(param=param)
+            circuit.update_quantum_state(state)
+            self.states_per_iteration.append({
+                "params": param.tolist(),
+                "state": state.to_json(),
+            })
 
         opt = minimize(
             _tracked_cost,
             parameters,
             method=self.optimizer,
             constraints=constraint,
+            callback=_iteration_callback,
         )
 
         min_cost = np.min(cost_history)
         optimized_params = opt.x.tolist()
 
-        return min_cost, optimized_params
+        return min_cost, optimized_params, opt
 
     # Old version
     def __run_optimization(self, parameters, constraint):
@@ -247,6 +271,9 @@ class IndirectVQE:
         initial_cost: float = 0
         min_cost: float | None = None
         sol_optimized_param = None
+
+        # Scipy minimize returned object
+        opt_obj_from_run = None
 
         # Storing density matrices
         initial_density_matrix_json = None
@@ -313,7 +340,7 @@ class IndirectVQE:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             # (4) Run optimization
-            min_cost, sol_optimized_param = self.run_optimization(
+            min_cost, sol_optimized_param, opt_obj_from_run = self.run_optimization(
                 parameters = random_initial_param,
                 constraint = constraints
             )  # type: ignore
@@ -372,7 +399,10 @@ class IndirectVQE:
             "initial_density_matrix": initial_density_matrix_json,
             "final_density_matrix": final_density_matrix_json,
             "lie_trotter_details": self.lie_trotter_details,
-            "cost_callings": self.cost_fn_calling_counter
+            "cost_callings": self.cost_fn_calling_counter,
+            "opt_obj": opt_obj_from_run,
+            "all_states_per_nfev": self.all_states_per_nfev,
+            "all_states_per_nit": self.states_per_iteration
         }
 
         return vqe_result
