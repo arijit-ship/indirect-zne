@@ -125,7 +125,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
             
         },
         "artifacts": {
-            "cost_callings_nfev": vqe_output["cost_callings"],
+            "cost_callings_nfev": vqe_output["cost_callings_nfev"],
             "opt_obj": serialize_optimize_result(vqe_output["opt_obj"]),
             "all_states_per_nfev": vqe_output["all_states_per_nfev"],
             "all_states_per_nit": vqe_output["all_states_per_nit"],

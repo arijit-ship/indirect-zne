@@ -399,7 +399,7 @@ class IndirectVQE:
             "initial_density_matrix": initial_density_matrix_json,
             "final_density_matrix": final_density_matrix_json,
             "lie_trotter_details": self.lie_trotter_details,
-            "cost_callings": self.cost_fn_calling_counter,
+            "cost_callings_nfev": self.cost_fn_calling_counter,
             "opt_obj": opt_obj_from_run,
             "all_states_per_nfev": self.all_states_per_nfev,
             "all_states_per_nit": self.states_per_iteration
