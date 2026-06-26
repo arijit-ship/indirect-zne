@@ -144,8 +144,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": [str(vqe_instance.get_ugate_hamiltonain())],
             "initial_parameters": vqe_output["init_random_param"],
-            "initial_states": [vqe_output["initial_density_matrix"]],
-            "final_states": [vqe_output["final_density_matrix"]],
+            # "initial_states": [vqe_output["initial_density_matrix"]],
+            # "final_states": [vqe_output["final_density_matrix"]],
             "lie_trotter_details": vqe_output["lie_trotter_details"],
             
         },

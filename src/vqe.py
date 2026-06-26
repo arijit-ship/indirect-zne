@@ -418,28 +418,31 @@ class IndirectVQE:
 
         # Post-optimization state reconstruction
         # for storing the density matrices
-        if sol_optimized_param is not None:
-            # Initialize a fresh DensityMatrix object
-            state = DensityMatrix(self.nqubits)
+        """
+        States are stored in HD5.
+        """
+        # if sol_optimized_param is not None:
+        #     # Initialize a fresh DensityMatrix object
+        #     state = DensityMatrix(self.nqubits)
             
-            # Re-create the ansatz circuit with the best parameters found
-            final_circuit = self.create_ansatz(param=sol_optimized_param)
+        #     # Re-create the ansatz circuit with the best parameters found
+        #     final_circuit = self.create_ansatz(param=sol_optimized_param)
             
-            # Apply the circuit to the state
-            final_circuit.update_quantum_state(state)
+        #     # Apply the circuit to the state
+        #     final_circuit.update_quantum_state(state)
             
-            # Get the actual numerical matrix (numpy array)
-            final_density_matrix_json = state.to_json()
+        #     # Get the actual numerical matrix (numpy array)
+        #     final_density_matrix_json = state.to_json()
 
-            # esetting
-            state = 0
-            state = DensityMatrix(self.nqubits)
-            # Re-create the ansatz circuit with the best parameters found
-            initial_circuit = self.create_ansatz(param=store_init_param_created)
-            # Apply the circuit to the state
-            initial_circuit.update_quantum_state(state)
-            # Get the actual numerical matrix (numpy array)
-            initial_density_matrix_json = state.to_json()
+        #     # esetting
+        #     state = 0
+        #     state = DensityMatrix(self.nqubits)
+        #     # Re-create the ansatz circuit with the best parameters found
+        #     initial_circuit = self.create_ansatz(param=store_init_param_created)
+        #     # Apply the circuit to the state
+        #     initial_circuit.update_quantum_state(state)
+        #     # Get the actual numerical matrix (numpy array)
+        #     initial_density_matrix_json = state.to_json()
 
         if sol_optimized_param is not None and self.run_dir:
             h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
@@ -468,8 +471,8 @@ class IndirectVQE:
             "min_cost": min_cost,
             "init_random_param": store_init_param_created,
             "optimized_param": sol_optimized_param,
-            "initial_density_matrix": initial_density_matrix_json,
-            "final_density_matrix": final_density_matrix_json,
+            # "initial_density_matrix": initial_density_matrix_json,
+            # "final_density_matrix": final_density_matrix_json,
             "lie_trotter_details": self.lie_trotter_details,
             "cost_callings_nfev": self.cost_fn_calling_counter,
             "opt_obj": opt_obj_from_run,
