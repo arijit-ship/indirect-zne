@@ -88,16 +88,14 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     message: str | None = config.get("message")
     history: bool = config.get("history")
     
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Batch directory level
+    
+    # Create the shared batch directory directly
     batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
-    # Specific run directory level inside the batch
-    run_dir = os.path.join(batch_dir, f"run_{run_index:03d}_{experiment_id}")
-    os.makedirs(run_dir, exist_ok=True)
+    os.makedirs(batch_dir, exist_ok=True)
 
-    # batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
-    # os.makedirs(batch_dir, exist_ok=True)
+    # Establish a unified base filename so json, h5, and drawings match perfectly
+    file_base_name = f"{file_name_prefix}_run{run_index:03d}_{experiment_id}"
 
     target_observable = constructObservable(
         nqubits=nqubits, definition=observable_def, coefficient=observable_coefficients
@@ -107,6 +105,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     print(f"[Run {run_index:03d}] Running...")
     start_time = time.time()
 
+    # Pass batch_dir directly to run_dir and pass file_base_name to run_id 
+    # to enforce identical naming for the generated .h5 file.
     vqe_instance = IndirectVQE(
         nqubits=nqubits,
         state=state,
@@ -116,8 +116,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
         noise_profile=noise_profile,
         identity_factors=[0, 0, 0, 0],
         init_param=initialparam,
-        run_dir = run_dir if history else None,
-        run_id = experiment_id,
+        run_dir = batch_dir if history else None,
+        run_id = f"{file_base_name}_HISTORY",
     )
     vqe_output = vqe_instance.run_vqe()
 
@@ -125,7 +125,6 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     print(f"[Run {run_index:03d}] Done in {total_run_time:.2f} sec")
 
     # Identical JSON structure to initialize_vqe() in main.py.
-    # Lists of length 1 since this is a single run.
     output_data = {
         "meta":{
         "id": experiment_id,
@@ -138,28 +137,24 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
             "initial_cost_history": [vqe_output["initial_cost"]],
             "optimized_minimum_cost": [vqe_output["min_cost"]],
             "optimized_parameters": [vqe_output["optimized_param"]],
-            "noise_details": vqe_instance.get_noise_level(),  # single dict, mirrors main.py
+            "noise_details": vqe_instance.get_noise_level(),
             "run_time_sec": total_run_time,
         },
         "others": {
             "observable_string": str(target_observable),
             "time_evolution_gate_hamiltonian_string": [str(vqe_instance.get_ugate_hamiltonain())],
             "initial_parameters": vqe_output["init_random_param"],
-            # "initial_states": [vqe_output["initial_density_matrix"]],
-            # "final_states": [vqe_output["final_density_matrix"]],
             "lie_trotter_details": vqe_output["lie_trotter_details"],
             
         },
         "artifacts": {
             "cost_callings_nfev": vqe_output["cost_callings_nfev"],
             "opt_obj": serialize_optimize_result(vqe_output["opt_obj"]),
-            # "all_states_per_nfev": vqe_output["all_states_per_nfev"],
-            # "all_states_per_nit": vqe_output["all_states_per_nit"],
         }
     }
 
-
-    output_file = os.path.join(run_dir, f"{file_name_prefix}_run{run_index:03d}_{experiment_id}_VQE.json")
+    # Save the json directly into the batch_dir using the unified file_base_name
+    output_file = os.path.join(batch_dir, f"{file_base_name}_VQE.json")
 
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=None, separators=(",", ":"))
@@ -168,7 +163,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
 
     if circuit_draw_status:
         vqe_instance.drawCircuit(
-            prefix=f"{file_name_prefix}_run{run_index:03d}",
+            prefix=file_base_name,
             dpi=fig_dpi,
             filetype=fig_filetype,
         )
@@ -214,4 +209,4 @@ if __name__ == "__main__":
     print("=" * symbol_count + "Done" + "=" * symbol_count)
     print(f"All {num_runs} runs completed in {total_time:.2f} sec")
     print(f"Output folder: output/{config['output']['file_name_prefix']}_{batch_timestamp}/")
-    print(f"Output files:  {config['output']['file_name_prefix']}_run000_VQE.json ... run{num_runs-1:03d}_VQE.json")
+    print(f"Output files:  {config['output']['file_name_prefix']}_run000_*.json ... run{num_runs-1:03d}_*.json")

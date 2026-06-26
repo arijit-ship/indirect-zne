@@ -11,7 +11,7 @@ state: "dmatrix"
 
 # Output configuration
 output:
-  file_name_prefix: "test-samll-sys" #heisenberg_ansatz_ric3_sample#1 
+  file_name_prefix: "no-history-test-samll-sys" #heisenberg_ansatz_ric3_sample#1 
   draw:
     status: False
     fig_dpi: 100

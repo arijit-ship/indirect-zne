@@ -156,7 +156,7 @@ class IndirectVQE:
     
     # HDF5 file to store all vqe history    
     def _init_h5_file(self):
-        h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+        h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
         with h5py.File(h5_path, "w") as hf:
             hf.attrs["id"] = str(self.run_id)
             hf.create_group("history_nfev")
@@ -217,7 +217,7 @@ class IndirectVQE:
         cost = self.observable_hami.get_expectation_value(state)
 
         if self.run_dir:
-            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+            h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
             with h5py.File(h5_path, "a") as hf:
                 idx = len(hf["history_nfev"])
                 grp = hf.require_group(f"history_nfev/{idx:05d}")
@@ -260,7 +260,7 @@ class IndirectVQE:
             circuit.update_quantum_state(state)
             cost_nit = self.observable_hami.get_expectation_value(state)
             if self.run_dir:
-                h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+                h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
                 with h5py.File(h5_path, "a") as hf:
                     idx = len(hf["history_nit"])
                     grp = hf.require_group(f"history_nit/{idx:05d}")
@@ -282,7 +282,7 @@ class IndirectVQE:
         optimized_params = opt.x.tolist()
 
         if self.run_dir:
-            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+            h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
             with h5py.File(h5_path, "a") as hf:
                 opt_grp = hf.require_group("opt")
                 opt_grp.create_dataset("success", data=bool(opt.success))
@@ -445,7 +445,7 @@ class IndirectVQE:
         #     initial_density_matrix_json = state.to_json()
 
         if sol_optimized_param is not None and self.run_dir:
-            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+            h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
 
             init_state = DensityMatrix(self.nqubits) if self.state.lower() == "dmatrix" else QuantumState(self.nqubits)
             self.create_ansatz(param=store_init_param_created).update_quantum_state(init_state)
