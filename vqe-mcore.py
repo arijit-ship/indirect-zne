@@ -7,7 +7,8 @@ import sys
 import time
 import uuid
 from ast import Dict
-from datetime import datetime
+from datetime import date, datetime
+
 from typing import List
 
 import yaml
@@ -51,9 +52,13 @@ def serialize_optimize_result(result):
                     else None),
     }
 
-def generate_experiment_id(prefix="id"):
-    # Generates something like: exp_a1b2c3d4-e5f6-...
-    return f"{prefix}_{uuid.uuid4()}"
+def generate_experiment_id(prefix: str | None = None) -> str:
+    experiment_id = str(uuid.uuid4())
+
+    if prefix is not None:
+        return f"{prefix}_{experiment_id}"
+
+    return experiment_id
 
 def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> None:
     """
@@ -61,7 +66,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     Identical JSON structure to initialize_vqe() in main.py.
     Designed to run in an isolated process — no shared state.
     """
-    experiment_id = generate_experiment_id("id")
+    experiment_id = generate_experiment_id()
+    timestamp_per_vqe = datetime.now().strftime("%Y%m%d_%H%M%S")
 
     config = load_config(config_path)
 
@@ -78,6 +84,19 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     noise_profile: Dict = config["noise_profile"]
     vaqe_profile: Dict = config["vqe"]
     initialparam: List[float] = config["init_param"]["value"]
+
+    message: str | None = config.get("message")
+    
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Batch directory level
+    batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
+    # Specific run directory level inside the batch
+    run_dir = os.path.join(batch_dir, f"run_{run_index:03d}_{experiment_id}")
+    os.makedirs(run_dir, exist_ok=True)
+
+    # batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
+    # os.makedirs(batch_dir, exist_ok=True)
 
     target_observable = constructObservable(
         nqubits=nqubits, definition=observable_def, coefficient=observable_coefficients
@@ -96,6 +115,8 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
         noise_profile=noise_profile,
         identity_factors=[0, 0, 0, 0],
         init_param=initialparam,
+        run_dir = run_dir,
+        run_id = experiment_id,
     )
     vqe_output = vqe_instance.run_vqe()
 
@@ -105,7 +126,11 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     # Identical JSON structure to initialize_vqe() in main.py.
     # Lists of length 1 since this is a single run.
     output_data = {
+        "meta":{
         "id": experiment_id,
+        "datatime": timestamp_per_vqe,
+        "message": message,
+        },
         "config": config,
         "output": {
             "exact_sol": exact_cost,
@@ -127,15 +152,13 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
         "artifacts": {
             "cost_callings_nfev": vqe_output["cost_callings_nfev"],
             "opt_obj": serialize_optimize_result(vqe_output["opt_obj"]),
-            "all_states_per_nfev": vqe_output["all_states_per_nfev"],
-            "all_states_per_nit": vqe_output["all_states_per_nit"],
+            # "all_states_per_nfev": vqe_output["all_states_per_nfev"],
+            # "all_states_per_nit": vqe_output["all_states_per_nit"],
         }
     }
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    batch_dir = os.path.join(current_dir, "output", f"{file_name_prefix}_{batch_timestamp}")
-    os.makedirs(batch_dir, exist_ok=True)
-    output_file = os.path.join(batch_dir, f"{file_name_prefix}_run{run_index:03d}_{experiment_id}_VQE.json")
+
+    output_file = os.path.join(run_dir, f"{file_name_prefix}_run{run_index:03d}_{experiment_id}_VQE.json")
 
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=None, separators=(",", ":"))

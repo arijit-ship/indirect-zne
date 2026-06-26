@@ -2,6 +2,8 @@ import os
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
+import h5py
+
 import matplotlib.pyplot as plt
 import numpy as np
 from qulacs import DensityMatrix, Observable, QuantumCircuit, QuantumState
@@ -33,6 +35,8 @@ class IndirectVQE:
         noise_profile: Dict,
         identity_factors: List[int],
         init_param: list[float] | str,
+        run_dir : None,
+        run_id: None
     ) -> None:
 
         self.nqubits = nqubits
@@ -77,6 +81,12 @@ class IndirectVQE:
 
         # States and params captured once per optimizer iteration (nit)
         self.states_per_iteration: list = []
+
+        self.run_dir = run_dir
+        self.run_id = run_id
+
+        if self.run_dir:
+            self._init_h5_file()
 
         """
         Validate the different args parsed form the config file and raise an error if inconsistancy found.
@@ -142,6 +152,15 @@ class IndirectVQE:
 
         if self.ansatz_noise_on_init_param:
             raise NotImplementedError("Adding noise to the initial parameters is not implemented yet.")
+        
+    
+    # HDF5 file to store all vqe history    
+    def _init_h5_file(self):
+        h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+        with h5py.File(h5_path, "w") as hf:
+            hf.attrs["id"] = str(self.run_id)
+            hf.create_group("history_nfev")
+            hf.create_group("history_nit")
 
     def create_ansatz(self, param: List[float]) -> QuantumCircuit:
         """
@@ -196,14 +215,26 @@ class IndirectVQE:
         self.ansatz_circuit = self.create_ansatz(param=param)
         self.ansatz_circuit.update_quantum_state(state)
         cost = self.observable_hami.get_expectation_value(state)
-        
+
+        if self.run_dir:
+            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+            with h5py.File(h5_path, "a") as hf:
+                idx = len(hf["history_nfev"])
+                grp = hf.require_group(f"history_nfev/{idx:05d}")
+                grp.create_dataset("param", data=param)
+                grp.create_dataset("state", data=state.get_matrix())
+                grp.create_dataset("cost",  data=float(cost))
+
+        # Counter (cost called by nfev)        
         self.cost_fn_calling_counter += 1
-        self.all_states_per_nfev.append(
-            {
-            "param": param.tolist(),
-            "state": state.to_json()
-            }
-            )
+        
+        # self.cost_fn_calling_counter += 1
+        # self.all_states_per_nfev.append(
+        #     {
+        #     "param": param.tolist(),
+        #     "state": state.to_json()
+        #     }
+        #     )
 
         return cost
 
@@ -221,13 +252,23 @@ class IndirectVQE:
         
         def _iteration_callback(param):
             """Called by SciPy once per major iteration (nit). Captures state + params."""
-            state = DensityMatrix(self.nqubits) if self.state.lower() == "dmatrix" else QuantumState(self.nqubits)
+            if self.state.lower() == "dmatrix":
+                state = DensityMatrix(self.nqubits)
+            else:
+                state = QuantumState(self.nqubits)
             circuit = self.create_ansatz(param=param)
             circuit.update_quantum_state(state)
-            self.states_per_iteration.append({
-                "params": param.tolist(),
-                "state": state.to_json(),
-            })
+            cost_nit = self.observable_hami.get_expectation_value(state)
+            if self.run_dir:
+                h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+                with h5py.File(h5_path, "a") as hf:
+                    idx = len(hf["history_nit"])
+                    grp = hf.require_group(f"history_nit/{idx:05d}")
+                    grp.create_dataset("param", data=param)
+                    grp.create_dataset("state", data=state.get_matrix())
+                    grp.create_dataset("cost",  data=float(cost_nit))
+                    
+
 
         opt = minimize(
             _tracked_cost,
@@ -239,6 +280,16 @@ class IndirectVQE:
 
         min_cost = np.min(cost_history)
         optimized_params = opt.x.tolist()
+
+        if self.run_dir:
+            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+            with h5py.File(h5_path, "a") as hf:
+                opt_grp = hf.require_group("opt")
+                opt_grp.create_dataset("success", data=bool(opt.success))
+                opt_grp.create_dataset("message", data=str(opt.message))
+                opt_grp.create_dataset("nfev",    data=int(opt.nfev))
+                opt_grp.create_dataset("nit",     data=int(opt.nit))
+                opt_grp.create_dataset("fun",     data=float(opt.fun))
 
         return min_cost, optimized_params, opt
 
@@ -390,6 +441,27 @@ class IndirectVQE:
             # Get the actual numerical matrix (numpy array)
             initial_density_matrix_json = state.to_json()
 
+        if sol_optimized_param is not None and self.run_dir:
+            h5_path = os.path.join(self.run_dir, f"vqe_run{self.run_id}.h5")
+
+            init_state = DensityMatrix(self.nqubits) if self.state.lower() == "dmatrix" else QuantumState(self.nqubits)
+            self.create_ansatz(param=store_init_param_created).update_quantum_state(init_state)
+            init_cost = self.observable_hami.get_expectation_value(init_state)
+
+            final_state = DensityMatrix(self.nqubits) if self.state.lower() == "dmatrix" else QuantumState(self.nqubits)
+            self.create_ansatz(param=sol_optimized_param).update_quantum_state(final_state)
+            final_cost = self.observable_hami.get_expectation_value(final_state)
+
+            with h5py.File(h5_path, "a") as hf:
+                init_grp = hf.require_group("init_sol")
+                init_grp.create_dataset("param", data=np.array(store_init_param_created))
+                init_grp.create_dataset("state", data=init_state.get_matrix())
+                init_grp.create_dataset("cost",  data=float(init_cost))
+
+                final_grp = hf.require_group("opt_sol")
+                final_grp.create_dataset("param", data=np.array(sol_optimized_param))
+                final_grp.create_dataset("state", data=final_state.get_matrix())
+                final_grp.create_dataset("cost",  data=float(final_cost))
 
         vqe_result: Dict = {
             "initial_cost": initial_cost,
@@ -401,8 +473,8 @@ class IndirectVQE:
             "lie_trotter_details": self.lie_trotter_details,
             "cost_callings_nfev": self.cost_fn_calling_counter,
             "opt_obj": opt_obj_from_run,
-            "all_states_per_nfev": self.all_states_per_nfev,
-            "all_states_per_nit": self.states_per_iteration
+            # "all_states_per_nfev": self.all_states_per_nfev,
+            # "all_states_per_nit": self.states_per_iteration
         }
 
         return vqe_result
