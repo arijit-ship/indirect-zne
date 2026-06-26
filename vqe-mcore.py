@@ -86,6 +86,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     initialparam: List[float] = config["init_param"]["value"]
 
     message: str | None = config.get("message")
+    history: bool = config.get("history")
     
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -115,7 +116,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
         noise_profile=noise_profile,
         identity_factors=[0, 0, 0, 0],
         init_param=initialparam,
-        run_dir = run_dir,
+        run_dir = run_dir if history else None,
         run_id = experiment_id,
     )
     vqe_output = vqe_instance.run_vqe()
