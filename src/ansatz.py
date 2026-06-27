@@ -141,8 +141,9 @@ def create_noisy_ansatz(
         "xznoise": "IndependentXZ",
         "time-depol": "time-depol",
         "time-depol-trotter": "time-depol-trotter",
-        "time-dphasing": "time-dphasing",
-        "time-ampdamp": "AmplitudeDamping"
+        "time-dephasing": "Dephasing",
+        "time-dphasing": "time-dphasing", # # <-- Alias for misspelled version
+        "time-ampdamp": "time-ampdamp"
     }
     
     noise_key = ansatz_noise_type.lower()
@@ -167,6 +168,7 @@ def create_noisy_ansatz(
             identity_factors=identity_factors
         )
     elif ansatz_noise_type == "time-depol":
+        print("DEPOLAIZING NOISE USED******\n\n")
         # p_i = Δp · (t_i+1 - t_i)
         # Δp =  ansatz_noise_prob [R, CZ, U, Y]
         circuit = create_timedepol_redun(
@@ -179,7 +181,7 @@ def create_noisy_ansatz(
             param=param,
             identity_factors=identity_factors
         )
-    elif ansatz_noise_type == "time-dphasing":
+    elif ansatz_noise_type == "time-dphasing" or "time-dphasing":
         print("DEPHASING NOISE USED******\n\n")
         # p_i = Δp · (t_i+1 - t_i)
         # Δp =  ansatz_noise_prob [R, CZ, U, Y]
@@ -488,6 +490,10 @@ def create_timedepol_redun(
     y_gate_factor: int = identity_factors[3]  # Identity scaling factor for Y gate
 
     circuit: QuantumCircuit = QuantumCircuit(nqubits)
+
+    #######################################
+    print(f"NOISE-TYPE: {noise_type}")
+    #######################################
 
     # Hard coded depolarizing
     noise_type = "Depolarizing"
