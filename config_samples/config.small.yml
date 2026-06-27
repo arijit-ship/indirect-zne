@@ -63,6 +63,10 @@ vqe:
     status: True
     algorithm: "SLSQP"
     constraint: True
+    opt_options: {
+            "maxiter": 100,  
+            "disp": True     # Optional: Set to True to print convergence messages in console
+        }
 
 # Initial parameters for the ansatz.
 init_param:

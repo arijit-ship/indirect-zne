@@ -47,6 +47,9 @@ class IndirectVQE:
         self.optimizer: str = vqe_profile["optimization"]["algorithm"]
         self.constraint: bool = vqe_profile["optimization"]["constraint"]
 
+        # Optimizer param
+        self.opt_options: dict = vqe_profile["optimization"]["opt_options"]
+
         # Ansatz variables
         self.ansatz_type: str = ansatz_profile["ugate"]["type"]
         self.ansatz_layer: int = ansatz_profile["layer"]
@@ -276,6 +279,7 @@ class IndirectVQE:
             method=self.optimizer,
             constraints=constraint,
             callback=_iteration_callback,
+            options=self.opt_options,
         )
 
         min_cost = np.min(cost_history)

@@ -82,11 +82,13 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     observable_coefficients: Dict = config["observable"]["coefficients"]
     ansatz: Dict = config["ansatz"]
     noise_profile: Dict = config["noise_profile"]
-    vaqe_profile: Dict = config["vqe"]
+    vqe_profile: Dict = config["vqe"]
     initialparam: List[float] = config["init_param"]["value"]
 
     message: str | None = config.get("message")
     history: bool = config.get("history")
+
+    #opt_options = vqe_profile["optimization"]["opt_options"]
     
     current_dir = os.path.dirname(os.path.abspath(__file__))
     
@@ -111,7 +113,7 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
         nqubits=nqubits,
         state=state,
         observable=target_observable,
-        vqe_profile=vaqe_profile,
+        vqe_profile=vqe_profile,
         ansatz_profile=ansatz,
         noise_profile=noise_profile,
         identity_factors=[0, 0, 0, 0],
