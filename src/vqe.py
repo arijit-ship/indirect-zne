@@ -47,8 +47,8 @@ class IndirectVQE:
         self.optimizer: str = vqe_profile["optimization"]["algorithm"]
         self.constraint: bool = vqe_profile["optimization"]["constraint"]
 
-        # Optimizer param
-        self.opt_options: dict = vqe_profile["optimization"]["opt_options"]
+        # Extract the opt_options dictionary directly
+        self.opt_options: dict = vqe_profile["optimization"].get("opt_options", {})
 
         # Ansatz variables
         self.ansatz_type: str = ansatz_profile["ugate"]["type"]
