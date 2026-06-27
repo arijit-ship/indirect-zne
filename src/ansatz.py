@@ -139,9 +139,11 @@ def create_noisy_ansatz(
         "bitflip": "BitFlip",
         "dephasing": "Dephasing",
         "xznoise": "IndependentXZ",
+
+        ###########time-dependent noise probabilities############
         "time-depol": "time-depol",
         "time-depol-trotter": "time-depol-trotter",
-        "time-dephasing": "Dephasing",
+        "time-dephasing": "time-dphasing",
         "time-dphasing": "time-dphasing", # # <-- Alias for misspelled version
         "time-ampdamp": "time-ampdamp"
     }
@@ -149,7 +151,7 @@ def create_noisy_ansatz(
     noise_key = ansatz_noise_type.lower()
 
     if noise_key not in valid_noise_types:
-        raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', 'xznoise', 'time-depol', 'time-depol-trotter', 'time-dephasing', or 'time-ampdamp.")
+        raise ValueError("Invalid noise type. Choose from 'depolarizing', 'bitflip', 'dephasing', 'xznoise', 'time-depol', 'time-depol-trotter', 'time-dephasing', 'time-dphasing' (alias for misspelled version of dephasing) or 'time-ampdamp.")
     # elif noise_key != "depolarizing":
     #     raise NotImplementedError(f"Noise type '{ansatz_noise_type}' is not implemented yet.")
     else:
@@ -181,7 +183,7 @@ def create_noisy_ansatz(
             param=param,
             identity_factors=identity_factors
         )
-    elif ansatz_noise_type == "time-dphasing" or "time-dphasing":
+    elif ansatz_noise_type in ["time-dephasing", "time-dphasing"]:
         print("DEPHASING NOISE USED******\n\n")
         # p_i = Δp · (t_i+1 - t_i)
         # Δp =  ansatz_noise_prob [R, CZ, U, Y]
