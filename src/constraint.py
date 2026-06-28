@@ -119,3 +119,41 @@ def create_tf_fixed_constraint(
     matrix[0, tf_index] = 1.0
 
     return LinearConstraint(matrix, [T_max], [T_max])
+
+
+def create_time_constraints_for_COBLYA(
+    time_params_length: int,
+) -> list[dict]:
+    """
+    COBYLA-compatible drop-in replacement for create_time_constraints().
+
+    Enforce:
+        t_0 >= 0
+        t_i - t_{i-1} >= 0  for i = 1, ..., n-1
+
+    COBYLA requires constraints as a list of dicts with:
+        {"type": "ineq", "fun": callable}  # fun(x) >= 0
+
+    Parameters
+    ----------
+    time_params_length : int
+        Number of time parameters [t0, t1, ..., t_f].
+        Note: all_params_length not needed — lambdas index directly into x.
+
+    Returns
+    -------
+    list of dict, one scalar constraint per row
+    """
+    constraints = []
+
+    # t_0 >= 0
+    constraints.append({"type": "ineq", "fun": lambda x: x[0]})
+
+    # t_i - t_{i-1} >= 0
+    for i in range(1, time_params_length):
+        constraints.append({
+            "type": "ineq",
+            "fun": lambda x, i=i: x[i] - x[i - 1]  # i=i captures loop var
+        })
+
+    return constraints

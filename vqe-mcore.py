@@ -12,6 +12,9 @@ from datetime import date, datetime
 from typing import List
 
 import yaml
+import h5py
+
+import numpy as np
 
 from configValidator import validate_yml_config
 from src.modules import get_eigen_min
@@ -31,25 +34,37 @@ def load_config(config_path):
         config = yaml.safe_load(file)
     return config
 
-# Helper functions
 
-def serialize_optimize_result(result):
-    """Convert scipy OptimizeResult to a JSON-serializable dict."""
+###########################################################
+# Helper functions
+###########################################################
+def serialize_optimize_result(result) -> dict:
+    """Convert scipy OptimizeResult to a JSON-serializable dict.
+    
+    Compatible with SLSQP, COBYLA, L-BFGS-B and other scipy optimizers.
+    Fields absent from a given optimizer are serialized as None.
+    """
+
+    # --- hess_inv: L-BFGS-B returns LinearOperator, SLSQP returns ndarray ---
+    hess_inv = None
+    if hasattr(result, "hess_inv") and result.hess_inv is not None:
+        if hasattr(result.hess_inv, "todense"):          # LinearOperator
+            hess_inv = np.asarray(result.hess_inv.todense()).tolist()
+        elif isinstance(result.hess_inv, np.ndarray):    # ndarray
+            hess_inv = result.hess_inv.tolist()
+
     return {
-        "x":        result.x.tolist(),          # optimal parameters
-        "fun":      float(result.fun),           # optimal value
+        "x":        result.x.tolist(),
+        "fun":      float(result.fun),
         "success":  bool(result.success),
         "message":  str(result.message),
-        "nit":      int(result.nit),
-        "nfev":     int(result.nfev),
-        # hess_inv can be a LinearOperator (not serializable) — guard it
-        "hess_inv": result.hess_inv.todense().tolist()
-                    if hasattr(result, "hess_inv")
-                    and hasattr(result.hess_inv, "todense")
-                    else (result.hess_inv.tolist()
-                    if hasattr(result, "hess_inv")
-                    and isinstance(result.hess_inv, np.ndarray)
-                    else None),
+        # COBYLA does not return nit
+        "nit":      int(result.nit)  if hasattr(result, "nit")  else None,
+        "nfev":     int(result.nfev) if hasattr(result, "nfev") else None,
+        # COBYLA / SLSQP do not return jac
+        "jac":      result.jac.tolist() if hasattr(result, "jac") and
+                    isinstance(result.jac, np.ndarray) else None,
+        "hess_inv": hess_inv,
     }
 
 def generate_experiment_id(prefix: str | None = None) -> str:
@@ -59,6 +74,8 @@ def generate_experiment_id(prefix: str | None = None) -> str:
         return f"{prefix}_{experiment_id}"
 
     return experiment_id
+###########################################################
+
 
 def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> None:
     """
@@ -150,13 +167,23 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
             
         },
         "artifacts": {
-            "cost_callings_nfev": vqe_output["cost_callings_nfev"],
+            # nfev + 1 
+            "cost_callings_total": vqe_output["cost_callings_total"],
             "opt_obj": serialize_optimize_result(vqe_output["opt_obj"]),
         }
     }
 
     # Save the json directly into the batch_dir using the unified file_base_name
     output_file = os.path.join(batch_dir, f"{file_base_name}_VQE.json")
+
+    if history:
+            h5_path = os.path.join(batch_dir, f"{file_base_name}_HISTORY.h5")
+            with h5py.File(h5_path, "a") as hf:
+                # Convert the config dict back to a clean YAML string layout
+                config_yaml_str = yaml.dump(config, default_flow_style=False)
+                
+                # Encode it to flat ASCII bytes so standard HDF5 openers don't crash
+                hf.attrs["config"] = config_yaml_str.encode("ascii", errors="ignore")
 
     with open(output_file, "w") as f:
         json.dump(output_data, f, indent=None, separators=(",", ":"))

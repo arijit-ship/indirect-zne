@@ -12,7 +12,7 @@ from scipy.optimize import minimize
 
 
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
-from src.constraint import create_time_constraints, create_tf_fixed_constraint
+from src.constraint import create_time_constraints, create_tf_fixed_constraint, create_time_constraints_for_COBLYA
 from src.createparam import create_param
 from src.hamiltonian import (
     create_heisenberg_hamiltonian,
@@ -288,11 +288,13 @@ class IndirectVQE:
         if self.run_dir:
             h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
             with h5py.File(h5_path, "a") as hf:
+                hf.create_dataset("cost_history", data=np.array(cost_history))
                 opt_grp = hf.require_group("opt")
                 opt_grp.create_dataset("success", data=bool(opt.success))
                 opt_grp.create_dataset("message", data=str(opt.message))
                 opt_grp.create_dataset("nfev",    data=int(opt.nfev))
-                opt_grp.create_dataset("nit",     data=int(opt.nit))
+                opt_grp.create_dataset("nit", data=int(getattr(opt, "nit", -1)))
+                #opt_grp.create_dataset("nit",     data=int(opt.nit))
                 opt_grp.create_dataset("fun",     data=float(opt.fun))
 
         return min_cost, optimized_params, opt
@@ -390,8 +392,15 @@ class IndirectVQE:
                     constraints = [vqe_constraint, t_final_constraints]
                 else:
                     constraints = vqe_constraint
+            
+            elif self.constraint and self.optimizer == "COBYLA":
 
-            elif self.optimizer != "SLSQP" and self.constraint:
+                print(f"[COBYLA constraint created!]:: Optimizer: {self.optimizer}, constraint: {self.constraint}")
+                cobyla_constraint = create_time_constraints_for_COBLYA(time_params_length=self.ansatz_layer)
+                constraints = cobyla_constraint
+
+            #elif self.optimizer != "SLSQP" and self.constraint:
+            else:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             # (4) Run optimization
@@ -478,7 +487,7 @@ class IndirectVQE:
             # "initial_density_matrix": initial_density_matrix_json,
             # "final_density_matrix": final_density_matrix_json,
             "lie_trotter_details": self.lie_trotter_details,
-            "cost_callings_nfev": self.cost_fn_calling_counter,
+            "cost_callings_total": self.cost_fn_calling_counter,
             "opt_obj": opt_obj_from_run,
             # "all_states_per_nfev": self.all_states_per_nfev,
             # "all_states_per_nit": self.states_per_iteration
