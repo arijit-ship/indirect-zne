@@ -88,6 +88,8 @@ class IndirectVQE:
         self.run_dir = run_dir
         self.run_id = run_id
 
+        self.iteration_count : int = 0
+
         if self.run_dir:
             self._init_h5_file()
 
@@ -225,7 +227,14 @@ class IndirectVQE:
                 idx = len(hf["history_nfev"])
                 grp = hf.require_group(f"history_nfev/{idx:05d}")
                 grp.create_dataset("param", data=param)
-                grp.create_dataset("state", data=state.get_matrix())
+                matrix = state.get_matrix()
+                grp.create_dataset("state", data=matrix,
+                                compression="gzip", compression_opts=4,
+                                shuffle=True,
+                                chunks=matrix.shape)
+                #grp.create_dataset("state", data=state.get_matrix(),
+                #compression="gzip", compression_opts=6)
+                #grp.create_dataset("state", data=state.get_matrix())
                 grp.create_dataset("cost",  data=float(cost))
 
         # Counter (cost called by nfev)        
@@ -247,7 +256,7 @@ class IndirectVQE:
     def run_optimization(self, parameters, constraint):
 
         cost_history = []
-
+        
         def _tracked_cost(param):
             cost = self.cost_function(param)
             cost_history.append(cost)
@@ -268,8 +277,16 @@ class IndirectVQE:
                     idx = len(hf["history_nit"])
                     grp = hf.require_group(f"history_nit/{idx:05d}")
                     grp.create_dataset("param", data=param)
-                    grp.create_dataset("state", data=state.get_matrix())
+                    matrix = state.get_matrix()
+                    grp.create_dataset("state", data=matrix,
+                                    compression="gzip", compression_opts=4,
+                                    shuffle=True,
+                                    chunks=matrix.shape)
+                    #grp.create_dataset("state", data=state.get_matrix())
                     grp.create_dataset("cost",  data=float(cost_nit))
+
+            self.iteration_count += 1
+            print(f"[ITERATIOS] :: {self.iteration_count}", flush=True)
                     
 
 
