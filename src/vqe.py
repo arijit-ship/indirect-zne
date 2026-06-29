@@ -247,7 +247,8 @@ class IndirectVQE:
         #     "state": state.to_json()
         #     }
         #     )
-
+        # Can give an estimation how long I have to wait
+        print(f"[ITERATION] :: {self.iteration_count} | [COST CALLING] :: {self.cost_fn_calling_counter}", flush=True)
         return cost
 
 
@@ -286,7 +287,7 @@ class IndirectVQE:
                     grp.create_dataset("cost",  data=float(cost_nit))
 
             self.iteration_count += 1
-            print(f"[ITERATIOS] :: {self.iteration_count}", flush=True)
+            print(f"[ITERATION] :: {self.iteration_count}", flush=True)
                     
 
 
