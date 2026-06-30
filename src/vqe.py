@@ -12,7 +12,11 @@ from scipy.optimize import minimize
 
 
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
-from src.constraint import create_time_constraints, create_tf_fixed_constraint, create_time_constraints_for_COBLYA
+from src.constraint import (
+    create_time_constraints_with_mingap,
+    create_tf_fixed_constraint,
+    create_time_constraints_for_COBLYA,
+)
 from src.createparam import create_param
 from src.hamiltonian import (
     create_heisenberg_hamiltonian,
@@ -395,15 +399,18 @@ class IndirectVQE:
             # (3) Checking constraint before optimization
             if self.constraint and self.optimizer == "SLSQP":
 
-                vqe_constraint = create_time_constraints(self.ansatz_layer, len(random_initial_param))
+                vqe_constraint = create_time_constraints_with_mingap(self.ansatz_layer, len(random_initial_param))
                 
                 if self.ansatz_noise_type == "time-depol-trotter":
                     num_time = self.ansatz_layer
                     total_params = len(random_initial_param)
                     tf_index = num_time - 1  # Correct: index of the last time parameter
 
+                    ###
+                    # Older experiment has create_time_constraints where wich allows t1 = t2
+
                     # Standardize constraints for SLSQP
-                    vqe_constraint = create_time_constraints(num_time, total_params)
+                    vqe_constraint = create_time_constraints_with_mingap(num_time, total_params)
                     t_final_constraints = create_tf_fixed_constraint(tf_index, total_params, self.ansatz_tf)
                     
                     # Passing as a list of LinearConstraint objects is supported in SciPy 1.1.0+

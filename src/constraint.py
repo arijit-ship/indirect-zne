@@ -157,3 +157,46 @@ def create_time_constraints_for_COBLYA(
         })
 
     return constraints
+
+def create_time_constraints_with_mingap(
+    time_params_length: int,
+    all_params_length: int,
+    min_dt: float = 1e-3,
+) -> LinearConstraint:
+    """
+    Enforce:
+        t_i >= 0
+        t_i - t_{i-1} >= min_dt  (strict ordering, no duplicates)
+
+    Parameters
+    ----------
+    time_params_length : int
+        Number of time parameters [t0, t1, ..., t_f]
+    all_params_length : int
+        Total number of parameters (time + angles)
+    min_dt : float
+        Minimum required gap between consecutive time points (default: 1e-3)
+
+    Returns
+    -------
+    LinearConstraint
+    """
+    rows = 2 * time_params_length - 1
+    matrix = np.zeros((rows, all_params_length))
+
+    # --- Positivity: t_i >= 0 ---
+    for i in range(time_params_length):
+        matrix[i, i] = 1.0
+
+    # --- Ordering: t_i - t_{i-1} >= min_dt ---
+    for i in range(1, time_params_length):
+        row = time_params_length + i - 1
+        matrix[row, i - 1] = -1.0
+        matrix[row, i] = 1.0
+
+    lower = np.zeros(rows)
+    # Apply min_dt to only the ordering rows
+    lower[time_params_length:] = min_dt
+    upper = np.full(rows, np.inf)
+
+    return LinearConstraint(matrix, lower, upper)

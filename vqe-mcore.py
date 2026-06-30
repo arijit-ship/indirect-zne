@@ -6,6 +6,9 @@ import os
 import sys
 import time
 import uuid
+
+import platform, psutil
+
 from ast import Dict
 from datetime import date, datetime
 
@@ -140,15 +143,23 @@ def run_single_vqe(run_index: int, config_path: str, batch_timestamp: str) -> No
     )
     vqe_output = vqe_instance.run_vqe()
 
+    timestamp_per_vqe_finished = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     total_run_time = time.time() - start_time
     print(f"[Run {run_index:03d}] Done in {total_run_time:.2f} sec")
 
     # Identical JSON structure to initialize_vqe() in main.py.
     output_data = {
-        "meta":{
-        "id": experiment_id,
-        "datatime": timestamp_per_vqe,
-        "message": message,
+            "meta": {
+            "id": experiment_id,
+            "datetime": timestamp_per_vqe,
+            "datetime_finished": timestamp_per_vqe_finished,
+            "run_index": run_index,
+            "python_version": sys.version,
+            "os": f"{platform.system()} {platform.release()}",
+            "hostname": platform.node(),
+            "cpu_logical_cores": os.cpu_count(),
+            "ram_total_gb": round(psutil.virtual_memory().total / 1e9, 2),
         },
         "config": config,
         "output": {
