@@ -33,7 +33,7 @@ observable:
     r: 1
 # Circuit configuration
 ansatz:
-  layer: 10
+  layer: 5
   # Not tested. Keep gateset=1, there could be bugs.
   gateset: 1
   ugate:
@@ -47,7 +47,7 @@ ansatz:
     # 'custom': Not overwritten.
     # 'xy-iss': cn, bn, r are overwritten to [0.5], [0], 0.
     # 'ising': cn, bn, r are overwritten to [0.5], [1], 1.
-    # 'heisenberg': Only cn is used (will NOT be overwritten); bn and r are not used.
+    # 'heisenberg': cn = 1 (over written).
       cn: [0.5, 0.5, 0.5]
       bn: [1.0, 1.0, 1.0, 1.0]
       r: 1
@@ -64,10 +64,11 @@ vqe:
     algorithm: "SLSQP" #COBYLA
     constraint: True
     opt_options:
-          #maxiter: 100
-          disp: True
-          ftol: 1e-6
-          maxiter: 100
+        maxiter: 100
+        disp: True
+        ftol: 1.0e-6      # Precision goal for the value of the objective function (stop when change is smaller than this.
+        eps: 1.0e-5       # Step size used for numerical approximation of the Jacobian if jac is not provided.
+        #iprint: 3
 # Initial parameters for the ansatz.
 init_param:
   # Parameter value: "random" or "List[floats]".
@@ -76,7 +77,7 @@ init_param:
 # Noise configuration
 noise_profile:
   status: True
-  type: "time-depol" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
+  type: "time-ampdamp" # Choose from 'depolarizing', 'bitflip', 'dephasing', or 'xznoise'.
   noise_prob: [0.001, 0.001, 0.001, 0.0] # Noise probabilities for [R, CZ, U, Y] gates.
   noise_on_init_param:
     # NOT IMPLEMENTED! Adds noise to the initial parameters.

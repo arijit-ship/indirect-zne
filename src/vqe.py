@@ -3,19 +3,17 @@ from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
 import h5py
-
 import matplotlib.pyplot as plt
 import numpy as np
 from qulacs import DensityMatrix, Observable, QuantumCircuit, QuantumState
 from qulacsvis import circuit_drawer
 from scipy.optimize import minimize
 
-
 from src.ansatz import create_noisy_ansatz, noiseless_ansatz
 from src.constraint import (
-    create_time_constraints_with_mingap,
     create_tf_fixed_constraint,
     create_time_constraints_for_COBLYA,
+    create_time_constraints_with_mingap,
 )
 from src.createparam import create_param
 from src.hamiltonian import (
@@ -39,8 +37,8 @@ class IndirectVQE:
         noise_profile: Dict,
         identity_factors: List[int],
         init_param: list[float] | str,
-        run_dir : None,
-        run_id: None
+        run_dir: None,
+        run_id: None,
     ) -> None:
 
         self.nqubits = nqubits
@@ -83,7 +81,7 @@ class IndirectVQE:
         # how many times did we hit the quantum backend?
         self.cost_fn_calling_counter: int = 0
 
-        # All states per cost calling (nfev) 
+        # All states per cost calling (nfev)
         self.all_states_per_nfev = []
 
         # States and params captured once per optimizer iteration (nit)
@@ -92,7 +90,7 @@ class IndirectVQE:
         self.run_dir = run_dir
         self.run_id = run_id
 
-        self.iteration_count : int = 0
+        self.iteration_count: int = 0
 
         if self.run_dir:
             self._init_h5_file()
@@ -161,9 +159,8 @@ class IndirectVQE:
 
         if self.ansatz_noise_on_init_param:
             raise NotImplementedError("Adding noise to the initial parameters is not implemented yet.")
-        
-    
-    # HDF5 file to store all vqe history    
+
+    # HDF5 file to store all vqe history
     def _init_h5_file(self):
         h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
         with h5py.File(h5_path, "w") as hf:
@@ -190,9 +187,9 @@ class IndirectVQE:
             )
             # If Lie-troter
             if self.ansatz_noise_type == "time-depol-trotter":
-                #print ("TROTTE!!!!\n\n\n\n\n\n")
+                # print ("TROTTE!!!!\n\n\n\n\n\n")
                 self.lie_trotter_details = self.ansatz.get("trotter_details", [])
-                #print(self.lie_trotter_details)
+                # print(self.lie_trotter_details)
             else:
                 self.lie_trotter_details = None
         else:
@@ -204,8 +201,6 @@ class IndirectVQE:
                 param=param,
             )
         self.ansatz_circuit = self.ansatz["circuit"]
-        
-        
 
         return self.ansatz_circuit
 
@@ -232,18 +227,17 @@ class IndirectVQE:
                 grp = hf.require_group(f"history_nfev/{idx:05d}")
                 grp.create_dataset("param", data=param)
                 matrix = state.get_matrix()
-                grp.create_dataset("state", data=matrix,
-                                compression="gzip", compression_opts=4,
-                                shuffle=True,
-                                chunks=matrix.shape)
-                #grp.create_dataset("state", data=state.get_matrix(),
-                #compression="gzip", compression_opts=6)
-                #grp.create_dataset("state", data=state.get_matrix())
-                grp.create_dataset("cost",  data=float(cost))
+                grp.create_dataset(
+                    "state", data=matrix, compression="gzip", compression_opts=4, shuffle=True, chunks=matrix.shape
+                )
+                # grp.create_dataset("state", data=state.get_matrix(),
+                # compression="gzip", compression_opts=6)
+                # grp.create_dataset("state", data=state.get_matrix())
+                grp.create_dataset("cost", data=float(cost))
 
-        # Counter (cost called by nfev)        
+        # Counter (cost called by nfev)
         self.cost_fn_calling_counter += 1
-        
+
         # self.cost_fn_calling_counter += 1
         # self.all_states_per_nfev.append(
         #     {
@@ -252,21 +246,23 @@ class IndirectVQE:
         #     }
         #     )
         # Can give an estimation how long I have to wait
-        print(f"[ITERATION] :: {self.iteration_count} | [COST CALLING] :: {self.cost_fn_calling_counter}", flush=True)
+        print(
+            f"[ITERATION] :: {self.iteration_count} | [COST CALLING] :: {self.cost_fn_calling_counter} | [CURRENT COST] :: {cost}",
+            flush=True,
+        )
         return cost
-
 
     # Improved version.
     # Jun 20, 2026
     def run_optimization(self, parameters, constraint):
 
         cost_history = []
-        
+
         def _tracked_cost(param):
             cost = self.cost_function(param)
             cost_history.append(cost)
             return cost
-        
+
         def _iteration_callback(param):
             """Called by SciPy once per major iteration (nit). Captures state + params."""
             if self.state.lower() == "dmatrix":
@@ -283,17 +279,14 @@ class IndirectVQE:
                     grp = hf.require_group(f"history_nit/{idx:05d}")
                     grp.create_dataset("param", data=param)
                     matrix = state.get_matrix()
-                    grp.create_dataset("state", data=matrix,
-                                    compression="gzip", compression_opts=4,
-                                    shuffle=True,
-                                    chunks=matrix.shape)
-                    #grp.create_dataset("state", data=state.get_matrix())
-                    grp.create_dataset("cost",  data=float(cost_nit))
+                    grp.create_dataset(
+                        "state", data=matrix, compression="gzip", compression_opts=4, shuffle=True, chunks=matrix.shape
+                    )
+                    # grp.create_dataset("state", data=state.get_matrix())
+                    grp.create_dataset("cost", data=float(cost_nit))
 
             self.iteration_count += 1
             print(f"[ITERATION] :: {self.iteration_count}", flush=True)
-                    
-
 
         opt = minimize(
             _tracked_cost,
@@ -304,7 +297,8 @@ class IndirectVQE:
             options=self.opt_options,
         )
 
-        min_cost = np.min(cost_history)
+        #min_cost = np.min(cost_history)
+        optimized_cost = opt.fun
         optimized_params = opt.x.tolist()
 
         if self.run_dir:
@@ -314,12 +308,12 @@ class IndirectVQE:
                 opt_grp = hf.require_group("opt")
                 opt_grp.create_dataset("success", data=bool(opt.success))
                 opt_grp.create_dataset("message", data=str(opt.message))
-                opt_grp.create_dataset("nfev",    data=int(opt.nfev))
+                opt_grp.create_dataset("nfev", data=int(opt.nfev))
                 opt_grp.create_dataset("nit", data=int(getattr(opt, "nit", -1)))
-                #opt_grp.create_dataset("nit",     data=int(opt.nit))
-                opt_grp.create_dataset("fun",     data=float(opt.fun))
+                # opt_grp.create_dataset("nit",     data=int(opt.nit))
+                opt_grp.create_dataset("fun", data=float(opt.fun))
 
-        return min_cost, optimized_params, opt
+        return optimized_cost, optimized_params, opt
 
     # Old version
     def __run_optimization(self, parameters, constraint):
@@ -400,7 +394,7 @@ class IndirectVQE:
             if self.constraint and self.optimizer == "SLSQP":
 
                 vqe_constraint = create_time_constraints_with_mingap(self.ansatz_layer, len(random_initial_param))
-                
+
                 if self.ansatz_noise_type == "time-depol-trotter":
                     num_time = self.ansatz_layer
                     total_params = len(random_initial_param)
@@ -412,26 +406,25 @@ class IndirectVQE:
                     # Standardize constraints for SLSQP
                     vqe_constraint = create_time_constraints_with_mingap(num_time, total_params)
                     t_final_constraints = create_tf_fixed_constraint(tf_index, total_params, self.ansatz_tf)
-                    
+
                     # Passing as a list of LinearConstraint objects is supported in SciPy 1.1.0+
                     constraints = [vqe_constraint, t_final_constraints]
                 else:
                     constraints = vqe_constraint
-            
+
             elif self.constraint and self.optimizer == "COBYLA":
 
                 print(f"[COBYLA constraint created!]:: Optimizer: {self.optimizer}, constraint: {self.constraint}")
                 cobyla_constraint = create_time_constraints_for_COBLYA(time_params_length=self.ansatz_layer)
                 constraints = cobyla_constraint
 
-            #elif self.optimizer != "SLSQP" and self.constraint:
+            # elif self.optimizer != "SLSQP" and self.constraint:
             else:
                 raise ValueError(f"Constaint not supported for: {self.optimizer}")
 
             # (4) Run optimization
             min_cost, sol_optimized_param, opt_obj_from_run = self.run_optimization(
-                parameters = random_initial_param,
-                constraint = constraints
+                parameters=random_initial_param, constraint=constraints
             )  # type: ignore
 
             # for i in range(self.iteration):
@@ -462,13 +455,13 @@ class IndirectVQE:
         # if sol_optimized_param is not None:
         #     # Initialize a fresh DensityMatrix object
         #     state = DensityMatrix(self.nqubits)
-            
+
         #     # Re-create the ansatz circuit with the best parameters found
         #     final_circuit = self.create_ansatz(param=sol_optimized_param)
-            
+
         #     # Apply the circuit to the state
         #     final_circuit.update_quantum_state(state)
-            
+
         #     # Get the actual numerical matrix (numpy array)
         #     final_density_matrix_json = state.to_json()
 
@@ -497,12 +490,12 @@ class IndirectVQE:
                 init_grp = hf.require_group("init_sol")
                 init_grp.create_dataset("param", data=np.array(store_init_param_created))
                 init_grp.create_dataset("state", data=init_state.get_matrix())
-                init_grp.create_dataset("cost",  data=float(init_cost))
+                init_grp.create_dataset("cost", data=float(init_cost))
 
                 final_grp = hf.require_group("opt_sol")
                 final_grp.create_dataset("param", data=np.array(sol_optimized_param))
                 final_grp.create_dataset("state", data=final_state.get_matrix())
-                final_grp.create_dataset("cost",  data=float(final_cost))
+                final_grp.create_dataset("cost", data=float(final_cost))
 
         vqe_result: Dict = {
             "initial_cost": initial_cost,
@@ -567,13 +560,13 @@ class IndirectVQE:
         VQE cost function using finite sampling via quri-parts estimator.
         Uses qulacs vector sampler which models finite measurement sampling.
         """
-        from quri_parts.core.operator import Operator, pauli_label
-        from quri_parts.core.state import GeneralCircuitQuantumState
         from quri_parts.core.estimator.sampling import create_sampling_estimator
-        from quri_parts.qulacs.sampler import create_qulacs_vector_sampler
         from quri_parts.core.measurement import bitwise_commuting_pauli_measurement
+        from quri_parts.core.operator import Operator, pauli_label
         from quri_parts.core.sampling.shots_allocator import create_equipartition_shots_allocator
+        from quri_parts.core.state import GeneralCircuitQuantumState
         from quri_parts.qulacs.circuit import convert_circuit
+        from quri_parts.qulacs.sampler import create_qulacs_vector_sampler
 
         self.ansatz_circuit = self.create_ansatz(param=param)
 
@@ -594,10 +587,7 @@ class IndirectVQE:
                 operator.constant += coeff
                 continue
 
-            label_str = " ".join(
-                f"{pauli_map[pid]}{qidx}"
-                for pid, qidx in zip(pauli_ids, pauli_qubits)
-            )
+            label_str = " ".join(f"{pauli_map[pid]}{qidx}" for pid, qidx in zip(pauli_ids, pauli_qubits))
             operator[pauli_label(label_str)] = coeff
 
         # Wrap quri-parts circuit as state and estimate
@@ -614,8 +604,7 @@ class IndirectVQE:
 
         return cost
 
-
-    def __cost_function(self, param: List[float], n_shots: int=10000) -> float:
+    def __cost_function(self, param: List[float], n_shots: int = 10000) -> float:
         """
         Variational quantum eigensolver cost function.
         """
@@ -632,7 +621,7 @@ class IndirectVQE:
         cost, var, std = self._estimate_expectation_shots(self.observable_hami, state, n_shots)
 
         return cost
-    
+
     def __estimate_expectation_shots(
         self,
         observable_hami,
@@ -683,7 +672,7 @@ class IndirectVQE:
         # Split shots between the two bases needed
         has_x = bool(xx_terms or x_terms)
         has_z = bool(zz_terms or z_terms)
-        
+
         # Simple equal split strategy
         shots_x = n_shots // 2 if (has_x and has_z) else (n_shots if has_x else 0)
         shots_z = n_shots - shots_x if (has_x and has_z) else (n_shots if has_z else 0)
@@ -696,6 +685,7 @@ class IndirectVQE:
             # Clone state and rotate to X basis (Hadamard)
             x_state = state.copy()
             from qulacs import QuantumCircuit
+
             rot = QuantumCircuit(n)
             for q in range(n):
                 rot.add_H_gate(q)
@@ -706,7 +696,7 @@ class IndirectVQE:
             for shot_idx, bitstring in enumerate(samples):
                 # Bit extraction: bitstring LSB is qubit 0
                 e_shot = 0.0
-                
+
                 # Optimization: only extract bits for qubits we actually care about,
                 # or pre-unpack up to max needed index.
                 bits = [(bitstring >> i) & 1 for i in range(n)]
@@ -742,7 +732,7 @@ class IndirectVQE:
         # ----------------------------------------------------------
         mean_x = x_shot_energies.mean() if shots_x > 0 else 0.0
         mean_z = z_shot_energies.mean() if shots_z > 0 else 0.0
-        
+
         # Combined mean includes the static identity offset
         mean_energy = mean_x + mean_z + constant_energy
 
