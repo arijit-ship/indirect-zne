@@ -1,24 +1,14 @@
 {
     "summary": {
-        "ensemble_var_hx": 1.9424739392770847,
-        "ensemble_var_hy": 1.2335379229819474,
-        "ensemble_var_hz": 1.9468966660883233,
-        "ensemble_var_total": 5.122908528347354,
         "quantum_var_hx": 6.176210516680958,
         "quantum_var_hy": 6.5971095096621,
         "quantum_var_hz": 6.130355587996084,
         "quantum_var_total": 18.903675614339143,
-        "mean_n_samples": 141.0,
-        "total_n_samples": 1410,
         "n_files": 10
     },
     "per_file_results": [
         {
             "n_samples": 164,
-            "ensemble_var_hx": 1.8726854616216233,
-            "ensemble_var_hy": 1.0816992625123554,
-            "ensemble_var_hz": 1.8642638794499042,
-            "ensemble_var_total": 4.818648603583883,
             "quantum_var_hx": 6.141596591990136,
             "quantum_var_hy": 6.6978568083511325,
             "quantum_var_hz": 6.129747495792149,
@@ -27,22 +17,14 @@
         },
         {
             "n_samples": 193,
-            "ensemble_var_hx": 1.573548297974865,
-            "ensemble_var_hy": 0.9653366654475581,
-            "ensemble_var_hz": 1.587908390091167,
-            "ensemble_var_total": 4.12679335351359,
             "quantum_var_hx": 6.1710319958649915,
             "quantum_var_hy": 6.659536086557396,
             "quantum_var_hz": 6.155742259277838,
-            "quantum_var_total": 18.986310341700225,
+            "quantum_var_total": 18.98631034170023,
             "filename": "8Q-t20-heisen-amp_run001_0389087b-7e88-4a69-bd61-06a443e6a01d_HISTORY.h5"
         },
         {
             "n_samples": 107,
-            "ensemble_var_hx": 2.4078979714154087,
-            "ensemble_var_hy": 1.430067956385435,
-            "ensemble_var_hz": 2.3693772903745707,
-            "ensemble_var_total": 6.2073432181754145,
             "quantum_var_hx": 6.409325991283777,
             "quantum_var_hy": 6.989075720948128,
             "quantum_var_hz": 6.344877129342959,
@@ -51,10 +33,6 @@
         },
         {
             "n_samples": 106,
-            "ensemble_var_hx": 1.9795786751886286,
-            "ensemble_var_hy": 1.3284631753335159,
-            "ensemble_var_hz": 1.953885165115981,
-            "ensemble_var_total": 5.2619270156381255,
             "quantum_var_hx": 6.039267505710379,
             "quantum_var_hy": 6.561342502558547,
             "quantum_var_hz": 6.192035684156466,
@@ -63,10 +41,6 @@
         },
         {
             "n_samples": 142,
-            "ensemble_var_hx": 1.853809738734471,
-            "ensemble_var_hy": 1.3326844551424486,
-            "ensemble_var_hz": 1.9292084021230522,
-            "ensemble_var_total": 5.115702595999972,
             "quantum_var_hx": 6.152006744267261,
             "quantum_var_hy": 6.548526247106011,
             "quantum_var_hz": 5.995426765117104,
@@ -75,46 +49,30 @@
         },
         {
             "n_samples": 155,
-            "ensemble_var_hx": 1.895761733196272,
-            "ensemble_var_hy": 1.20847802641845,
-            "ensemble_var_hz": 1.8853356082405401,
-            "ensemble_var_total": 4.989575367855262,
             "quantum_var_hx": 6.061402249121782,
             "quantum_var_hy": 6.367480981364571,
             "quantum_var_hz": 5.992879842499184,
-            "quantum_var_total": 18.421763072985534,
+            "quantum_var_total": 18.421763072985538,
             "filename": "8Q-t20-heisen-amp_run005_bfd9fe01-e4f1-4c75-83dd-bc9ee80f6956_HISTORY.h5"
         },
         {
             "n_samples": 134,
-            "ensemble_var_hx": 2.2340599392893985,
-            "ensemble_var_hy": 1.3303456475637967,
-            "ensemble_var_hz": 2.234062899841339,
-            "ensemble_var_total": 5.798468486694534,
             "quantum_var_hx": 6.232123395493176,
             "quantum_var_hy": 6.535898168399627,
             "quantum_var_hz": 6.063247470622612,
-            "quantum_var_total": 18.831269034515415,
+            "quantum_var_total": 18.83126903451541,
             "filename": "8Q-t20-heisen-amp_run006_3cb45fb9-16d7-4ac9-9e16-4450eb5f02a0_HISTORY.h5"
         },
         {
             "n_samples": 164,
-            "ensemble_var_hx": 1.6905460733896547,
-            "ensemble_var_hy": 1.2015251040108046,
-            "ensemble_var_hz": 1.6706557445764325,
-            "ensemble_var_total": 4.562726921976892,
             "quantum_var_hx": 6.045521150526774,
             "quantum_var_hy": 6.39765108548865,
             "quantum_var_hz": 5.777439572957156,
-            "quantum_var_total": 18.22061180897258,
+            "quantum_var_total": 18.220611808972578,
             "filename": "8Q-t20-heisen-amp_run007_060c810b-fb51-4359-8f1b-1cabb7a24714_HISTORY.h5"
         },
         {
             "n_samples": 145,
-            "ensemble_var_hx": 1.6548628604165287,
-            "ensemble_var_hy": 1.102586638762161,
-            "ensemble_var_hz": 1.6739485685012987,
-            "ensemble_var_total": 4.4313980676799885,
             "quantum_var_hx": 6.022317332527519,
             "quantum_var_hy": 6.588775520031664,
             "quantum_var_hz": 6.125300234037113,
@@ -123,14 +81,10 @@
         },
         {
             "n_samples": 100,
-            "ensemble_var_hx": 2.2619886415439954,
-            "ensemble_var_hy": 1.354192298242947,
-            "ensemble_var_hz": 2.3003207125689453,
-            "ensemble_var_total": 5.916501652355888,
             "quantum_var_hx": 6.487512210023778,
             "quantum_var_hy": 6.624951975815284,
             "quantum_var_hz": 6.526859426158263,
-            "quantum_var_total": 19.639323611997327,
+            "quantum_var_total": 19.639323611997323,
             "filename": "8Q-t20-heisen-amp_run009_6db53149-50db-48bb-9d88-92c16cff0090_HISTORY.h5"
         }
     ]
