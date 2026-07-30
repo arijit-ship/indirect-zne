@@ -1,3 +1,4 @@
+import math
 import matplotlib
 import matplotlib.pyplot as plt
 import os
@@ -456,3 +457,145 @@ def make_zne_order_table(
         f.write(latex_output)
 
     return fig
+
+
+
+def to_sci_notation(value: float, sig_figs: int = 3) -> str:
+    """
+    Convert a float into a LaTeX '$a.bc \\times 10^{n}$' style string,
+    suitable for journal tables.
+
+    Examples
+    --------
+    12.25              -> "$1.23 \\times 10^{1}$"
+    165.765625         -> "$1.66 \\times 10^{2}$"
+    98482.74544026295  -> "$9.85 \\times 10^{4}$"
+    """
+    if value == 0:
+        return f"$0.00 \\times 10^{{0}}$"
+
+    exponent = math.floor(math.log10(abs(value)))
+    mantissa = value / (10 ** exponent)
+
+    # Guard against rounding pushing mantissa to 10.xx (e.g. 9.999 -> 10.00)
+    mantissa_str = f"{mantissa:.{sig_figs - 1}f}"
+    if float(mantissa_str) >= 10:
+        mantissa = mantissa / 10
+        exponent += 1
+        mantissa_str = f"{mantissa:.{sig_figs - 1}f}"
+
+    return f"${mantissa_str} \\times 10^{{{exponent}}}$"
+
+
+def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> str:
+    """
+    Build the LaTeX table string (as in the boilerplate) directly from
+    mul_var_data == PROCESSED_SIM_DATA["ZNE-mul-var"].
+
+    mul_var_data: dict of entries (one per ZNE run), each entry containing
+        - 'degree'          : ZNE order
+        - 'zne_mean'        : ZNE mitigated estimate (mean)
+        - 'zne_std'         : ZNE mitigated estimate (std)
+        - 'mean_noise_off'  : noise-free estimation mean (same across entries)
+        - 'std_noise_off'   : noise-free estimation std  (same across entries)
+        - 'mean_exp_vals'   : list, [0] is the unmitigated mean
+        - 'std_exp_vals'    : list, [0] is the unmitigated std
+        - 'cost_mean'       : ZNE sampling overhead (c)
+
+    Returns
+    -------
+    str : full LaTeX table string, ready to print / write to file.
+    """
+    # ── Sort entries by ZNE order (degree) ──────────────────────────────────
+    sorted_keys = sorted(mul_var_data.keys(), key=lambda k: mul_var_data[k]["degree"])
+
+    # ── Pull noise-free / unmitigated values (identical across entries) ─────
+    any_entry = mul_var_data[sorted_keys[0]]
+    noise_free_mean = any_entry["mean_noise_off"]
+    noise_free_std = any_entry["std_noise_off"]
+    unmitigated_mean = any_entry["mean_exp_vals"][0]
+    unmitigated_std = any_entry["std_exp_vals"][0]
+
+    # ── Header ────────────────────────────────────────────────────────────
+    lines = []
+    lines.append(r"\begin{table}")
+    lines.append(
+        r"\caption{\textbf{Multi-variate ZNE in plot Figure "
+        r"\ref{fig-plots-zne-diff-orders-multi-variate}. Mean values and "
+        r"corresponding standard deviations are computed over 10 independent "
+        r"experimental runs.}}"
+    )
+    lines.append(r"\label{table-multi-var-zne}")
+    lines.append(r"\setlength{\tabcolsep}{3pt}")
+    lines.append(r"\begin{tabular}{|p{71pt}|p{71pt}|p{71pt}|}")
+    lines.append(r"\hline")
+    lines.append(
+        r"Quantity & Estimated Value (Mean $\pm$ Std. Dev.) & "
+        r"ZNE Sampling Overhead $(c)$ \\"
+    )
+    lines.append(r"\hline")
+
+    # ── Fixed rows: noise-free & unmitigated ─────────────────────────────────
+    lines.append(
+        f"Noise-free estimation & ${noise_free_mean:.3f} \\pm {noise_free_std:.3f}$ & -- \\\\"
+    )
+    lines.append(r"\hline")
+    lines.append(
+        f"Unmitigated & ${unmitigated_mean:.3f} \\pm {unmitigated_std:.3f}$ & -- \\\\"
+    )
+    lines.append(r"\hline")
+
+    # ── ZNE order rows ────────────────────────────────────────────────────
+    for key in sorted_keys:
+        entry = mul_var_data[key]
+        degree = entry["degree"]
+        zne_mean = entry["zne_mean"]
+        zne_std = entry["zne_std"]
+        cost = entry["cost_mean"]
+        cost_str = to_sci_notation(cost, sig_figs=cost_sig_figs)
+        lines.append(
+            f"ZNE of order {degree} & ${zne_mean:.3f} \\pm {zne_std:.3f}$ & {cost_str} \\\\"
+        )
+    lines.append(r"\hline")
+
+    # ── Footnote row ──────────────────────────────────────────────────────
+    lines.append(
+        r"\multicolumn{3}{p{215pt}}{All values are expressed in dimensionless "
+        r"units. Due to the large number of data points, we do not include "
+        r"them explicitly here. For more detailed data used in this "
+        r"multi-variate extrapolation, refer to \cite{indirect-zne-github}.} \\"
+    )
+    lines.append(r"\hline")
+
+    lines.append(r"\end{tabular}")
+    lines.append(r"\end{table}")
+
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    # Quick sanity check with (a trimmed version of) the provided data structure
+    mul_var_data = {
+        "muld2": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
+                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
+                   "zne_mean": -9.365709494803022, "zne_std": 0.09252120925043855,
+                   "degree": 2, "cost_mean": 165.76562499999915},
+        "muld1": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
+                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
+                   "zne_mean": -8.816096372239517, "zne_std": 0.12436742710641012,
+                   "degree": 1, "cost_mean": 12.25},
+        "muld5": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
+                   "mean_exp_vals": [-7.028104805115261], "std_exp_vals": [0.158371805293024],
+                   "zne_mean": -9.513671206824233, "zne_std": 0.06799107480719531,
+                   "degree": 5, "cost_mean": 98482.74544026295},
+        "muld3": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
+                   "mean_exp_vals": [-7.028104805115261], "std_exp_vals": [0.158371805293024],
+                   "zne_mean": -9.524398265652781, "zne_std": 0.07641775243479651,
+                   "degree": 3, "cost_mean": 1614.4072875976015},
+        "muld4": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
+                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
+                   "zne_mean": -9.544936237854959, "zne_std": 0.06975206566945787,
+                   "degree": 4, "cost_mean": 12941.062088941126},
+    }
+
+    print(make_zne_order_table_latex(mul_var_data))
