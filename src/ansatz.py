@@ -850,7 +850,6 @@ def create_time_depol_trotter(
     hamiltonian: Observable,
     param: List[float],
     identity_factors: List[int],
-    # del_t is gamma
     delta_t: float = 0.05,
 ) -> dict:
 
