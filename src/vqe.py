@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 from typing import Dict, List, Tuple, Union
 
@@ -208,6 +209,9 @@ class IndirectVQE:
         """
         Variational quantum eigensolver cost function.
         """
+        t_start = time.perf_counter()
+
+        t0 = time.perf_counter()
         state = 0
         if self.state.lower() == "dmatrix":
             state = DensityMatrix(self.nqubits)
@@ -215,12 +219,23 @@ class IndirectVQE:
             state = QuantumState(self.nqubits)
         else:
             raise ValueError(f"Unsupported state: {self.state}. Supported states are: 'dmatrix', 'statevector'")
+        t_state_init = time.perf_counter() - t0
 
+        t0 = time.perf_counter()
         self.ansatz_circuit = self.create_ansatz(param=param)
-        self.ansatz_circuit.update_quantum_state(state)
-        cost = self.observable_hami.get_expectation_value(state)
+        t_create_ansatz = time.perf_counter() - t0
 
+        t0 = time.perf_counter()
+        self.ansatz_circuit.update_quantum_state(state)
+        t_update_state = time.perf_counter() - t0
+
+        t0 = time.perf_counter()
+        cost = self.observable_hami.get_expectation_value(state)
+        t_expectation = time.perf_counter() - t0
+
+        t_h5 = 0.0
         if self.run_dir:
+            t0 = time.perf_counter()
             h5_path = os.path.join(self.run_dir, f"{self.run_id}.h5")
             with h5py.File(h5_path, "a") as hf:
                 idx = len(hf["history_nfev"])
@@ -230,26 +245,25 @@ class IndirectVQE:
                 grp.create_dataset(
                     "state", data=matrix, compression="gzip", compression_opts=4, shuffle=True, chunks=matrix.shape
                 )
-                # grp.create_dataset("state", data=state.get_matrix(),
-                # compression="gzip", compression_opts=6)
-                # grp.create_dataset("state", data=state.get_matrix())
                 grp.create_dataset("cost", data=float(cost))
+            t_h5 = time.perf_counter() - t0
 
         # Counter (cost called by nfev)
         self.cost_fn_calling_counter += 1
 
-        # self.cost_fn_calling_counter += 1
-        # self.all_states_per_nfev.append(
-        #     {
-        #     "param": param.tolist(),
-        #     "state": state.to_json()
-        #     }
-        #     )
-        # Can give an estimation how long I have to wait
+        t_total = time.perf_counter() - t_start
+
         print(
             f"[ITERATION] :: {self.iteration_count} | [COST CALLING] :: {self.cost_fn_calling_counter} | [CURRENT COST] :: {cost}",
             flush=True,
         )
+        print(
+            f"[TIMING] state_init={t_state_init:.4f}s | create_ansatz={t_create_ansatz:.4f}s | "
+            f"update_state={t_update_state:.4f}s | expectation={t_expectation:.4f}s | "
+            f"h5_write={t_h5:.4f}s | total={t_total:.4f}s",
+            flush=True,
+        )
+
         return cost
 
     # Improved version.
