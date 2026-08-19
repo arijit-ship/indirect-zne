@@ -1,6 +1,6 @@
 
 message: "History is stored in hdf5"
-history: False
+history: True
 # Run configurations: Choose from 'vqe', 'redundant', and 'zne'.
 run: "vqe"
 
