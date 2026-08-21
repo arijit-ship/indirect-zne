@@ -486,7 +486,6 @@ def to_sci_notation(value: float, sig_figs: int = 3) -> str:
 
     return f"${mantissa_str} \\times 10^{{{exponent}}}$"
 
-
 def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> str:
     """
     Build the LaTeX table string (as in the boilerplate) directly from
@@ -500,7 +499,8 @@ def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> st
         - 'std_noise_off'   : noise-free estimation std  (same across entries)
         - 'mean_exp_vals'   : list, [0] is the unmitigated mean
         - 'std_exp_vals'    : list, [0] is the unmitigated std
-        - 'cost_mean'       : ZNE sampling overhead (c)
+        - 'cost_eq_mean'    : ZNE sampling overhead under equal shot allocation,
+                               c = M * Gamma^2  (Eq. eq-lre-sampling-c-bar)
 
     Returns
     -------
@@ -551,7 +551,7 @@ def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> st
         degree = entry["degree"]
         zne_mean = entry["zne_mean"]
         zne_std = entry["zne_std"]
-        cost = entry["cost_mean"]
+        cost = entry["cost_eq_mean"]
         cost_str = to_sci_notation(cost, sig_figs=cost_sig_figs)
         lines.append(
             f"ZNE of order {degree} & ${zne_mean:.3f} \\pm {zne_std:.3f}$ & {cost_str} \\\\"
@@ -571,31 +571,3 @@ def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> st
     lines.append(r"\end{table}")
 
     return "\n".join(lines)
-
-
-if __name__ == "__main__":
-    # Quick sanity check with (a trimmed version of) the provided data structure
-    mul_var_data = {
-        "muld2": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
-                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
-                   "zne_mean": -9.365709494803022, "zne_std": 0.09252120925043855,
-                   "degree": 2, "cost_mean": 165.76562499999915},
-        "muld1": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
-                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
-                   "zne_mean": -8.816096372239517, "zne_std": 0.12436742710641012,
-                   "degree": 1, "cost_mean": 12.25},
-        "muld5": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
-                   "mean_exp_vals": [-7.028104805115261], "std_exp_vals": [0.158371805293024],
-                   "zne_mean": -9.513671206824233, "zne_std": 0.06799107480719531,
-                   "degree": 5, "cost_mean": 98482.74544026295},
-        "muld3": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
-                   "mean_exp_vals": [-7.028104805115261], "std_exp_vals": [0.158371805293024],
-                   "zne_mean": -9.524398265652781, "zne_std": 0.07641775243479651,
-                   "degree": 3, "cost_mean": 1614.4072875976015},
-        "muld4": {"mean_noise_off": -9.65844800304873, "std_noise_off": 0.05286937954035172,
-                   "mean_exp_vals": [-7.028104805115262], "std_exp_vals": [0.158371805293024],
-                   "zne_mean": -9.544936237854959, "zne_std": 0.06975206566945787,
-                   "degree": 4, "cost_mean": 12941.062088941126},
-    }
-
-    print(make_zne_order_table_latex(mul_var_data))
