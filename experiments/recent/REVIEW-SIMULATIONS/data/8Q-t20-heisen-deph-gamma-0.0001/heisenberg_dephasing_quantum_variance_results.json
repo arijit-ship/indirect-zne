@@ -1,0 +1,91 @@
+{
+    "summary": {
+        "quantum_var_hx": 7.131051732621593,
+        "quantum_var_hy": 7.312912224988542,
+        "quantum_var_hz": 7.013576989087298,
+        "quantum_var_total": 21.45754094669743,
+        "n_files": 10
+    },
+    "per_file_results": [
+        {
+            "n_samples": 119,
+            "quantum_var_hx": 6.978164317938725,
+            "quantum_var_hy": 7.242293481169451,
+            "quantum_var_hz": 6.9903721585816045,
+            "quantum_var_total": 21.210829957689782,
+            "filename": "8Q-t20-heisen-dephasing_run000_fc0bb251-4600-4ede-a344-ceebf0238d15_HISTORY.h5"
+        },
+        {
+            "n_samples": 149,
+            "quantum_var_hx": 6.7773844938968555,
+            "quantum_var_hy": 7.398007818075079,
+            "quantum_var_hz": 6.965910466427924,
+            "quantum_var_total": 21.141302778399858,
+            "filename": "8Q-t20-heisen-dephasing_run001_585b363b-a000-4b2d-a8fc-0d92c178f012_HISTORY.h5"
+        },
+        {
+            "n_samples": 139,
+            "quantum_var_hx": 7.797179104242223,
+            "quantum_var_hy": 7.498547954944333,
+            "quantum_var_hz": 7.355737660009726,
+            "quantum_var_total": 22.65146471919628,
+            "filename": "8Q-t20-heisen-dephasing_run002_418f5689-5040-43fe-b396-f0f42be2c895_HISTORY.h5"
+        },
+        {
+            "n_samples": 118,
+            "quantum_var_hx": 6.981715690752592,
+            "quantum_var_hy": 7.2487400714550105,
+            "quantum_var_hz": 6.936742410875905,
+            "quantum_var_total": 21.167198173083506,
+            "filename": "8Q-t20-heisen-dephasing_run003_b4e8bbb6-e2b8-42d5-8902-e51a50ff44f6_HISTORY.h5"
+        },
+        {
+            "n_samples": 172,
+            "quantum_var_hx": 7.387526777646693,
+            "quantum_var_hy": 7.284299388304035,
+            "quantum_var_hz": 7.131167062792689,
+            "quantum_var_total": 21.802993228743414,
+            "filename": "8Q-t20-heisen-dephasing_run004_6317abc1-2f15-4f01-95fa-a3b0e533fd76_HISTORY.h5"
+        },
+        {
+            "n_samples": 94,
+            "quantum_var_hx": 6.689431080142469,
+            "quantum_var_hy": 6.910930456585518,
+            "quantum_var_hz": 6.568023434415221,
+            "quantum_var_total": 20.168384971143205,
+            "filename": "8Q-t20-heisen-dephasing_run005_308be0eb-c6ce-44cc-b1d7-f58dbb95a6d1_HISTORY.h5"
+        },
+        {
+            "n_samples": 141,
+            "quantum_var_hx": 7.001803583882647,
+            "quantum_var_hy": 7.284463569392777,
+            "quantum_var_hz": 6.922846526794226,
+            "quantum_var_total": 21.20911368006965,
+            "filename": "8Q-t20-heisen-dephasing_run006_58acf41c-b75f-40dd-971c-14003e1d1881_HISTORY.h5"
+        },
+        {
+            "n_samples": 86,
+            "quantum_var_hx": 7.160167751298787,
+            "quantum_var_hy": 7.384484293005488,
+            "quantum_var_hz": 7.1524905749283985,
+            "quantum_var_total": 21.69714261923267,
+            "filename": "8Q-t20-heisen-dephasing_run007_1b4894f2-aa86-4fe4-b1f8-46d12cb20520_HISTORY.h5"
+        },
+        {
+            "n_samples": 117,
+            "quantum_var_hx": 7.21909072703579,
+            "quantum_var_hy": 7.593627759342543,
+            "quantum_var_hz": 7.170501479593159,
+            "quantum_var_total": 21.983219965971493,
+            "filename": "8Q-t20-heisen-dephasing_run008_0f8daffd-455b-410b-96d9-213981110f55_HISTORY.h5"
+        },
+        {
+            "n_samples": 107,
+            "quantum_var_hx": 7.318053799379148,
+            "quantum_var_hy": 7.283727457611191,
+            "quantum_var_hz": 6.94197811645413,
+            "quantum_var_total": 21.543759373444466,
+            "filename": "8Q-t20-heisen-dephasing_run009_de0b756d-7ade-4be5-ab62-9a7ac78fa86f_HISTORY.h5"
+        }
+    ]
+}

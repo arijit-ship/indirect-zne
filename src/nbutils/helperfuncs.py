@@ -2590,7 +2590,7 @@ def make_multivatiate_zne_table(
 
     # Section 3 – Single ZNE value
     n_pts = len(data["sorted_noise"])
-    row_labels.append(f"Multi-variate Richardson ZNE value")
+    row_labels.append(f"Multivariate Richardson ZNE value")
     row_values.append(f"{data['zne_mean']:.3f} \u00b1 {data['zne_std']:.3f}")
 
     # ── Section divider positions ─────────────────────────────────────────────
@@ -2701,7 +2701,7 @@ def make_multivatiate_zne_table(
     latex_lines.append("        \\hline")
 
     # Section 3: ZNE value
-    label = f"\\text{{Multi-variate Richardson ZNE value}}"
+    label = f"\\text{{Multivariate Richardson ZNE value}}"
     val_str = f"{data['zne_mean']:.3f} \\pm {data['zne_std']:.3f}"
     latex_lines.append(f"        {label} & ${val_str}$ \\\\")
     latex_lines.append("        \\hline")
@@ -2892,8 +2892,8 @@ def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> st
     lines = []
     lines.append(r"\begin{table}")
     lines.append(
-        r"\caption{\textbf{Multi-variate ZNE in plot Figure "
-        r"\ref{fig-plots-zne-diff-orders-multi-variate}. Mean values and "
+        r"\caption{\textbf{Multivariate ZNE in plot Figure "
+        r"\ref{fig-plots-zne-diff-orders-multivariate}. Mean values and "
         r"corresponding standard deviations are computed over 10 independent "
         r"experimental runs.}}"
     )
@@ -2926,7 +2926,7 @@ def make_zne_order_table_latex(mul_var_data: dict, cost_sig_figs: int = 3) -> st
         r"\multicolumn{3}{p{215pt}}{All values are expressed in dimensionless "
         r"units. Due to the large number of data points, we do not include "
         r"them explicitly here. For more detailed data used in this "
-        r"multi-variate extrapolation, refer to \cite{indirect-zne-github}.} \\"
+        r"multivariate extrapolation, refer to \cite{indirect-zne-github}.} \\"
     )
     lines.append(r"\hline")
 

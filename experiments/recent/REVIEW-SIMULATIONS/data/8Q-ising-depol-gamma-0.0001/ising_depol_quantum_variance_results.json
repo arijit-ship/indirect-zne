@@ -1,0 +1,80 @@
+{
+    "summary": {
+        "quantum_var_hx": 7.651335659935017,
+        "quantum_var_hz": 12.168512657344317,
+        "quantum_var_total": 19.819848317279334,
+        "n_files": 10
+    },
+    "per_file_results": [
+        {
+            "n_samples": 121,
+            "quantum_var_hx": 7.5895209663698875,
+            "quantum_var_hz": 12.523463174141169,
+            "quantum_var_total": 20.112984140511056,
+            "filename": "8Q-t20-ising-depol_run000_caebd250-1469-4069-b249-c7cc57d7e92b_HISTORY.h5"
+        },
+        {
+            "n_samples": 147,
+            "quantum_var_hx": 7.275131927523203,
+            "quantum_var_hz": 12.514578081188393,
+            "quantum_var_total": 19.789710008711598,
+            "filename": "8Q-t20-ising-depol_run001_87ec3972-818a-49e0-bcc3-b02d10ba0dc4_HISTORY.h5"
+        },
+        {
+            "n_samples": 135,
+            "quantum_var_hx": 7.46822597051694,
+            "quantum_var_hz": 13.05452262105965,
+            "quantum_var_total": 20.522748591576587,
+            "filename": "8Q-t20-ising-depol_run002_0dd191bd-03d4-4d74-9e92-885a309bf1f3_HISTORY.h5"
+        },
+        {
+            "n_samples": 98,
+            "quantum_var_hx": 7.768998023739724,
+            "quantum_var_hz": 12.187182775851108,
+            "quantum_var_total": 19.95618079959083,
+            "filename": "8Q-t20-ising-depol_run003_e82fb316-c79e-4f32-bceb-226b0ab351ce_HISTORY.h5"
+        },
+        {
+            "n_samples": 163,
+            "quantum_var_hx": 7.993439994616173,
+            "quantum_var_hz": 10.936282000551797,
+            "quantum_var_total": 18.92972199516797,
+            "filename": "8Q-t20-ising-depol_run004_78a92671-a2f2-44e9-b212-df28f0604432_HISTORY.h5"
+        },
+        {
+            "n_samples": 59,
+            "quantum_var_hx": 7.791141896462718,
+            "quantum_var_hz": 12.469018654193516,
+            "quantum_var_total": 20.260160550656234,
+            "filename": "8Q-t20-ising-depol_run005_35346ae4-c4c5-417d-b0e4-21b9f23ccfc0_HISTORY.h5"
+        },
+        {
+            "n_samples": 133,
+            "quantum_var_hx": 7.725254538740294,
+            "quantum_var_hz": 12.435611656124957,
+            "quantum_var_total": 20.16086619486525,
+            "filename": "8Q-t20-ising-depol_run006_b0eadbe5-b2ca-45d3-8b54-50c928832089_HISTORY.h5"
+        },
+        {
+            "n_samples": 93,
+            "quantum_var_hx": 7.541834615759919,
+            "quantum_var_hz": 12.691260404844147,
+            "quantum_var_total": 20.23309502060407,
+            "filename": "8Q-t20-ising-depol_run007_37877deb-1741-4246-9e09-f2f9ed76487d_HISTORY.h5"
+        },
+        {
+            "n_samples": 114,
+            "quantum_var_hx": 7.545101415936303,
+            "quantum_var_hz": 12.289738301964311,
+            "quantum_var_total": 19.834839717900614,
+            "filename": "8Q-t20-ising-depol_run008_2d413be9-1664-4a49-9198-171215ecdb55_HISTORY.h5"
+        },
+        {
+            "n_samples": 108,
+            "quantum_var_hx": 7.814707249685019,
+            "quantum_var_hz": 10.583468903524127,
+            "quantum_var_total": 18.398176153209146,
+            "filename": "8Q-t20-ising-depol_run009_48c00314-d5e9-4fde-a012-2a2fdce66522_HISTORY.h5"
+        }
+    ]
+}

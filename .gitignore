@@ -3,7 +3,7 @@ output/*
 env
 .vscode
 .VSCodeCounter
-
+private
 src/optimizer
 # from boilerplate
 # Byte-compiled / optimized / DLL files
